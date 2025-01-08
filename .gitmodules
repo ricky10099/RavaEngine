@@ -1,0 +1,12 @@
+[submodule "Externals/glm"]
+	path = Externals/glm
+	url = https://github.com/ricky10099/GLM.git
+[submodule "Externals/GLFW"]
+	path = Externals/GLFW
+	url = https://github.com/ricky10099/GLFW.git
+[submodule "Externals/spdlog"]
+	path = Externals/spdlog
+	url = https://github.com/ricky10099/spdlog.git
+[submodule "Externals/ImGui"]
+	path = Externals/ImGui
+	url = https://github.com/ricky10099/imgui.git
