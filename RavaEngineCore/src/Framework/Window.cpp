@@ -1,0 +1,67 @@
+#include "ravapch.h"
+
+// stb_image
+#include <stb/stb_image.h>
+
+#include "Framework/Window.h"
+//#include "Framework/Vulkan/VKUtils.h"
+// #include "Framework/Vulkan/Device.h"
+
+namespace Rava {
+Window::Window(std::string_view name) :
+	//: m_width{width}
+	//, m_height{height}
+	m_windowName(name) {
+	ENGINE_INFO("Initializing Window");
+	InitWindow();
+}
+
+Window::~Window() {
+	ENGINE_INFO("Destruct Window");
+
+	glfwDestroyWindow(m_window);
+	glfwTerminate();
+}
+
+void Window::InitWindow() {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+	GLFWmonitor* primaryMonitor  = glfwGetPrimaryMonitor();
+	const GLFWvidmode* videoMode = glfwGetVideoMode(primaryMonitor);
+
+	int monitorX, monitorY;
+	glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY);
+
+	m_window = glfwCreateWindow(m_width, m_height, m_windowName.c_str(), nullptr, nullptr);
+	glfwSetWindowPos(m_window, monitorX + (videoMode->width - m_width) / 2,
+					 monitorY + (videoMode->height - m_height) / 2);
+
+	glfwShowWindow(m_window);
+
+	if (!glfwVulkanSupported()) {
+		ENGINE_CRITICAL("GLFW: Vulkan not supported!");
+	}
+
+	// Set icon
+	GLFWimage icon;
+	int channels;
+	std::string iconPathStr = "RavaEngineCore/src/Framework/Vulkan/Rava.jpg";
+	icon.pixels = stbi_load(iconPathStr.c_str(), &icon.width, &icon.height, &channels, 4);
+	if (icon.pixels) {
+		glfwSetWindowIcon(m_window, 1, &icon);
+		stbi_image_free(icon.pixels);
+	}
+
+	glfwSetWindowUserPointer(m_window, this);
+	glfwSetFramebufferSizeCallback(m_window, FramebufferResizeCallback);
+}
+
+void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	m_framebufferResized = true;
+	m_width              = width;
+	m_height             = height;
+}
+}  // namespace Vulkan
