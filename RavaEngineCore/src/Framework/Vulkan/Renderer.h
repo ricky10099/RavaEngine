@@ -5,6 +5,7 @@
 #include "Framework/Vulkan/RenderPass.h"
 #include "Framework/Vulkan/Descriptor.h"
 #include "Framework/Vulkan/Buffer.h"
+#include "Framework/Scene.h"
 
 namespace Vulkan {
 class Renderer {
@@ -18,14 +19,15 @@ class Renderer {
 	NO_COPY(Renderer)
 
 	void Init();
-	VkCommandBuffer BeginFrame();
+	void BeginFrame();
+	//void BeginFrame(Scene* scene);
 	void EndFrame();
 	//void BeginShadowRenderPass0(VkCommandBuffer commandBuffer);
 	//void BeginShadowRenderPass1(VkCommandBuffer commandBuffer);
-	void Begin3DRenderPass(VkCommandBuffer commandBuffer);
+	void Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/);
 	//void BeginPostProcessingRenderPass(VkCommandBuffer commandBuffer);
 	void BeginGUIRenderPass(VkCommandBuffer commandBuffer);
-	void EndRenderPass(VkCommandBuffer commandBuffer);
+	void EndRenderPass(/*VkCommandBuffer commandBuffer*/);
 
 	//void Render(Scene* scene);
 
@@ -39,7 +41,7 @@ class Renderer {
 	//void TransparencyPass(entt::registry& registry, ParticleSystem* particleSystem);
 	//void Submit2D(Camera* camera, entt::registry& registry);
 	//void GUIRenderpass(Camera* camera);
-	//void EndScene();
+	void EndScene();
 	//void DrawWithTransform(const Sprite& sprite, const glm::mat4& transform) ;
 	//void Draw(const Sprite& sprite, const glm::mat4& position, const glm::vec4& color, const float textureID = 1.0f);
 	//void UpdateAnimations(entt::registry& registry, const Timestep& timestep) ;
@@ -52,6 +54,8 @@ class Renderer {
 
 	int GetFrameIndex() const;
 	VkCommandBuffer GetCurrentCommandBuffer() const;
+	std::shared_ptr<RenderPass> GetRenderPass() { return m_renderPass; }
+	u32 GetImageCount() { return m_swapChain->ImageCount(); }
 	float GetAmbientLightIntensity() const { return m_ambientLightIntensity; }
 	u32 GetFrameCounter() const { return m_frameCounter; }
 	float GetAspectRatio() const { return m_swapChain->ExtentAspectRatio(); }
@@ -71,7 +75,7 @@ class Renderer {
 	Rava::Window* m_ravaWindow;
 	std::unique_ptr<SwapChain> m_swapChain;
 
-	std::unique_ptr<RenderPass> m_renderPass;
+	std::shared_ptr<RenderPass> m_renderPass;
 	// std::unique_ptr<VK_ShadowMap> m_ShadowMap[NUMBER_OF_SHADOW_MAPS];
 
 	/*std::unique_ptr<VK_RenderSystemPbr> m_RenderSystemPbr;

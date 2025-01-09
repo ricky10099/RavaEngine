@@ -8,5 +8,8 @@ class Scene {
 	void Init() { LOG_TRACE("Scene Init()"); }
 
 	void Update() {}
+
+	private:
+
 };
 }  // namespace Rava

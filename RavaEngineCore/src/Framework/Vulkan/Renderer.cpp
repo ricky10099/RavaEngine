@@ -19,7 +19,7 @@ Renderer::Renderer(Rava::Window* window)
 
 Renderer::~Renderer() {
 	ENGINE_INFO("Destruct Renderer");
-	vkDeviceWaitIdle(VKContext->GetLogicalDevice());
+	//vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 	FreeCommandBuffers();
 }
 
@@ -98,7 +98,7 @@ void Renderer::RecreateSwapChain() {
 }
 
 void Renderer::RecreateRenderpass() {
-	m_renderPass = std::make_unique<RenderPass>(m_swapChain.get());
+	m_renderPass = std::make_shared<RenderPass>(m_swapChain.get());
 }
 
 void Renderer::CreateCommandBuffers() {
@@ -129,13 +129,13 @@ void Renderer::FreeCommandBuffers() {
 	m_commandBuffers.clear();
 }
 
-VkCommandBuffer Renderer::BeginFrame() {
+void Renderer::BeginFrame() {
 	ENGINE_ASSERT(!m_frameInProgress, "Can't Call BeginFrame while already in progress!");
 
 	auto result = m_swapChain->AcquireNextImage(&m_currentImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		Recreate();
-		return nullptr;
+		//return nullptr;
 	}
 
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -151,7 +151,8 @@ VkCommandBuffer Renderer::BeginFrame() {
 	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
 	VK_CHECK(result, "Failed to Begin Recording Command Buffer!")
 
-	return commandBuffer;
+	m_currentCommandBuffer = commandBuffer;
+	//return commandBuffer;
 }
 
 void Renderer::EndFrame() {
@@ -173,9 +174,9 @@ void Renderer::EndFrame() {
 	m_currentFrameIndex = (m_currentFrameIndex + 1) % MAX_FRAMES_SYNC;
 }
 
-void Renderer::Begin3DRenderPass(VkCommandBuffer commandBuffer) {
+void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	assert(m_frameInProgress);
-	assert(commandBuffer == GetCurrentCommandBuffer());
+	//assert(commandBuffer == GetCurrentCommandBuffer());
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -193,7 +194,8 @@ void Renderer::Begin3DRenderPass(VkCommandBuffer commandBuffer) {
 	renderPassInfo.clearValueCount = static_cast<u32>(clearValues.size());
 	renderPassInfo.pClearValues    = clearValues.data();
 
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	//vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(m_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport{};
 	viewport.x        = 0.0f;
@@ -206,8 +208,8 @@ void Renderer::Begin3DRenderPass(VkCommandBuffer commandBuffer) {
 		{0, 0},
         m_swapChain->GetSwapChainExtent()
 	};
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	vkCmdSetViewport(m_currentCommandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
 }
 
 void Renderer::BeginGUIRenderPass(VkCommandBuffer commandBuffer) {
@@ -241,11 +243,19 @@ void Renderer::BeginGUIRenderPass(VkCommandBuffer commandBuffer) {
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Renderer::EndRenderPass(VkCommandBuffer commandBuffer) {
+void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	assert(m_frameInProgress);
-	assert(commandBuffer == GetCurrentCommandBuffer());
+	//assert(commandBuffer == GetCurrentCommandBuffer());
 
-	vkCmdEndRenderPass(commandBuffer);
+	// vkCmdEndRenderPass(commandBuffer);
+	 vkCmdEndRenderPass(m_currentCommandBuffer);
+}
+
+void Renderer::EndScene() {
+	if (m_currentCommandBuffer) {
+		EndRenderPass(/*m_currentCommandBuffer*/);  // end GUI render pass
+		EndFrame();
+	}
 }
 
 void Renderer::Recreate() {

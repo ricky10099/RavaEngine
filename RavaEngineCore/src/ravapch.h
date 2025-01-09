@@ -49,6 +49,11 @@ using namespace std::literals::chrono_literals;
 #endif
 #include <glm/gtx/string_cast.hpp>
 
+// ImGui
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_vulkan.h>
+
 // PhyX
 #include <PxPhysicsAPI.h>
 

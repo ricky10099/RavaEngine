@@ -29,6 +29,7 @@ class Context {
 	NO_MOVE(Context)
 
 	static Context* Get() { return m_context; }
+	VkInstance GetInstance() const { return m_instance; }
 	VkSurfaceKHR GetSurface() const { return m_surface; }
 	VkPhysicalDevice GetPhysicalDevice() const { return m_physicalDevice; }
 	VkDevice GetLogicalDevice() const { return m_device; }
