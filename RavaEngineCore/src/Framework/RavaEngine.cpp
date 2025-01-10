@@ -15,6 +15,7 @@ Engine::Engine() {
 
 	m_context = std::make_unique<Vulkan::Context>(&m_ravaWindow);
 	m_renderer.Init();
+	//m_editor = std::make_unique<Editor>(m_renderer.GetRenderPass()->Get3DRenderPass(), m_renderer.GetImageCount());
 	LoadScene(std::make_unique<Scene>());
 }
 
@@ -52,15 +53,18 @@ void Engine::Run() {
 
 		// render
 		m_renderer.Begin3DRenderPass(/*commandBuffer*/);
+		//m_renderer.BeginGUIRenderPass(/*commandBuffer*/);
 
 		// order here matters
 		// entityRenderSystem.RenderEntities(frameInfo, m_currentScene->m_entityRoot);
 		// entityPointLightSystem.Render(frameInfo, m_currentScene->m_entityRoot);
-		m_editor.NewFrame();
-		m_editor.Run();
-		m_editor.Render(m_renderer.GetCurrentCommandBuffer());
-		m_renderer.EndRenderPass(/*commandBuffer*/);
-		m_renderer.EndFrame();
+		//m_editor->NewFrame();
+		//m_editor->Run();
+		//m_editor->Render(m_renderer.GetCurrentCommandBuffer());
+		m_renderer.UpdateEditor();
+		m_renderer.EndScene();
+		//m_renderer.EndRenderPass(/*commandBuffer*/);
+		//m_renderer.EndFrame();
 		//}
 
 		glfwPollEvents();

@@ -18,6 +18,7 @@ IncludeDir["Assimp"]	= "Externals/Assimp/include"
 IncludeDir["PhysX"]		= "Externals/PhysX/include"
 IncludeDir["CRIWARE"]	= "Externals/CRIWARE/include"
 IncludeDir["glm"]		= "Externals/glm"
+IncludeDir["ImGui"]		= "Externals/ImGui"
 
 LibDir = {}
 LibDir["Assimp"]	= "Externals/Assimp/lib"
@@ -60,6 +61,7 @@ project "RavaEngineCore"
 		"%{IncludeDir.PhysX}",
 		"%{IncludeDir.CRIWARE}",
 		"%{IncludeDir.glm}",
+		"%{IncludeDir.ImGui}",
 	}
 	
 	libdirs {

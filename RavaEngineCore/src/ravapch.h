@@ -96,6 +96,12 @@ using u16 = unsigned short;
 using u32 = unsigned int;
 using u64 = unsigned long long;
 
+template<typename T>
+using Shared = std::shared_ptr<T>;
+
+template <typename T>
+using Unique = std::unique_ptr<T>;
+
 #ifdef RAVA_DEBUG
 #	define RAVA_ENABLE_ASSERTS
 #	define RAVA_DEBUGBREAK() __debugbreak()

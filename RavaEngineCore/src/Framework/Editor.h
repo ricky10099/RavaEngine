@@ -12,7 +12,16 @@ class Editor {
 	void Render(VkCommandBuffer commandBuffer);
 	void Run();
 
+	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
+
    private:
 	VkDescriptorPool m_descriptorPool;
+	std::vector<VkDescriptorSet> m_descriptorSets;
+	VkSampler m_textureSampler = VK_NULL_HANDLE;
+
+	bool m_viewportFocused = false, m_viewportHovered = false;
+
+	glm::vec2 m_viewportSize = {0.0f, 0.0f};
+	glm::vec2 m_viewportBounds[2];
 };
 }  // namespace Rava

@@ -7,19 +7,18 @@ std::unique_ptr<DescriptorPool> Renderer::s_descriptorPool;
 Renderer::Renderer(Rava::Window* window)
 	: m_ravaWindow{window}
 	, m_frameCounter{0}
-	, m_currentImageIndex{0}
-	, m_ambientLightIntensity{0.0f}
-	, m_currentFrameIndex{0}
-	, m_showDebugShadowMap{false}
+	, m_currentImageIndex{0}  //, m_ambientLightIntensity{0.0f}
+	, m_currentFrameIndex{0}  //, m_showDebugShadowMap{false}
 	, m_frameInProgress{false}
 	, m_shadersCompiled{false} {
 	ENGINE_INFO("Initializing Renderer.");
-	// CompileShaders();  // runs in a parallel thread and sets m_ShadersCompiled
+	// Init();
+	//  CompileShaders();  // runs in a parallel thread and sets m_ShadersCompiled
 }
 
 Renderer::~Renderer() {
 	ENGINE_INFO("Destruct Renderer");
-	//vkDeviceWaitIdle(VKContext->GetLogicalDevice());
+	// vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 	FreeCommandBuffers();
 }
 
@@ -73,6 +72,7 @@ void Renderer::Init() {
 	}
 
 	// m_Imgui = Imgui::Create(m_RenderPass->GetGUIRenderPass(), static_cast<u32>(m_SwapChain->ImageCount()));
+	m_editor = std::make_unique<Rava::Editor>(m_renderPass->Get3DRenderPass(), static_cast<u32>(m_swapChain->ImageCount()));
 }
 
 void Renderer::RecreateSwapChain() {
@@ -93,6 +93,11 @@ void Renderer::RecreateSwapChain() {
 		m_swapChain                             = std::make_unique<SwapChain>(extent, oldSwapChain);
 		if (!oldSwapChain->CompareSwapFormats(*m_swapChain.get())) {
 			ENGINE_CRITICAL("swap chain image or depth format has changed");
+		}
+	}
+	if (m_editor) {
+		for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
+			m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
 		}
 	}
 }
@@ -135,7 +140,7 @@ void Renderer::BeginFrame() {
 	auto result = m_swapChain->AcquireNextImage(&m_currentImageIndex);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		Recreate();
-		//return nullptr;
+		// return nullptr;
 	}
 
 	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -152,7 +157,9 @@ void Renderer::BeginFrame() {
 	VK_CHECK(result, "Failed to Begin Recording Command Buffer!")
 
 	m_currentCommandBuffer = commandBuffer;
-	//return commandBuffer;
+	// return commandBuffer;
+
+	m_editor->NewFrame();
 }
 
 void Renderer::EndFrame() {
@@ -176,7 +183,7 @@ void Renderer::EndFrame() {
 
 void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	assert(m_frameInProgress);
-	//assert(commandBuffer == GetCurrentCommandBuffer());
+	// assert(commandBuffer == GetCurrentCommandBuffer());
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -188,13 +195,13 @@ void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 
 	std::array<VkClearValue, static_cast<u32>(RenderPass::RenderTargets3D::NUMBER_OF_ATTACHMENTS)> clearValues{};
 	clearValues[0].color = {
-		{0.01f, 0.01f, 0.01f, 1.0f}
+		{0.1f, 0.01f, 0.01f, 1.0f}
 	};
 	clearValues[1].depthStencil    = {1.0f, 0};
 	renderPassInfo.clearValueCount = static_cast<u32>(clearValues.size());
 	renderPassInfo.pClearValues    = clearValues.data();
 
-	//vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	// vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBeginRenderPass(m_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport{};
@@ -212,47 +219,57 @@ void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
 }
 
-void Renderer::BeginGUIRenderPass(VkCommandBuffer commandBuffer) {
-	assert(m_frameInProgress);
-	assert(commandBuffer == GetCurrentCommandBuffer());
-
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass  = m_renderPass->GetGUIRenderPass();
-	renderPassInfo.framebuffer = m_renderPass->GetGUIFrameBuffer(m_currentImageIndex);
-
-	renderPassInfo.renderArea.offset = {0, 0};
-	renderPassInfo.renderArea.extent = m_swapChain->GetSwapChainExtent();
-	renderPassInfo.clearValueCount   = 0;
-	renderPassInfo.pClearValues      = nullptr;
-
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	VkViewport viewport{};
-	viewport.x        = 0.0f;
-	viewport.y        = 0.0f;
-	viewport.width    = static_cast<float>(m_swapChain->GetSwapChainExtent().width);
-	viewport.height   = static_cast<float>(m_swapChain->GetSwapChainExtent().height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	VkRect2D scissor{
-		{0, 0},
-        m_swapChain->GetSwapChainExtent()
-	};
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-}
+// void Renderer::BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/) {
+//	assert(m_frameInProgress);
+//	//assert(commandBuffer == GetCurrentCommandBuffer());
+//
+//	VkRenderPassBeginInfo renderPassInfo{};
+//	renderPassInfo.sType       = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+//	renderPassInfo.renderPass  = m_renderPass->GetGUIRenderPass();
+//	renderPassInfo.framebuffer = m_renderPass->GetGUIFrameBuffer(m_currentImageIndex);
+//
+//	renderPassInfo.renderArea.offset = {0, 0};
+//	renderPassInfo.renderArea.extent = m_swapChain->GetSwapChainExtent();
+//
+//	std::array<VkClearValue, 1> clearValues{};
+//	clearValues[0].color = {
+//		{0.01f, 0.01f, 0.01f, 1.0f}
+//	};
+//	renderPassInfo.clearValueCount   = 1;
+//	renderPassInfo.pClearValues    = clearValues.data();
+//
+//	vkCmdBeginRenderPass(m_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+//
+//	VkViewport viewport{};
+//	viewport.x        = 0.0f;
+//	viewport.y        = 0.0f;
+//	viewport.width    = static_cast<float>(m_swapChain->GetSwapChainExtent().width);
+//	viewport.height   = static_cast<float>(m_swapChain->GetSwapChainExtent().height);
+//	viewport.minDepth = 0.0f;
+//	viewport.maxDepth = 1.0f;
+//	VkRect2D scissor{
+//		{0, 0},
+//         m_swapChain->GetSwapChainExtent()
+//	};
+//	vkCmdSetViewport(m_currentCommandBuffer, 0, 1, &viewport);
+//	vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
+// }
 
 void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	assert(m_frameInProgress);
-	//assert(commandBuffer == GetCurrentCommandBuffer());
+	// assert(commandBuffer == GetCurrentCommandBuffer());
 
 	// vkCmdEndRenderPass(commandBuffer);
-	 vkCmdEndRenderPass(m_currentCommandBuffer);
+	vkCmdEndRenderPass(m_currentCommandBuffer);
+}
+
+void Renderer::UpdateEditor() {
+	m_editor->Run();
 }
 
 void Renderer::EndScene() {
 	if (m_currentCommandBuffer) {
+		m_editor->Render(m_currentCommandBuffer);
 		EndRenderPass(/*m_currentCommandBuffer*/);  // end GUI render pass
 		EndFrame();
 	}

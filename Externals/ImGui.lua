@@ -20,7 +20,17 @@ project "ImGui"
         "%{prj.name}/imstb_textedit.h",
         "%{prj.name}/imstb_truetype.h",
         "%{prj.name}/imgui_demo.cpp",
+        "%{prj.name}/backends/imgui_impl_vulkan.h",
+        "%{prj.name}/backends/imgui_impl_vulkan.cpp",
+        "%{prj.name}/backends/imgui_impl_glfw.h",
+        "%{prj.name}/backends/imgui_impl_glfw.cpp",
     }
+
+    includedirs {
+        "%{prj.name}",
+		"%{VULKAN_SDK}/Include",
+		"../%{IncludeDir.GLFW}",
+	}
 
     filter "system:windows"
         systemversion "latest"

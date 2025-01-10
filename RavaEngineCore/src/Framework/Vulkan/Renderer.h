@@ -6,6 +6,7 @@
 #include "Framework/Vulkan/Descriptor.h"
 #include "Framework/Vulkan/Buffer.h"
 #include "Framework/Scene.h"
+#include "Framework/Editor.h"
 
 namespace Vulkan {
 class Renderer {
@@ -26,9 +27,10 @@ class Renderer {
 	//void BeginShadowRenderPass1(VkCommandBuffer commandBuffer);
 	void Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/);
 	//void BeginPostProcessingRenderPass(VkCommandBuffer commandBuffer);
-	void BeginGUIRenderPass(VkCommandBuffer commandBuffer);
+	//void BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/);
 	void EndRenderPass(/*VkCommandBuffer commandBuffer*/);
 
+	void UpdateEditor();
 	//void Render(Scene* scene);
 
 	//void BeginFrame(Camera* camera);
@@ -46,17 +48,17 @@ class Renderer {
 	//void Draw(const Sprite& sprite, const glm::mat4& position, const glm::vec4& color, const float textureID = 1.0f);
 	//void UpdateAnimations(entt::registry& registry, const Timestep& timestep) ;
 
-	void SetAmbientLightIntensity(float ambientLightIntensity) {
+	/*void SetAmbientLightIntensity(float ambientLightIntensity) {
 		m_ambientLightIntensity = ambientLightIntensity;
-	}
-	void ShowDebugShadowMap(bool showDebugShadowMap)  { m_showDebugShadowMap = showDebugShadowMap; }
+	}*/
+	//void ShowDebugShadowMap(bool showDebugShadowMap)  { m_showDebugShadowMap = showDebugShadowMap; }
 	//void ToggleDebugWindow(const GenericCallback& callback = nullptr) { m_Imgui = Imgui::ToggleDebugWindow(callback); }
 
 	int GetFrameIndex() const;
 	VkCommandBuffer GetCurrentCommandBuffer() const;
 	std::shared_ptr<RenderPass> GetRenderPass() { return m_renderPass; }
 	u32 GetImageCount() { return m_swapChain->ImageCount(); }
-	float GetAmbientLightIntensity() const { return m_ambientLightIntensity; }
+	//float GetAmbientLightIntensity() const { return m_ambientLightIntensity; }
 	u32 GetFrameCounter() const { return m_frameCounter; }
 	float GetAspectRatio() const { return m_swapChain->ExtentAspectRatio(); }
 	u32 GetContextWidth() const { return m_swapChain->Width(); }
@@ -112,7 +114,7 @@ class Renderer {
 	// std::vector<VkDescriptorSet> m_ShadowDescriptorSets0{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
 	// std::vector<VkDescriptorSet> m_ShadowDescriptorSets1{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
 	std::vector<VkDescriptorSet> m_globalDescriptorSets{MAX_FRAMES_SYNC};
-	std::vector<VkDescriptorSet> m_localDescriptorSets{MAX_FRAMES_SYNC};
+	//std::vector<VkDescriptorSet> m_localDescriptorSets{MAX_FRAMES_SYNC};
 	std::vector<std::unique_ptr<Buffer>> m_uniformBuffers{MAX_FRAMES_SYNC};
 	// std::vector<std::unique_ptr<VK_Buffer>> m_ShadowUniformBuffers0{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
 	// std::vector<std::unique_ptr<VK_Buffer>> m_ShadowUniformBuffers1{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
@@ -120,10 +122,11 @@ class Renderer {
 	// std::vector<VkDescriptorSet> m_LightingDescriptorSets{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
 	// std::vector<VkDescriptorSet> m_PostProcessingDescriptorSets{VK_SwapChain::MAX_FRAMES_IN_FLIGHT};
 
-	float m_ambientLightIntensity;
-	glm::mat4 m_GUIViewProjectionMatrix{1.0f};
+	//float m_ambientLightIntensity;
+	//glm::mat4 m_GUIViewProjectionMatrix{1.0f};
 
-	bool m_showDebugShadowMap;
+	//bool m_showDebugShadowMap;
+	Unique<Rava::Editor> m_editor = nullptr;
 
 	private:
 	//void CompileShaders();
@@ -138,5 +141,6 @@ class Renderer {
 	//void CreateRenderSystemBloom();
 	void Recreate();
 	//void UpdateTransformCache(Scene& scene, uint const nodeIndex, glm::mat4 const& parentMat4, bool parentDirtyFlag);
+	
 };
 }  // namespace Vulkan

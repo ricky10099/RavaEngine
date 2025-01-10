@@ -244,7 +244,7 @@ void Context::HasGflwRequiredInstanceExtensions() {
 
 	// Check if given extensions are in list of available extensions
 	ENGINE_INFO("Available Extensions:");
-	std::unordered_set<std::string> available;
+	std::unordered_set<std::string_view> available;
 	for (const auto& extension : extensions) {
 		ENGINE_INFO("\t{0}", extension.extensionName);
 		available.insert(extension.extensionName);
@@ -331,7 +331,7 @@ bool Context::CheckDeviceExtensionSupport(VkPhysicalDevice device) {
 	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
 	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-	std::set<std::string> requiredExtensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
+	std::set<std::string_view> requiredExtensions(DEVICE_EXTENSIONS.begin(), DEVICE_EXTENSIONS.end());
 	// Check for extension
 	for (const auto& extension : availableExtensions) {
 		requiredExtensions.erase(extension.extensionName);
