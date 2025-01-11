@@ -1,4 +1,9 @@
 # RavaEngine
+
+<p align="center">
+  <img width="512" height="512" src="https://github.com/ricky10099/RavaEngine/blob/main/Assets/Images/Rava.png">
+</p>
+
 Self learning Vulkan API and try to make a game engine.
 
 The name "Rava" takes Lava which related to Vulkan as volcano, and with the R of Ricky which is my name.
