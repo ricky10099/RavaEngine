@@ -4,9 +4,12 @@
 #include "Framework/Vulkan/SwapChain.h"
 #include "Framework/Vulkan/RenderPass.h"
 #include "Framework/Vulkan/Descriptor.h"
+#include "Framework/Vulkan/RenderSystem/PointLightRenderSystem.h"
+#include "Framework/Vulkan/RenderSystem/EntityRenderSystem.h"
 #include "Framework/Vulkan/Buffer.h"
 #include "Framework/Scene.h"
 #include "Framework/Editor.h"
+
 
 namespace Vulkan {
 class Renderer {
@@ -28,19 +31,19 @@ class Renderer {
 	void Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/);
 	//void BeginPostProcessingRenderPass(VkCommandBuffer commandBuffer);
 	//void BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/);
-	void EndRenderPass(/*VkCommandBuffer commandBuffer*/);
+	void EndRenderPass(/*VkCommandBuffer commandBuffer*/) const;
 
-	void UpdateEditor();
+	void UpdateEditor(Shared<Rava::Scene> scene);
 	//void Render(Scene* scene);
 
 	//void BeginFrame(Camera* camera);
-	//void Renderpass3D(entt::registry& registry);
+	void RenderpassEntities(entt::registry& registry);
 	//void SubmitShadows(entt::registry& registry, const std::vector<DirectionalLightComponent*>& directionalLights = {});
-	//void Submit(Scene& scene) ;
+	void RenderEntities(Shared<Rava::Scene> scene);
 	//void NextSubpass();
 	//void LightingPass();
 	//void PostProcessingRenderpass();
-	//void TransparencyPass(entt::registry& registry, ParticleSystem* particleSystem);
+	void RenderEnv(entt::registry& registry /*,*/ /*ParticleSystem* particleSystem*/);
 	//void Submit2D(Camera* camera, entt::registry& registry);
 	//void GUIRenderpass(Camera* camera);
 	void EndScene();
@@ -80,20 +83,20 @@ class Renderer {
 	std::shared_ptr<RenderPass> m_renderPass;
 	// std::unique_ptr<VK_ShadowMap> m_ShadowMap[NUMBER_OF_SHADOW_MAPS];
 
-	/*std::unique_ptr<VK_RenderSystemPbr> m_RenderSystemPbr;
-	std::unique_ptr<VK_RenderSystemPbrSA> m_RenderSystemPbrSA;
-	std::unique_ptr<VK_RenderSystemGrass> m_RenderSystemGrass;
-	std::unique_ptr<VK_RenderSystemShadowInstanced> m_RenderSystemShadowInstanced;
-	std::unique_ptr<VK_RenderSystemShadowAnimatedInstanced> m_RenderSystemShadowAnimatedInstanced;
-	std::unique_ptr<VK_RenderSystemDeferredShading> m_RenderSystemDeferredShading;
-	std::unique_ptr<VK_RenderSystemPostProcessing> m_RenderSystemPostProcessing;
-	std::unique_ptr<VK_RenderSystemBloom> m_RenderSystemBloom;
-	std::unique_ptr<VK_RenderSystemCubemap> m_RenderSystemCubemap;
-	std::unique_ptr<VK_RenderSystemSpriteRenderer> m_RenderSystemSpriteRenderer;
-	std::unique_ptr<VK_RenderSystemSpriteRenderer2D> m_RenderSystemSpriteRenderer2D;
-	std::unique_ptr<VK_RenderSystemGUIRenderer> m_RenderSystemGUIRenderer;
-	std::unique_ptr<VK_RenderSystemDebug> m_RenderSystemDebug;
-	std::unique_ptr<VK_LightSystem> m_LightSystem;*/
+	std::unique_ptr<EntityRenderSystem> m_entityRenderSystem;
+	std::unique_ptr<PointLightRenderSystem> m_pointLightRenderSystem;
+	//std::unique_ptr<VK_RenderSystemPbrSA> m_RenderSystemPbrSA;
+	//std::unique_ptr<VK_RenderSystemGrass> m_RenderSystemGrass;
+	//std::unique_ptr<VK_RenderSystemShadowInstanced> m_RenderSystemShadowInstanced;
+	//std::unique_ptr<VK_RenderSystemShadowAnimatedInstanced> m_RenderSystemShadowAnimatedInstanced;
+	//std::unique_ptr<VK_RenderSystemDeferredShading> m_RenderSystemDeferredShading;
+	//std::unique_ptr<VK_RenderSystemPostProcessing> m_RenderSystemPostProcessing;
+	//std::unique_ptr<VK_RenderSystemBloom> m_RenderSystemBloom;
+	//std::unique_ptr<VK_RenderSystemCubemap> m_RenderSystemCubemap;
+	//std::unique_ptr<VK_RenderSystemSpriteRenderer> m_RenderSystemSpriteRenderer;
+	//std::unique_ptr<VK_RenderSystemSpriteRenderer2D> m_RenderSystemSpriteRenderer2D;
+	//std::unique_ptr<VK_RenderSystemGUIRenderer> m_RenderSystemGUIRenderer;
+	//std::unique_ptr<VK_RenderSystemDebug> m_RenderSystemDebug;
 
 	// std::shared_ptr<Imgui> m_Imgui;
 

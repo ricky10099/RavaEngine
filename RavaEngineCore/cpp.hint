@@ -3,3 +3,5 @@
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
 #define NO_COPY(type) type(const type&) = delete; type& operator=(const type&) = delete;
 #define NO_MOVE(type) type(type&&) = delete; type& operator=(type&&) = delete;
+#define EVENT_CLASS_TYPE(x) static EventType GetStaticType() { return EventType::x; } EventType GetEventType() const override { return GetStaticType(); } const char* GetName() const override { return #x "Event"; }
+#define EVENT_CLASS_CATEGORY(x) int GetCategoryFlags() const override { return x; }

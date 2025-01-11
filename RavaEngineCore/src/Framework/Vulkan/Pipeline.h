@@ -29,10 +29,10 @@ class Pipeline {
 
 	NO_COPY(Pipeline)
 
-	void Bind(VkCommandBuffer commandBuffer);
+	void Bind(VkCommandBuffer commandBuffer) const;
 
 	static void DefaultPipelineConfig(PipelineConfig& config);
-	static void EnableAlphaBlending(PipelineConfig& config);
+	//static void EnableAlphaBlending(PipelineConfig& config);
 
 	private:
 	void CreateGraphicsPipeline(std::string_view vertFilePath, std::string_view fragFilePath, const PipelineConfig& config);

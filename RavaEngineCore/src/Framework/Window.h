@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Framework/InputEvents/Event.h"
+
 namespace Rava {
 class Window {
    public:
@@ -8,7 +10,6 @@ class Window {
 
 	NO_COPY(Window)
 
-	//void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 	void ResetWindowResizedFlag() { m_framebufferResized = false; }
 
 	u32 Width() { return m_width; }

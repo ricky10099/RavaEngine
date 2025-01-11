@@ -4,14 +4,10 @@
 #include <stb/stb_image.h>
 
 #include "Framework/Window.h"
-//#include "Framework/Vulkan/VKUtils.h"
-// #include "Framework/Vulkan/Device.h"
 
 namespace Rava {
-Window::Window(std::string_view name) :
-	//: m_width{width}
-	//, m_height{height}
-	m_windowName(name) {
+Window::Window(std::string_view name)
+	: m_windowName(name) {
 	ENGINE_INFO("Initializing Window");
 	InitWindow();
 }
@@ -36,8 +32,7 @@ void Window::InitWindow() {
 	glfwGetMonitorPos(primaryMonitor, &monitorX, &monitorY);
 
 	m_window = glfwCreateWindow(m_width, m_height, m_windowName.c_str(), nullptr, nullptr);
-	glfwSetWindowPos(m_window, monitorX + (videoMode->width - m_width) / 2,
-					 monitorY + (videoMode->height - m_height) / 2);
+	glfwSetWindowPos(m_window, monitorX + (videoMode->width - m_width) / 2, monitorY + (videoMode->height - m_height) / 2);
 
 	glfwShowWindow(m_window);
 
@@ -48,8 +43,8 @@ void Window::InitWindow() {
 	// Set icon
 	GLFWimage icon;
 	int channels;
-	std::string iconPathStr = "RavaEngineCore/src/Framework/Vulkan/Rava.jpg";
-	icon.pixels = stbi_load(iconPathStr.c_str(), &icon.width, &icon.height, &channels, 4);
+	std::string iconPathStr = "Assets/Images/Rava.png";
+	icon.pixels             = stbi_load(iconPathStr.c_str(), &icon.width, &icon.height, &channels, 4);
 	if (icon.pixels) {
 		glfwSetWindowIcon(m_window, 1, &icon);
 		stbi_image_free(icon.pixels);
@@ -64,4 +59,4 @@ void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height
 	m_width              = width;
 	m_height             = height;
 }
-}  // namespace Vulkan
+}  // namespace Rava

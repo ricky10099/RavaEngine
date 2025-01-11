@@ -3,8 +3,12 @@
 #include "Framework/Editor.h"
 #include "Framework/Vulkan/VKUtils.h"
 #include "Framework/RavaEngine.h"
+#include "Framework/Vulkan/Renderer.h"
+#include "Framework/Components.h"
+#include "Framework/Entity.h"
 
 namespace Rava {
+
 Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	// set up a descriptor pool stored on this instance, see header for more comments on this.
 	VkDescriptorPoolSize pool_sizes[] = {
@@ -44,10 +48,10 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 	// ImGui::StyleColorsClassic();
-
+	SetDarkThemeColors();
 	// Setup Platform/Renderer backends
 	// Initialize imgui for vulkan
-	ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Engine::s_engine->GetGLFWWindow(), true);
+	ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Engine::instance->GetGLFWWindow(), true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance                  = VKContext->GetInstance();
 	init_info.PhysicalDevice            = VKContext->GetPhysicalDevice();
@@ -123,131 +127,269 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 	}
 }
 
-void Editor::Run() {
-	// static bool dockspaceOpen                 = true;
-	// static bool opt_fullscreen_persistant     = true;
-	// bool opt_fullscreen                       = opt_fullscreen_persistant;
-	// static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-	// ImGuiWindowFlags window_flags             = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-	// if (opt_fullscreen) {
-	//	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	//	ImGui::SetNextWindowPos(viewport->Pos);
-	//	ImGui::SetNextWindowSize(viewport->Size);
-	//	ImGui::SetNextWindowViewport(viewport->ID);
-	//	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	//	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	//	window_flags |=
-	//		ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-	//	window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-	// }
+void Editor::Run(Shared<Rava::Scene> scene) {
+	ImGui::SetNextWindowBgAlpha(1.0f);
+	DrawSceneHierarchy(scene);
 
-	// if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) {
-	//	window_flags |= ImGuiWindowFlags_NoBackground;
-	// }
-
-	// ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	// ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
-	// ImGui::PopStyleVar();
-
-	// if (opt_fullscreen) {
-	//	ImGui::PopStyleVar(2);
-	// }
-
-	//// DockSpace
-	// ImGuiIO& io           = ImGui::GetIO();
-	// ImGuiStyle& style     = ImGui::GetStyle();
-	// float minWinSizeX     = style.WindowMinSize.x;
-	// style.WindowMinSize.x = 370.0f;
-	// if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable) {
-	//	ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-	//	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-	// }
-
-	// style.WindowMinSize.x = minWinSizeX;
-
-	// if (ImGui::BeginMenuBar()) {
-	//	if (ImGui::BeginMenu("File")) {
-	//		if (ImGui::MenuItem("Open Project...", "Ctrl+O")) {
-	//			// OpenProject();
-	//		}
-
-	//		ImGui::Separator();
-
-	//		if (ImGui::MenuItem("New Scene", "Ctrl+N")) {
-	//			// NewScene();
-	//		}
-
-	//		if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {
-	//			// SaveScene();
-	//		}
-
-	//		if (ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S")) {
-	//			// SaveSceneAs();
-	//		}
-
-	//		ImGui::Separator();
-
-	//		if (ImGui::MenuItem("Exit")) {
-	//			// Application::Get().Close();
-	//		}
-
-	//		ImGui::EndMenu();
-	//	}
-
-	//	if (ImGui::BeginMenu("Script")) {
-	//		if (ImGui::MenuItem("Reload assembly", "Ctrl+R")) {
-	//			// ScriptEngine::ReloadAssembly();
-	//		}
-
-	//		ImGui::EndMenu();
-	//	}
-
-	//	ImGui::EndMenuBar();
-	//}
-
-	// ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(1.0f, 1.0f, 1.0f, 0.0f));  // Set transparent window background
-	// ImGui::Begin("Hello, world!");  // Create a window called "Hello, world!" and append into it.
-
-	// ImGui::Begin("Vulkan Engine Debug Window");
-
-	// auto callback = Imgui::m_Callback;
-	// if (callback) {
-	//	callback();
-	// }
-
-	// ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-	// ImGui::End();
-
-	// ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{0, 0});
-	//ImGui::Begin("Viewport");
-	//auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
-	//auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-	//auto viewportOffset    = ImGui::GetWindowPos();
-	//m_viewportBounds[0]    = {viewportMinRegion.x + viewportOffset.x, viewportMinRegion.y + viewportOffset.y};
-	//m_viewportBounds[1]    = {viewportMaxRegion.x + viewportOffset.x, viewportMaxRegion.y + viewportOffset.y};
-
-	//m_viewportFocused = ImGui::IsWindowFocused();
-	//m_viewportHovered = ImGui::IsWindowHovered();
-
-	//// Application::Get().GetImGuiLayer()->BlockEvents(!m_ViewportHovered);
-	//// m_descriptorSets = ImGui_ImplVulkan_AddTexture(m_textureSampler, Engine::s_engine->Get)
-	//ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-	//m_viewportSize           = {viewportPanelSize.x, viewportPanelSize.y};
-	//// ImGui_ImplVulkan_AddTexture() uint64_t textureID = m_framebuffer->GetColorAttachmentRendererID();
-	//ImGui::Image(
-	//	(ImTextureID)m_descriptorSets[Engine::s_engine->GetCurrentFrameIndex()], ImVec2{m_viewportSize.x, m_viewportSize.y}
-	//);
-
-	//ImGui::End();
-	// ImGui::PopStyleVar();
-
-	ImGui::ShowDemoWindow();
-
-	// ImGui::PopStyleColor();
+	ImGui::SetNextWindowSize(ImVec2{400.0f, 100.0f}, ImGuiCond_Once);
+	ImGui::Begin("Render Setting");
+	ImGui::ColorEdit3("Clear Color", (float*)&Engine::instance->clearColor);  // Edit 3 floats representing a color
+	auto view = scene->GetRegistry().view<Rava::Component::DirectionalLight>();
+	for (auto entity : view) {
+		auto& directionalLight = view.get<Rava::Component::DirectionalLight>(entity);
+		DrawVec3Control("Directional Light", directionalLight.direction, 1.0f, 150.0f);
+	}
+	ImGui::End();
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {
 	m_descriptorSets[currentFrame] =
 		ImGui_ImplVulkan_AddTexture(m_textureSampler, swapChainImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+}
+
+void Editor::DrawSceneHierarchy(Shared<Rava::Scene> scene) {
+	ImGui::Begin("Scene Hierarchy");
+
+	for (size_t i = 0; i < scene->GetEntitySize(); ++i) {
+		DrawEntityNode(scene, scene->GetEntity(i), i);
+	}
+
+	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
+		m_selectedEntity = {};
+	}
+
+	// Right-click on blank space
+	ImGuiPopupFlags flags = ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems;
+	if (ImGui::BeginPopupContextWindow(0, flags)) {
+		if (ImGui::MenuItem("Create Empty Entity")) {
+			scene->CreateEntity("Empty Entity");
+		}
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::End();
+
+	ImGui::Begin("Properties");
+	if (m_selectedEntity) {
+		DrawComponents(m_selectedEntity);
+	}
+
+	ImGui::End();
+}
+
+void Editor::DrawEntityNode(Shared<Rava::Scene>& scene, const Shared<Entity>& entity, size_t index) {
+	ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+	bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, entity->GetName().data());
+	if (ImGui::IsItemClicked()) {
+		m_selectedEntity = entity;
+	}
+
+	bool entityDeleted = false;
+	if (ImGui::BeginPopupContextItem()) {
+		if (ImGui::MenuItem("Delete Entity")) {
+			entityDeleted = true;
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (opened) {
+		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+		bool opened              = ImGui::TreeNodeEx((void*)9817239, flags, entity->GetName().data());
+		if (opened) {
+			ImGui::TreePop();
+		}
+		ImGui::TreePop();
+	}
+
+	if (entityDeleted) {
+		scene->DestroyEntity(index);
+		if (m_selectedEntity == entity) {
+			m_selectedEntity = {};
+		}
+	}
+}
+
+void Editor::DrawComponents(Shared<Entity> entity) {
+	char buffer[256];
+	memset(buffer, 0, sizeof(buffer));
+	strncpy_s(buffer, sizeof(buffer), entity->GetName().data(), sizeof(buffer));
+	if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
+		entity->SetName(buffer);
+	}
+
+	ImGui::SameLine();
+	ImGui::PushItemWidth(-1);
+
+	if (ImGui::Button("Add Component")) {
+		ImGui::OpenPopup("Add Component");
+	}
+
+	if (ImGui::BeginPopup("Add Component")) {
+		DisplayAddComponentEntry<Component::PointLight>("Point Light");
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::PopItemWidth();
+
+	DrawComponent<Component::Transform>("Transform", entity, [](auto& component) {
+		DrawVec3Control("Position", component->position);
+		glm::vec3 rotation = glm::degrees(component->rotation);
+		DrawVec3Control("Rotation", rotation);
+		component->rotation = glm::radians(rotation);
+		DrawVec3Control("Scale", component->scale, 1.0f);
+	});
+}
+
+template <typename T, typename UIFunction>
+void Editor::DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction) {
+	const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed
+										   | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap
+										   | ImGuiTreeNodeFlags_FramePadding;
+	if (entity->HasComponent<T>()) {
+		auto component                = entity->GetComponent<T>();
+		ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{4, 4});
+		float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImGui::Separator();
+		bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+		ImGui::PopStyleVar();
+		ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+		if (ImGui::Button("+", ImVec2{lineHeight, lineHeight})) {
+			ImGui::OpenPopup("ComponentSettings");
+		}
+
+		bool removeComponent = false;
+		if (ImGui::BeginPopup("ComponentSettings")) {
+			if (ImGui::MenuItem("Remove component")) {
+				removeComponent = true;
+			}
+
+			ImGui::EndPopup();
+		}
+
+		if (open) {
+			uiFunction(component);
+			ImGui::TreePop();
+		}
+
+		if (removeComponent) {
+			entity->RemoveComponent<T>();
+		}
+	}
+}
+
+void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+	ImGuiIO& io   = ImGui::GetIO();
+	auto boldFont = io.Fonts->Fonts[0];
+
+	ImGui::PushID(label.c_str());
+
+	ImGui::Columns(2);
+	ImGui::SetColumnWidth(0, columnWidth);
+	ImGui::Text(label.c_str());
+	ImGui::NextColumn();
+
+	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
+	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
+
+	float lineHeight  = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+	ImVec2 buttonSize = {lineHeight + 3.0f, lineHeight};
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.9f, 0.2f, 0.2f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("X", buttonSize)) {
+		values.x = resetValue;
+	}
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.3f, 0.8f, 0.3f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("Y", buttonSize)) {
+		values.y = resetValue;
+	}
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::PopItemWidth();
+	ImGui::SameLine();
+
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.2f, 0.35f, 0.9f, 1.0f});
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
+	ImGui::PushFont(boldFont);
+	if (ImGui::Button("Z", buttonSize)) {
+		values.z = resetValue;
+	}
+	ImGui::PopFont();
+	ImGui::PopStyleColor(3);
+
+	ImGui::SameLine();
+	ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::PopItemWidth();
+
+	ImGui::PopStyleVar();
+
+	ImGui::Columns(1);
+
+	ImGui::PopID();
+}
+
+template <typename T>
+void Editor::DisplayAddComponentEntry(const std::string& entryName) {
+	if (!m_selectedEntity->HasComponent<T>()) {
+		if (ImGui::MenuItem(entryName.c_str())) {
+			m_selectedEntity->AddComponent<T>();
+			ImGui::CloseCurrentPopup();
+		}
+	}
+}
+
+void Editor::SetDarkThemeColors() {
+	auto& colors              = ImGui::GetStyle().Colors;
+	colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.105f, 0.11f, 1.0f};
+
+	// Headers
+	colors[ImGuiCol_Header]        = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+	colors[ImGuiCol_HeaderHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+	colors[ImGuiCol_HeaderActive]  = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+	// Buttons
+	colors[ImGuiCol_Button]        = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+	colors[ImGuiCol_ButtonHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+	colors[ImGuiCol_ButtonActive]  = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+	// Frame BG
+	colors[ImGuiCol_FrameBg]        = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+	colors[ImGuiCol_FrameBgHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
+	colors[ImGuiCol_FrameBgActive]  = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+	// Tabs
+	colors[ImGuiCol_Tab]                = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TabHovered]         = ImVec4{0.38f, 0.3805f, 0.381f, 1.0f};
+	colors[ImGuiCol_TabActive]          = ImVec4{0.28f, 0.2805f, 0.281f, 1.0f};
+	colors[ImGuiCol_TabUnfocused]       = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+
+	// Title
+	colors[ImGuiCol_TitleBg]          = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TitleBgActive]    = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 }
 }  // namespace Rava

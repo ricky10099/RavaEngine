@@ -41,9 +41,10 @@ struct GlobalUbo {
 	glm::mat4 projection{1.f};
 	glm::mat4 view{1.f};
 	glm::mat4 inverseView{1.f};
-	glm::vec4 ambientLightColor{1.f, 1.f, 1.f, .02f};  // w is intensity
+	glm::vec4 ambientLightColor{1.f, 1.f, 1.f, 0.02f};  // w is intensity
 	PointLight pointLights[MAX_LIGHTS];
-	int numLights;
+	DirectionalLight directionalLight;
+	int numPointLights;
 };
 
 struct FrameInfo {
@@ -56,7 +57,7 @@ struct FrameInfo {
 //////////////////////////////////////////////////////////////////////////
 // Vulkan Function
 //////////////////////////////////////////////////////////////////////////
-
+namespace Vulkan {
 static VkFormat FindSupportedFormat(
 	const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features
 ) {
@@ -364,6 +365,7 @@ static std::vector<char> ReadShaderFromAssets(const std::string& filename) {
 
 	return fileBuffer;
 }
+}  // namespace Vulkan
 
 //////////////////////////////////////////////////////////////////////////
 // Vulkan validation
@@ -378,6 +380,7 @@ static const bool ENABLE_VALIDATION = false;
 // VK_LAYER_LUNARG_standard_validation = All standard validation layers
 static const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 
+namespace Vulkan {
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
 	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -436,3 +439,4 @@ static void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT&
 						   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	createInfo.pfnUserCallback = DebugCallback;
 }
+}  // namespace Vulkan

@@ -85,7 +85,7 @@ project "RavaEngineCore"
 	}
 
 	postbuildcommands {
-		-- "call $(SolutionDir)compileGLSLC.bat",
+		"call $(SolutionDir)CompileShaders.bat",
 		"{COPY} ../%{LibDir.PhysX}/%{cfg.buildcfg}/*.dll \"../bin/" ..outputdir.. "/%{prj.name}/\"",
 		"{COPY} ../%{LibDir.Assimp}/%{cfg.buildcfg}/*.dll \"../bin/" ..outputdir.. "/%{prj.name}/\"",
 		"{COPY} ../%{LibDir.CRI}/*.dll \"../bin/" ..outputdir.. "/%{prj.name}/\"",

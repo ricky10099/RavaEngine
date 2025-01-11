@@ -1,6 +1,9 @@
 #include "ravapch.h"
 
+#include "Framework/RavaEngine.h"
 #include "Framework/Vulkan/Renderer.h"
+#include "Framework/Components.h"
+#include "Framework/Scene.h"
 
 namespace Vulkan {
 std::unique_ptr<DescriptorPool> Renderer::s_descriptorPool;
@@ -13,20 +16,14 @@ Renderer::Renderer(Rava::Window* window)
 	, m_shadersCompiled{false} {
 	ENGINE_INFO("Initializing Renderer.");
 	// Init();
-	//  CompileShaders();  // runs in a parallel thread and sets m_ShadersCompiled
 }
 
 Renderer::~Renderer() {
 	ENGINE_INFO("Destruct Renderer");
-	// vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 	FreeCommandBuffers();
 }
 
 void Renderer::Init() {
-	// if (!m_shadersCompiled) {
-	//	return m_shadersCompiled;
-	// }
-
 	RecreateSwapChain();
 	RecreateRenderpass();
 	CreateCommandBuffers();
@@ -44,7 +41,8 @@ void Renderer::Init() {
 
 	// create a global pool for desciptor sets
 	static constexpr u32 POOL_SIZE = 10000;
-	s_descriptorPool               = DescriptorPool::Builder()
+
+	s_descriptorPool = DescriptorPool::Builder()
 						   .SetMaxSets(MAX_FRAMES_SYNC * POOL_SIZE)
 						   .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_FRAMES_SYNC * 50)
 						   .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, MAX_FRAMES_SYNC * 7500)
@@ -53,10 +51,10 @@ void Renderer::Init() {
 
 	std::unique_ptr<DescriptorSetLayout> globalDescriptorSetLayout =
 		DescriptorSetLayout::Builder()
-			.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)          // projection, view , lights
-			.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)  // spritesheet
-			.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)  // font atlas
-			.AddBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+			.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)  // projection, view , lights
+			//.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)  // spritesheet
+			//.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)  // font atlas
+			//.AddBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
 			.Build();
 	m_globalDescriptorSetLayout = globalDescriptorSetLayout->GetDescriptorSetLayout();
 
@@ -70,6 +68,20 @@ void Renderer::Init() {
 			//.WriteImage(2, imageInfo1)
 			.Build(m_globalDescriptorSets[i]);
 	}
+
+	for (u32 i = 0; i < MAX_FRAMES_SYNC; i++) {
+		VkDescriptorBufferInfo bufferInfo = m_uniformBuffers[i]->DescriptorInfo();
+		DescriptorWriter(*globalDescriptorSetLayout, *s_descriptorPool)
+			.WriteBuffer(0, &bufferInfo)
+			//.WriteImage(1, imageInfo0)
+			//.WriteImage(2, imageInfo1)
+			.Build(m_globalDescriptorSets[i]);
+	}
+
+	std::vector<VkDescriptorSetLayout> entityDescriptorSetLayouts = {m_globalDescriptorSetLayout};
+	m_entityRenderSystem = std::make_unique<EntityRenderSystem>(m_renderPass->Get3DRenderPass(), entityDescriptorSetLayouts);
+	m_pointLightRenderSystem =
+		std::make_unique<PointLightRenderSystem>(m_renderPass->Get3DRenderPass(), m_globalDescriptorSetLayout);
 
 	// m_Imgui = Imgui::Create(m_RenderPass->GetGUIRenderPass(), static_cast<u32>(m_SwapChain->ImageCount()));
 	m_editor = std::make_unique<Rava::Editor>(m_renderPass->Get3DRenderPass(), static_cast<u32>(m_swapChain->ImageCount()));
@@ -95,11 +107,11 @@ void Renderer::RecreateSwapChain() {
 			ENGINE_CRITICAL("swap chain image or depth format has changed");
 		}
 	}
-	if (m_editor) {
-		for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
-			m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
-		}
-	}
+	// if (m_editor) {
+	//	for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
+	//		m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
+	//	}
+	// }
 }
 
 void Renderer::RecreateRenderpass() {
@@ -158,8 +170,42 @@ void Renderer::BeginFrame() {
 
 	m_currentCommandBuffer = commandBuffer;
 	// return commandBuffer;
+	if (m_currentCommandBuffer) {
+		m_frameInfo = {
+			m_currentFrameIndex,
+			0.0f, /* m_FrameTime */
+			m_currentCommandBuffer,
+
+			m_globalDescriptorSets[m_currentFrameIndex]
+		};
+	}
 
 	m_editor->NewFrame();
+}
+
+void Renderer::RenderpassEntities(entt::registry& registry) {
+	if (m_currentCommandBuffer) {
+		GlobalUbo ubo{};
+		// ubo.Projection        = m_frameInfo.m_Camera->GetProjectionMatrix();
+		// ubo.View              = m_frameInfo.m_Camera->GetViewMatrix();
+		// ubo.AmbientLightColor = {1.0f, 1.0f, 1.0f, m_AmbientLightIntensity};
+		// m_LightSystem->Update(m_FrameInfo, ubo, registry);
+		// m_UniformBuffers[m_CurrentFrameIndex]->WriteToBuffer(&ubo);
+		// m_UniformBuffers[m_CurrentFrameIndex]->Flush();
+
+		for (auto [entity, cam] : registry.view<Rava::Component::Camera>().each()) {
+			if (cam.currentCamera) {
+				ubo.projection  = cam.view.GetProjection();
+				ubo.view        = cam.view.GetView();
+				ubo.inverseView = cam.view.GetInverseView();
+			}
+		}
+		m_pointLightRenderSystem->Update(m_frameInfo, ubo, registry);
+		m_uniformBuffers[m_currentFrameIndex]->WriteToBuffer(&ubo);
+		m_uniformBuffers[m_currentFrameIndex]->Flush();
+
+		Begin3DRenderPass(/*m_currentCommandBuffer*/);
+	}
 }
 
 void Renderer::EndFrame() {
@@ -195,7 +241,10 @@ void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 
 	std::array<VkClearValue, static_cast<u32>(RenderPass::RenderTargets3D::NUMBER_OF_ATTACHMENTS)> clearValues{};
 	clearValues[0].color = {
-		{0.1f, 0.01f, 0.01f, 1.0f}
+		Rava::Engine::instance->clearColor.r,
+		Rava::Engine::instance->clearColor.g,
+		Rava::Engine::instance->clearColor.b,
+		Rava::Engine::instance->clearColor.a
 	};
 	clearValues[1].depthStencil    = {1.0f, 0};
 	renderPassInfo.clearValueCount = static_cast<u32>(clearValues.size());
@@ -206,9 +255,9 @@ void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 
 	VkViewport viewport{};
 	viewport.x        = 0.0f;
-	viewport.y        = 0.0f;
+	viewport.y        = static_cast<float>(m_swapChain->GetSwapChainExtent().height);
 	viewport.width    = static_cast<float>(m_swapChain->GetSwapChainExtent().width);
-	viewport.height   = static_cast<float>(m_swapChain->GetSwapChainExtent().height);
+	viewport.height   = static_cast<float>(m_swapChain->GetSwapChainExtent().height) * -1.0f;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	VkRect2D scissor{
@@ -255,7 +304,7 @@ void Renderer::Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/) {
 //	vkCmdSetScissor(m_currentCommandBuffer, 0, 1, &scissor);
 // }
 
-void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) {
+void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) const {
 	assert(m_frameInProgress);
 	// assert(commandBuffer == GetCurrentCommandBuffer());
 
@@ -263,8 +312,27 @@ void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) {
 	vkCmdEndRenderPass(m_currentCommandBuffer);
 }
 
-void Renderer::UpdateEditor() {
-	m_editor->Run();
+void Renderer::UpdateEditor(Shared<Rava::Scene> scene) {
+	m_editor->Run(scene);
+}
+
+void Renderer::RenderEntities(Shared<Rava::Scene> scene) {
+	if (m_currentCommandBuffer) {
+		// UpdateTransformCache(scene, SceneGraph::ROOT_NODE, glm::mat4(1.0f), false);
+
+		auto& registry = scene->GetRegistry();
+
+		// 3D objects
+		m_entityRenderSystem->Render(m_frameInfo, registry);
+		// m_RenderSystemPbrSA->RenderEntities(m_frameInfo, registry);
+		// m_RenderSystemGrass->RenderEntities(m_frameInfo, registry);
+	}
+}
+
+void Renderer::RenderEnv(entt::registry& registry) {
+	if (m_currentCommandBuffer) {
+		m_pointLightRenderSystem->Render(m_frameInfo, registry);
+	}
 }
 
 void Renderer::EndScene() {

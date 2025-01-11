@@ -1,0 +1,321 @@
+#include "ravapch.h"
+
+#include <ufbx/ufbx.c>
+
+#include "Framework/RavaUtils.h"
+#include "Framework/Resources/ufbxLoader.h"
+
+namespace Rava {
+ufbxLoader::ufbxLoader(const std::string& filePath)
+	: m_filePath(ASSETS_DIR + filePath) {
+	m_path = GetPathWithoutFileName(filePath);
+}
+
+bool ufbxLoader::Load(const u32 instanceCount) {
+	ufbx_load_opts loadOptions{};
+	loadOptions.load_external_files           = true;
+	loadOptions.ignore_missing_external_files = true;
+	loadOptions.generate_missing_normals      = true;
+	loadOptions.target_axes                   = {
+						  .right = UFBX_COORDINATE_AXIS_POSITIVE_X,
+						  .up    = UFBX_COORDINATE_AXIS_POSITIVE_Y,
+						  .front = UFBX_COORDINATE_AXIS_POSITIVE_Z,
+    };
+	loadOptions.target_unit_meters = 1.0f;
+
+	// load raw data of the file (can be fbx or obj)
+	ufbx_error ufbxError;
+
+	m_modelScene = ufbx_load_file(m_filePath.data(), &loadOptions, &ufbxError);
+
+	if (m_modelScene == nullptr) {
+		char errorBuffer[512];
+		ufbx_format_error(errorBuffer, sizeof(errorBuffer), &ufbxError);
+		ENGINE_ERROR("ufbxLoader::Load error: file: {0}, error: {1}", m_filePath, errorBuffer);
+		return false;
+	}
+
+	if (!m_modelScene->meshes.count) {
+		ENGINE_ERROR("ufbxBuilder::Load: no meshes found in {0}", m_filePath);
+		return false;
+	}
+
+	m_instanceCount = instanceCount;
+	for (m_instanceIndex = 0; m_instanceIndex < m_instanceCount; ++m_instanceIndex) {
+		LoadNode(m_modelScene->root_node);
+	}
+
+	ufbx_free_scene(m_modelScene);
+	return true;
+}
+
+void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
+	vertices.clear();
+	indices.clear();
+	meshes.clear();
+
+	ufbx_mesh* fbxMesh = fbxNode->mesh;
+	if (fbxMesh) {
+		u32 meshCount = fbxMesh->material_parts.count;
+		if (meshCount > 0) {
+			meshes.resize(meshCount);
+			for (u32 meshIndex = 0; meshIndex < meshCount; ++meshIndex) {
+				LoadMesh(fbxNode, meshIndex);
+			}
+			if (m_fbxNoTangents)  // at least one mesh did not have tangents
+			{
+				CalculateTangents();
+			}
+		}
+	}
+	u32 childCount = fbxNode->children.count;
+	for (u32 childIndex = 0; childIndex < childCount; ++childIndex) {
+		LoadNode(fbxNode->children[childIndex]);
+	}
+}
+
+void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
+	ufbx_mesh* fbxMesh                = fbxNode->mesh;
+	const ufbx_mesh_part& fbxMeshPart = fbxNode->mesh->material_parts[meshIndex];
+	size_t faceCount                  = fbxMeshPart.num_faces;
+
+	if (!fbxMeshPart.num_triangles) {
+		ENGINE_ERROR("ufbxLoader::LoadMesh: only triangle meshes are supported!");
+		return;
+	}
+
+	size_t numVerticesBefore = vertices.size();
+	size_t numIndicesBefore  = indices.size();
+
+	Mesh& mesh         = meshes[meshIndex];
+	mesh.firstVertex   = static_cast<u32>(numVerticesBefore);
+	mesh.firstIndex    = static_cast<u32>(numIndicesBefore);
+	mesh.indexCount    = 0;
+	mesh.instanceCount = m_instanceCount;
+
+	ufbx_material_map& baseColorMap = fbxNode->materials[meshIndex]->pbr.base_color;
+	glm::vec4 diffuseColor =
+		baseColorMap.has_value ? glm::vec4(
+			baseColorMap.value_vec4.x, baseColorMap.value_vec4.y, baseColorMap.value_vec4.z, baseColorMap.value_vec4.w
+		)
+							   : glm::vec4(1.0f);
+
+#pragma region Vertices
+	bool hasTangents            = fbxMesh->vertex_tangent.exists;
+	bool hasUVs                 = fbxMesh->uv_sets.count;
+	bool hasVertexColors        = fbxMesh->vertex_color.exists;
+	ufbx_skin_deformer* fbxSkin = nullptr;
+	if (fbxMesh->skin_deformers.count) {
+		fbxSkin = fbxMesh->skin_deformers.data[0];
+	}
+
+	m_fbxNoTangents = m_fbxNoTangents || (!hasTangents);
+	for (size_t fbxFaceIndex = 0; fbxFaceIndex < faceCount; ++fbxFaceIndex) {
+		ufbx_face& fbxFace        = fbxMesh->faces[fbxMeshPart.face_indices.data[fbxFaceIndex]];
+		size_t triangleIndexCount = fbxMesh->max_face_triangles * 3;
+		std::vector<u32> verticesPerFaceIndexBuffer(triangleIndexCount);
+		size_t triangleCount = ufbx_triangulate_face(verticesPerFaceIndexBuffer.data(), triangleIndexCount, fbxMesh, fbxFace);
+		size_t vertexCountPerFace = triangleCount * 3;
+
+		for (u32 vertexPerFace = 0; vertexPerFace < vertexCountPerFace; ++vertexPerFace) {
+			u32 vertexPerFaceIndex = verticesPerFaceIndexBuffer[vertexPerFace];
+
+			Vertex vertex{};
+
+			u32 fbxVertexIndex     = fbxMesh->vertex_indices[vertexPerFaceIndex];
+			ufbx_vec3& positionFbx = fbxMesh->vertices[fbxVertexIndex];
+			vertex.position        = glm::vec3(positionFbx.x, positionFbx.y, positionFbx.z);
+
+			u32 fbxNormalIndex = fbxMesh->vertex_normal.indices[vertexPerFaceIndex];
+			ENGINE_ASSERT(fbxNormalIndex < fbxMesh->vertex_normal.values.count, "LoadMesh: memory violation normals");
+			ufbx_vec3& normalFbx = fbxMesh->vertex_normal.values.data[fbxNormalIndex];
+			vertex.normal        = glm::vec3(normalFbx.x, normalFbx.y, normalFbx.z);
+
+			if (hasTangents) {
+				u32 fbxTangentIndex = fbxMesh->vertex_tangent.indices[vertexPerFaceIndex];
+				ENGINE_ASSERT(fbxTangentIndex < fbxMesh->vertex_tangent.values.count, "LoadMesh: memory violation tangents");
+				ufbx_vec3& tangentFbx = fbxMesh->vertex_tangent.values.data[fbxTangentIndex];
+				vertex.tangent        = glm::vec3(tangentFbx.x, tangentFbx.y, tangentFbx.z);
+			}
+
+			if (hasUVs) {
+				u32 fbxUVIndex = fbxMesh->vertex_uv.indices[vertexPerFaceIndex];
+				ENGINE_ASSERT(fbxUVIndex < fbxMesh->vertex_uv.values.count, "LoadMesh: memory violation uv coordinates");
+				ufbx_vec2& uvFbx = fbxMesh->vertex_uv.values.data[fbxUVIndex];
+				vertex.uv        = glm::vec2(uvFbx.x, uvFbx.y);
+			}
+
+			if (hasVertexColors) {
+				u32 fbxColorIndex   = fbxMesh->vertex_color.indices[vertexPerFaceIndex];
+				ufbx_vec4& colorFbx = fbxMesh->vertex_color.values.data[fbxColorIndex];
+
+				// convert from sRGB to linear
+				glm::vec3 linearColor = glm::pow(glm::vec3(colorFbx.x, colorFbx.y, colorFbx.z), glm::vec3(2.2f));
+				glm::vec4 vertexColor(linearColor.x, linearColor.y, linearColor.z, colorFbx.w);
+				vertex.color = vertexColor * diffuseColor;
+			} else {
+				vertex.color = diffuseColor;
+			}
+
+			if (fbxSkin) {
+				ufbx_skin_vertex skinVertex = fbxSkin->vertices[fbxVertexIndex];
+				size_t numWeights = skinVertex.num_weights < MAX_JOINT_INFLUENCE ? skinVertex.num_weights : MAX_JOINT_INFLUENCE;
+
+				for (size_t weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
+					ufbx_skin_weight skinWeight = fbxSkin->weights.data[skinVertex.weight_begin + weightIndex];
+					int jointIndex              = skinWeight.cluster_index;
+					float weight                = skinWeight.weight;
+
+					switch (weightIndex) {
+						case 0:
+							vertex.jointIds.x = jointIndex;
+							vertex.weights.x  = weight;
+							break;
+						case 1:
+							vertex.jointIds.y = jointIndex;
+							vertex.weights.y  = weight;
+							break;
+						case 2:
+							vertex.jointIds.z = jointIndex;
+							vertex.weights.z  = weight;
+							break;
+						case 3:
+							vertex.jointIds.w = jointIndex;
+							vertex.weights.w  = weight;
+							break;
+						default:
+							break;
+					}
+				}
+
+				// normalize weights
+				float weightSum = vertex.weights.x + vertex.weights.y + vertex.weights.z + vertex.weights.w;
+				if (weightSum > std::numeric_limits<float>::epsilon()) {
+					vertex.weights = vertex.weights / weightSum;
+				}
+			}
+
+			vertices.push_back(vertex);
+		}
+	}
+#pragma endregion
+
+#pragma region Indices
+	u32 meshAllVertices = vertices.size() - numVerticesBefore;
+
+	ufbx_vertex_stream stream;
+	stream.data         = &vertices[numVerticesBefore];
+	stream.vertex_count = meshAllVertices;
+	stream.vertex_size  = sizeof(Vertex);
+
+	indices.resize(numIndicesBefore + meshAllVertices);
+
+	ufbx_error ufbxError;
+	size_t vertexCount = ufbx_generate_indices(&stream, 1, &indices[numIndicesBefore], meshAllVertices, nullptr, &ufbxError);
+
+	if (ufbxError.type != UFBX_ERROR_NONE) {
+		char errorBuffer[512];
+		ufbx_format_error(errorBuffer, sizeof(errorBuffer), &ufbxError);
+		ENGINE_ERROR(
+			"UFbxBuilder: creation of index buffer failed, file: {0}, error: {1},  node: {2}",
+			m_filePath,
+			errorBuffer,
+			fbxNode->name.data
+		);
+	}
+
+	vertices.resize(numVerticesBefore + vertexCount);
+	mesh.vertexCount = vertexCount;
+	mesh.indexCount  = meshAllVertices;
+#pragma endregion
+}
+
+void ufbxLoader::CalculateTangents() {
+	if (indices.size()) {
+		CalculateTangentsFromIndexBuffer(indices);
+	} else {
+		u32 vertexCount = vertices.size();
+		if (vertexCount) {
+			std::vector<u32> indices;
+			indices.resize(vertexCount);
+			for (u32 i = 0; i < vertexCount; i++) {
+				indices[i] = i;
+			}
+			CalculateTangentsFromIndexBuffer(indices);
+		}
+	}
+}
+
+void ufbxLoader::CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices) {
+	u32 count           = 0;
+	u32 vertexIndex1    = 0;
+	u32 vertexIndex2    = 0;
+	u32 vertexIndex3    = 0;
+	glm::vec3 position1 = glm::vec3{0.0f};
+	glm::vec3 position2 = glm::vec3{0.0f};
+	glm::vec3 position3 = glm::vec3{0.0f};
+	glm::vec2 uv1       = glm::vec2{0.0f};
+	glm::vec2 uv2       = glm::vec2{0.0f};
+	glm::vec2 uv3       = glm::vec2{0.0f};
+
+	for (u32 index : indices) {
+		auto& vertex = vertices[index];
+
+		switch (count) {
+			case 0:
+				position1    = vertex.position;
+				uv1          = vertex.uv;
+				vertexIndex1 = index;
+				break;
+			case 1:
+				position2    = vertex.position;
+				uv2          = vertex.uv;
+				vertexIndex2 = index;
+				break;
+			case 2:
+				position3    = vertex.position;
+				uv3          = vertex.uv;
+				vertexIndex3 = index;
+
+				glm::vec3 edge1    = position2 - position1;
+				glm::vec3 edge2    = position3 - position1;
+				glm::vec2 deltaUV1 = uv2 - uv1;
+				glm::vec2 deltaUV2 = uv3 - uv1;
+
+				float dU1 = deltaUV1.x;
+				float dU2 = deltaUV2.x;
+				float dV1 = deltaUV1.y;
+				float dV2 = deltaUV2.y;
+				float E1x = edge1.x;
+				float E2x = edge2.x;
+				float E1y = edge1.y;
+				float E2y = edge2.y;
+				float E1z = edge1.z;
+				float E2z = edge2.z;
+
+				float factor;
+				if ((dU1 * dV2 - dU2 * dV1) > std::numeric_limits<float>::epsilon()) {
+					factor = 1.0f / (dU1 * dV2 - dU2 * dV1);
+				} else {
+					factor = 100000.0f;
+				}
+
+				glm::vec3 tangent;
+
+				tangent.x = factor * (dV2 * E1x - dV1 * E2x);
+				tangent.y = factor * (dV2 * E1y - dV1 * E2y);
+				tangent.z = factor * (dV2 * E1z - dV1 * E2z);
+				if (tangent.x == 0.0f && tangent.y == 0.0f && tangent.z == 0.0f) {
+					tangent = glm::vec3(1.0f, 0.0f, 0.0f);
+				}
+
+				vertices[vertexIndex1].tangent = tangent;
+				vertices[vertexIndex2].tangent = tangent;
+				vertices[vertexIndex3].tangent = tangent;
+
+				break;
+		}
+		count = (count + 1) % 3;
+	}
+}
+}  // namespace Rava
