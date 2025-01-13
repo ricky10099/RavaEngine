@@ -62,11 +62,11 @@ class RenderPass {
 	// VkFormat GetFormatEmission() const { return m_bufferEmissionFormat; }
 
 	VkFramebuffer Get3DFrameBuffer(int index) { return m_3DFramebuffers[index]; }
-	//VkFramebuffer GetGUIFrameBuffer(int index) { return m_GUIFramebuffers[index]; }
+	VkFramebuffer GetGUIFrameBuffer(int index) { return m_GUIFramebuffers[index]; }
 	// VkFramebuffer GetPostProcessingFrameBuffer(int index) { return m_PostProcessingFramebuffers[index]; }
 
 	VkRenderPass Get3DRenderPass() const { return m_3DRenderPass; }
-	//VkRenderPass GetGUIRenderPass() const { return m_GUIRenderPass; }
+	VkRenderPass GetGUIRenderPass() const { return m_GUIRenderPass; }
 	// VkRenderPass GetPostProcessingRenderPass() { return m_PostProcessingRenderPass; }
 
    private:
@@ -105,11 +105,11 @@ class RenderPass {
 	// VkDeviceMemory m_GBufferEmissionImageMemory;
 
 	std::vector<VkFramebuffer> m_3DFramebuffers;
-	//std::vector<VkFramebuffer> m_GUIFramebuffers;
+	std::vector<VkFramebuffer> m_GUIFramebuffers;
 	// std::vector<VkFramebuffer> m_postProcessingFramebuffers;
 
 	VkRenderPass m_3DRenderPass;
-	//VkRenderPass m_GUIRenderPass;
+	VkRenderPass m_GUIRenderPass;
 	// VkRenderPass m_postProcessingRenderPass;
 
    private:
@@ -117,12 +117,12 @@ class RenderPass {
 	void CreateDepthResources();
 
 	void Create3DRenderPass();
+	void CreateGUIRenderPass();
 	// void CreatePostProcessingRenderPass();
-	//void CreateGUIRenderPass();
 
 	void Create3DFramebuffers();
 	// void CreatePostProcessingFramebuffers();
-	//void CreateGUIFramebuffers();
+	void CreateGUIFramebuffers();
 
 	// void CreateGBufferImages();
 	// void CreateGBufferImageViews();

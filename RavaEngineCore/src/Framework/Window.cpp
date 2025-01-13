@@ -55,8 +55,12 @@ void Window::InitWindow() {
 }
 
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-	m_framebufferResized = true;
-	m_width              = width;
-	m_height             = height;
+	//m_framebufferResized = true;
+	//m_width              = width;
+	//m_height             = height;
+	auto ravaWindow                  = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+	ravaWindow->m_framebufferResized = true;
+	ravaWindow->m_width              = width;
+	ravaWindow->m_height             = height;
 }
 }  // namespace Rava

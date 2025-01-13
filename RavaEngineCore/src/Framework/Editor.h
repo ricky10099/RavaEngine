@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Framework/Scene.h"
+#include "Framework/Vulkan/SwapChain.h"
 
 namespace Rava {
 class Editor {
@@ -12,7 +13,7 @@ class Editor {
 
 	void NewFrame();
 	void Render(VkCommandBuffer commandBuffer);
-	void Run(Shared<Rava::Scene> scene);
+	void Organize(Scene* scene);
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
 
@@ -33,8 +34,8 @@ class Editor {
 	Shared<Entity> m_selectedEntity = nullptr;
 
    private:
-	void DrawSceneHierarchy(Shared<Rava::Scene> scene);
-	void DrawEntityNode(Shared<Rava::Scene>& scene, const Shared<Entity>& entity, size_t index);
+	void DrawSceneHierarchy(Scene* scene);
+	void DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>
 	void DisplayAddComponentEntry(const std::string& entryName);

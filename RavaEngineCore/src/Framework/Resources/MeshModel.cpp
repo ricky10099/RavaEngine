@@ -2,6 +2,7 @@
 
 #include "Framework/Resources/MeshModel.h"
 #include "Framework/Resources/ufbxLoader.h"
+#include "Framework/Vulkan/MaterialDescriptor.h"
 
 namespace Rava {
 std::vector<VkVertexInputBindingDescription> Vertex::GetBindingDescriptions() {
@@ -129,13 +130,13 @@ void MeshModel::DrawMesh(const VkCommandBuffer& commandBuffer, const Mesh& mesh)
 }
 
 void MeshModel::BindDescriptors(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout, Mesh& mesh) {
-	//mesh.material.m_materialBuffer->WriteToBuffer(&mesh.material.m_PBRMaterial);
-	//mesh.material.m_materialBuffer->Flush();
+	mesh.material.materialBuffer->WriteToBuffer(&mesh.material.pbrMaterial);
+	mesh.material.materialBuffer->Flush();
 
-	//const VkDescriptorSet& materialDescriptorSet = mesh.material.m_materialDescriptor->GetDescriptorSet();
+	const VkDescriptorSet& materialDescriptorSet = mesh.material.materialDescriptor->GetDescriptorSet();
 	//const VkDescriptorSet& skeletonDescriptorSet = mesh.skeletonDescriptorSet;
 
-	std::vector<VkDescriptorSet> descriptorSets = {frameInfo.globalDescriptorSet/*, materialDescriptorSet, skeletonDescriptorSet*/};
+	std::vector<VkDescriptorSet> descriptorSets = {frameInfo.globalDescriptorSet, materialDescriptorSet/*, skeletonDescriptorSet*/};
 	vkCmdBindDescriptorSets(
 		frameInfo.commandBuffer,                  // VkCommandBuffer        commandBuffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,          // VkPipelineBindPoint    pipelineBindPoint,

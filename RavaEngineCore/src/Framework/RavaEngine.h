@@ -8,14 +8,22 @@
 #include "Framework/Timestep.h"
 
 namespace Rava {
+class Camera;
 class Engine {
    public:
-	static Engine* instance;
+	static Engine* s_Instance;
 	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
 	u16 frameLimit       = 144;
 
 	// static constexpr int WINDOW_WIDTH  = 1280;
 	// static constexpr int WINDOW_HEIGHT = 720;
+
+	enum class EngineState {
+		Edit,
+		Debug,
+		Run,
+	};
+	EngineState engineState = EngineState::Edit;
 
    public:
 	Engine();
@@ -26,7 +34,7 @@ class Engine {
 	void Run();
 
 	// void OnEvent(Event& event);
-	void LoadScene(Shared<Scene> scene);
+	void LoadScene(Unique<Scene> scene);
 
 	GLFWwindow* GetGLFWWindow() { return m_ravaWindow.GetGLFWwindow(); }
 	u32 GetCurrentFrameIndex() { return m_renderer.GetFrameIndex(); }
@@ -37,7 +45,7 @@ class Engine {
 	Window m_ravaWindow{m_title};
 	static std::unique_ptr<Vulkan::Context> m_context;
 	Vulkan::Renderer m_renderer{&m_ravaWindow};
-	Shared<Scene> m_currentScene = nullptr;
+	Unique<Scene> m_currentScene = nullptr;
 
 	Timestep m_timestep{0ms};
 	std::chrono::steady_clock::time_point m_timeLastFrame;
@@ -45,8 +53,17 @@ class Engine {
 	float m_targetFrameTime = 0.1f;
 	u32 m_frameCount        = 0;
 
-	private:
-	void UpdateCameraTransform();
-	 void UpdateTitleFPS(std::chrono::steady_clock::time_point newTime);
+	Camera m_mainCamera;
+	Camera m_editorCamera;
+	glm::vec3 m_editorCameraPosition = {0.0f, 2.0f, 2.0f};
+	glm::vec3 m_editorCameraRotation = {};
+
+
+   private:
+	void UpdateTitleFPS(std::chrono::steady_clock::time_point newTime);
+	void EditorInputHandle();
+	void UpdateEditorCamera();
+	void UpdateSceneAndEntities();
+	void UpdateSceneCamera();
 };
 }  // namespace Rava

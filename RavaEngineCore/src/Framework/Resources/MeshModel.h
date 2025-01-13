@@ -2,6 +2,7 @@
 
 #include "Framework/Vulkan/VKUtils.h"
 #include "Framework/Vulkan/Buffer.h"
+#include "Framework/Resources/Materials.h"
 
 namespace Rava {
 //class AssimpLoader;
@@ -30,6 +31,7 @@ struct Mesh {
 	u32 indexCount;
 	u32 vertexCount;
 	u32 instanceCount;
+	Material material;
 };
 
 class MeshModel {

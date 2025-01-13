@@ -69,8 +69,8 @@ class MouseButtonPressedEvent : public MouseButtonEvent {
 		, m_mouseY(posY) {}
 
 	inline int GetButton() const { return m_mouseButton; }
-	inline float GetX() const { return m_mouseX; }
-	inline float GetY() const { return m_mouseY; }
+	inline double GetX() const { return m_mouseX; }
+	inline double GetY() const { return m_mouseY; }
 
 	EVENT_CLASS_TYPE(MouseButtonPressed);
 

@@ -4,6 +4,7 @@
 
 #include "Framework/RavaUtils.h"
 #include "Framework/Resources/ufbxLoader.h"
+#include "Framework/Vulkan/MaterialDescriptor.h"
 
 namespace Rava {
 ufbxLoader::ufbxLoader(const std::string& filePath)
@@ -40,6 +41,8 @@ bool ufbxLoader::Load(const u32 instanceCount) {
 		return false;
 	}
 
+	LoadMaterials();
+
 	m_instanceCount = instanceCount;
 	for (m_instanceIndex = 0; m_instanceIndex < m_instanceCount; ++m_instanceIndex) {
 		LoadNode(m_modelScene->root_node);
@@ -47,6 +50,163 @@ bool ufbxLoader::Load(const u32 instanceCount) {
 
 	ufbx_free_scene(m_modelScene);
 	return true;
+}
+
+void ufbxLoader::LoadMaterials() {
+	u32 numMaterials = m_modelScene->materials.count;
+	materials.resize(numMaterials);
+	// m_materialTextures.resize(numMaterials);
+	for (u32 materialIndex = 0; materialIndex < numMaterials; ++materialIndex) {
+		const ufbx_material* fbxMaterial = m_modelScene->materials[materialIndex];
+		// PrintProperties(fbxMaterial);
+
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_BASE_COLOR, materialIndex);
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_ROUGHNESS, materialIndex);
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_METALNESS, materialIndex);
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_NORMAL_MAP, materialIndex);
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_EMISSION_COLOR, materialIndex);
+		LoadMaterial(fbxMaterial, UFBX_MATERIAL_PBR_EMISSION_FACTOR, materialIndex);
+
+		m_materialNameToIndex[fbxMaterial->name.data] = materialIndex;
+	}
+}
+
+void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pbr_map materialProperty, int materialIndex) {
+	Material& material                           = materials[materialIndex];
+	Material::PBRMaterial& pbrMaterial           = material.pbrMaterial;
+	Material::MaterialTextures& materialTextures = material.materialTextures;
+
+	switch (materialProperty) {
+		// aka albedo aka diffuse color
+		case UFBX_MATERIAL_PBR_BASE_COLOR: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.base_color;
+			if (materialMap.has_value) {
+				const ufbx_material_map& baseFactorMaterialMap = fbxMaterial->pbr.base_factor;
+				float baseFactor = baseFactorMaterialMap.has_value ? baseFactorMaterialMap.value_real : 1.0f;
+				if (materialMap.texture) {
+					if (auto texture = LoadTexture(materialMap, Texture::USE_SRGB)) {
+						materialTextures[Material::DIFFUSE_MAP_INDEX] = texture;
+						pbrMaterial.features |= Material::HAS_DIFFUSE_MAP;
+						pbrMaterial.diffuseColor.r = baseFactor;
+						pbrMaterial.diffuseColor.g = baseFactor;
+						pbrMaterial.diffuseColor.b = baseFactor;
+						pbrMaterial.diffuseColor.a = baseFactor;
+					}
+				} else {
+					pbrMaterial.diffuseColor.r = materialMap.value_vec4.x * baseFactor;
+					pbrMaterial.diffuseColor.g = materialMap.value_vec4.y * baseFactor;
+					pbrMaterial.diffuseColor.b = materialMap.value_vec4.z * baseFactor;
+					pbrMaterial.diffuseColor.a = materialMap.value_vec4.w * baseFactor;
+				}
+			}
+			break;
+		}
+		case UFBX_MATERIAL_PBR_ROUGHNESS: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.roughness;
+			if (materialMap.has_value) {
+				if (materialMap.texture) {
+					if (auto texture = LoadTexture(materialMap, Texture::USE_UNORM)) {
+						materialTextures[Material::ROUGHNESS_MAP_INDEX] = texture;
+						pbrMaterial.features |= Material::HAS_ROUGHNESS_MAP;
+					}
+				} else  // constant material property
+				{
+					pbrMaterial.roughness = materialMap.value_real;
+				}
+			}
+			break;
+		}
+		case UFBX_MATERIAL_PBR_METALNESS: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.metalness;
+			if (materialMap.has_value) {
+				if (materialMap.texture) {
+					if (auto texture = LoadTexture(materialMap, Texture::USE_UNORM)) {
+						materialTextures[Material::METALLIC_MAP_INDEX] = texture;
+						pbrMaterial.features |= Material::HAS_METALLIC_MAP;
+					}
+				} else  // constant material property
+				{
+					pbrMaterial.metallic = materialMap.value_real;
+				}
+			}
+			break;
+		}
+		case UFBX_MATERIAL_PBR_NORMAL_MAP: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.normal_map;
+			if (materialMap.texture) {
+				if (auto texture = LoadTexture(materialMap, Texture::USE_UNORM)) {
+					materialTextures[Material::NORMAL_MAP_INDEX] = texture;
+					pbrMaterial.features |= Material::HAS_NORMAL_MAP;
+				}
+			}
+			break;
+		}
+		case UFBX_MATERIAL_PBR_EMISSION_COLOR: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.emission_color;
+			if (materialMap.texture) {
+				if (auto texture = LoadTexture(materialMap, Texture::USE_SRGB)) {
+					materialTextures[Material::EMISSIVE_MAP_INDEX] = texture;
+					pbrMaterial.features |= Material::HAS_EMISSIVE_MAP;
+					pbrMaterial.emissiveColor = glm::vec3(1.0f);
+				}
+			} else {
+				glm::vec3 emissiveColor(materialMap.value_vec3.x, materialMap.value_vec3.y, materialMap.value_vec3.z);
+				pbrMaterial.emissiveColor = emissiveColor;
+			}
+			break;
+		}
+		case UFBX_MATERIAL_PBR_EMISSION_FACTOR: {
+			ufbx_material_map const& materialMap = fbxMaterial->pbr.emission_factor;
+			if (materialMap.has_value) {
+				pbrMaterial.emissiveStrength = materialMap.value_real;
+			}
+			break;
+		}
+		default: {
+			ENGINE_ASSERT(false, "Material Property not recognized");
+			break;
+		}
+	}
+}
+
+std::shared_ptr<Texture> Rava::ufbxLoader::LoadTexture(ufbx_material_map const& materialMap, bool useSRGB) {
+	std::shared_ptr<Texture> texture;
+	auto createTexture = [&](ufbx_string const& str) {
+		std::string filepath(str.data);
+		if (FileExists(filepath) && !IsDirectory(filepath)) {
+			texture = std::make_shared<Texture>();
+			if (texture->Init(filepath, useSRGB)) {
+				// m_textures.push_back(texture);
+				return true;
+			}
+		}
+		return false;
+	};
+
+	if (createTexture(materialMap.texture->filename)) {
+		return texture;
+	}
+	if (createTexture(materialMap.texture->absolute_filename)) {
+		return texture;
+	}
+	if (createTexture(materialMap.texture->relative_filename)) {
+		return texture;
+	}
+	if (!texture) {
+		std::string textureName = materialMap.texture->filename.data;
+		textureName             = textureName.substr(textureName.find_last_of("\\") + 1);
+		// m_filePath;
+		std::string texturepath(GetPathWithoutFileName(m_filePath) + textureName);
+		texture = std::make_shared<Texture>();
+		if (texture->Init(texturepath, useSRGB)) {
+			// m_textures.push_back(texture);
+			return texture;
+		}
+	}
+
+	std::string filepath(materialMap.texture->filename.data);
+	ENGINE_ERROR("ufbxLoader::LoadTexture(): file '{0}' not found", filepath);
+	return nullptr;
 }
 
 void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
@@ -61,6 +221,9 @@ void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
 			meshes.resize(meshCount);
 			for (u32 meshIndex = 0; meshIndex < meshCount; ++meshIndex) {
 				LoadMesh(fbxNode, meshIndex);
+				std::string materialName = fbxNode->mesh->materials.data[meshIndex]->name.data;
+				u32 materialIndex        = m_materialNameToIndex[materialName];
+				AssignMaterial(meshes[meshIndex], materialIndex);
 			}
 			if (m_fbxNoTangents)  // at least one mesh did not have tangents
 			{
@@ -217,7 +380,7 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 		char errorBuffer[512];
 		ufbx_format_error(errorBuffer, sizeof(errorBuffer), &ufbxError);
 		ENGINE_ERROR(
-			"UFbxBuilder: creation of index buffer failed, file: {0}, error: {1},  node: {2}",
+			"ufbxBuilder: creation of index buffer failed, file: {0}, error: {1},  node: {2}",
 			m_filePath,
 			errorBuffer,
 			fbxNode->name.data
@@ -228,6 +391,27 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 	mesh.vertexCount = vertexCount;
 	mesh.indexCount  = meshAllVertices;
 #pragma endregion
+}
+
+void ufbxLoader::AssignMaterial(Mesh& mesh, int const materialIndex) {
+	// material
+	{
+		if (!(static_cast<size_t>(materialIndex) < materials.size())) {
+			ENGINE_ERROR("AssignMaterial: materialIndex must be less than materials.size()");
+		}
+
+		Material& material = mesh.material;
+
+		// material
+		if (materialIndex != -1) {
+			material = materials[materialIndex];
+			// material.materialTextures = m_materialTextures[materialIndex];
+		}
+
+		// create material descriptor
+		material.materialDescriptor = std::make_shared<Vulkan::MaterialDescriptor>(mesh.material, mesh.material.materialTextures);
+	}
+	ENGINE_INFO("Material assigned (ufbx): material index {0}", materialIndex);
 }
 
 void ufbxLoader::CalculateTangents() {

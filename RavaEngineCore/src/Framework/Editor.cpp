@@ -51,7 +51,7 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	SetDarkThemeColors();
 	// Setup Platform/Renderer backends
 	// Initialize imgui for vulkan
-	ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Engine::instance->GetGLFWWindow(), true);
+	ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Engine::s_Instance->GetGLFWWindow(), true);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance                  = VKContext->GetInstance();
 	init_info.PhysicalDevice            = VKContext->GetPhysicalDevice();
@@ -127,19 +127,21 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 	}
 }
 
-void Editor::Run(Shared<Rava::Scene> scene) {
+void Editor::Organize(Scene* scene) {
 	ImGui::SetNextWindowBgAlpha(1.0f);
 	DrawSceneHierarchy(scene);
 
 	ImGui::SetNextWindowSize(ImVec2{400.0f, 100.0f}, ImGuiCond_Once);
 	ImGui::Begin("Render Setting");
-	ImGui::ColorEdit3("Clear Color", (float*)&Engine::instance->clearColor);  // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
 	auto view = scene->GetRegistry().view<Rava::Component::DirectionalLight>();
 	for (auto entity : view) {
 		auto& directionalLight = view.get<Rava::Component::DirectionalLight>(entity);
 		DrawVec3Control("Directional Light", directionalLight.direction, 1.0f, 150.0f);
 	}
 	ImGui::End();
+
+	ImGui::ShowDemoWindow();
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {
@@ -147,11 +149,20 @@ void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame)
 		ImGui_ImplVulkan_AddTexture(m_textureSampler, swapChainImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
-void Editor::DrawSceneHierarchy(Shared<Rava::Scene> scene) {
+void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGui::Begin("Scene Hierarchy");
 
 	for (size_t i = 0; i < scene->GetEntitySize(); ++i) {
-		DrawEntityNode(scene, scene->GetEntity(i), i);
+		DrawEntityNode(scene, scene->GetEntity((u32)i), i);
+		auto item = scene->m_entities[i];
+		if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+			int n_next = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+			if (n_next >= 0 && n_next < scene->GetEntitySize()) {
+				scene->m_entities[i] = scene->m_entities[n_next];
+				scene->m_entities[n_next] = item;
+				ImGui::ResetMouseDragDelta();
+			}
+		}
 	}
 
 	if (ImGui::IsMouseDown(0) && ImGui::IsWindowHovered()) {
@@ -178,10 +189,12 @@ void Editor::DrawSceneHierarchy(Shared<Rava::Scene> scene) {
 	ImGui::End();
 }
 
-void Editor::DrawEntityNode(Shared<Rava::Scene>& scene, const Shared<Entity>& entity, size_t index) {
+void Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index) {
 	ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-	flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-	bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, entity->GetName().data());
+	//flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+	ImGui::Selectable(entity->GetName().data());
+	// bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, entity->GetName().data());
+
 	if (ImGui::IsItemClicked()) {
 		m_selectedEntity = entity;
 	}
@@ -195,17 +208,17 @@ void Editor::DrawEntityNode(Shared<Rava::Scene>& scene, const Shared<Entity>& en
 		ImGui::EndPopup();
 	}
 
-	if (opened) {
-		ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-		bool opened              = ImGui::TreeNodeEx((void*)9817239, flags, entity->GetName().data());
-		if (opened) {
-			ImGui::TreePop();
-		}
-		ImGui::TreePop();
-	}
+	// if (opened) {
+	//	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+	//	bool opened              = ImGui::TreeNodeEx((void*)9817239, flags, entity->GetName().data());
+	//	if (opened) {
+	//		ImGui::TreePop();
+	//	}
+	//	ImGui::TreePop();
+	// }
 
 	if (entityDeleted) {
-		scene->DestroyEntity(index);
+		scene->DestroyEntity((u32)index);
 		if (m_selectedEntity == entity) {
 			m_selectedEntity = {};
 		}

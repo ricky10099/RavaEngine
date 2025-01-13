@@ -77,12 +77,14 @@ void Camera::SetTargetViewYXZ(glm::vec3 targetPosition, glm::vec3 targetRotation
 }
 
 void Camera::UpdateView(float deltaTime) {
-	float t                 = glm::clamp(m_positionSmoothness * deltaTime, 0.0f, 1.0f);
-	static float slowFactor = 0.01f;  // Start very slow
-	t *= slowFactor;
-	slowFactor = glm::min(slowFactor + (deltaTime * 0.5f), 1.0f);  // Gradually increase to 1.0
-
-	m_position = glm::mix(m_position, m_targetPosition, t);
+	//float t                 = glm::clamp(m_positionSmoothness * deltaTime, 0.0f, 1.0f);
+	//static float slowFactor = 0.1f;  // Start very slow
+	//t *= slowFactor;
+	//slowFactor = glm::min(slowFactor + (deltaTime * 0.5f), 1.0f);  // Gradually increase to 1.0
+	if (!m_initialized) {
+		return;
+	}
+	m_position = glm::mix(m_position, m_targetPosition, m_positionSmoothness * deltaTime);
 	m_rotation = glm::mix(m_rotation, m_targetRotation, m_rotationSmoothness * deltaTime);
 
 	SetViewYXZ(m_position, m_rotation);
