@@ -7,8 +7,9 @@
 #include "Framework/Vulkan/RenderSystem/PointLightRenderSystem.h"
 #include "Framework/Vulkan/RenderSystem/EntityRenderSystem.h"
 #include "Framework/Vulkan/Buffer.h"
-#include "Framework/Scene.h"
+#include "Framework/Camera.h"
 #include "Framework/Editor.h"
+#include "Framework/Scene.h"
 
 
 namespace Vulkan {
@@ -30,22 +31,22 @@ class Renderer {
 	//void BeginShadowRenderPass1(VkCommandBuffer commandBuffer);
 	void Begin3DRenderPass(/*VkCommandBuffer commandBuffer*/);
 	//void BeginPostProcessingRenderPass(VkCommandBuffer commandBuffer);
-	//void BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/);
+	void BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/);
 	void EndRenderPass(/*VkCommandBuffer commandBuffer*/) const;
 
-	void UpdateEditor(Shared<Rava::Scene> scene);
+	void UpdateEditor(Rava::Scene* scene);
 	//void Render(Scene* scene);
 
 	//void BeginFrame(Camera* camera);
-	void RenderpassEntities(entt::registry& registry);
+	void RenderpassEntities(entt::registry& registry, Rava::Camera& camera);
 	//void SubmitShadows(entt::registry& registry, const std::vector<DirectionalLightComponent*>& directionalLights = {});
-	void RenderEntities(Shared<Rava::Scene> scene);
+	void RenderEntities(Rava::Scene* scene);
 	//void NextSubpass();
 	//void LightingPass();
 	//void PostProcessingRenderpass();
 	void RenderEnv(entt::registry& registry /*,*/ /*ParticleSystem* particleSystem*/);
 	//void Submit2D(Camera* camera, entt::registry& registry);
-	//void GUIRenderpass(Camera* camera);
+	void RenderpassGUI(/*Camera* camera*/);
 	void EndScene();
 	//void DrawWithTransform(const Sprite& sprite, const glm::mat4& transform) ;
 	//void Draw(const Sprite& sprite, const glm::mat4& position, const glm::vec4& color, const float textureID = 1.0f);
@@ -60,7 +61,7 @@ class Renderer {
 	int GetFrameIndex() const;
 	VkCommandBuffer GetCurrentCommandBuffer() const;
 	std::shared_ptr<RenderPass> GetRenderPass() { return m_renderPass; }
-	u32 GetImageCount() { return m_swapChain->ImageCount(); }
+	u32 GetImageCount() { return static_cast<u32>(m_swapChain->ImageCount()); }
 	//float GetAmbientLightIntensity() const { return m_ambientLightIntensity; }
 	u32 GetFrameCounter() const { return m_frameCounter; }
 	float GetAspectRatio() const { return m_swapChain->ExtentAspectRatio(); }

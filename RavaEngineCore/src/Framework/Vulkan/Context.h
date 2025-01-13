@@ -19,7 +19,7 @@ struct QueueFamilyIndices {
 
 class Context {
    public:
-	VkPhysicalDeviceProperties Properties;
+	VkPhysicalDeviceProperties properties;
 
    public:
 	Context(Rava::Window* window);

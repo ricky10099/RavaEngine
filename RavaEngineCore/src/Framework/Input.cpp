@@ -9,13 +9,13 @@ std::unordered_map<int, bool> Input::m_mouseProcessed;
 std::unordered_map<int, int> Input::m_mouseHoldFrames;
 
 bool Input::IsKeyPress(KeyCode key) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto state   = glfwGetKey(window, static_cast<int>(key));
 	return state == GLFW_PRESS;
 }
 
 bool Input::IsKeyDown(KeyCode key) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto keyCode = static_cast<int>(key);
 	auto state   = glfwGetKey(window, keyCode);
 
@@ -32,7 +32,7 @@ bool Input::IsKeyDown(KeyCode key) {
 }
 
 bool Input::IsKeyRepeat(KeyCode key, u32 frameCount) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto keyInt  = static_cast<int>(key);
 	auto state   = glfwGetKey(window, keyInt);
 
@@ -49,19 +49,19 @@ bool Input::IsKeyRepeat(KeyCode key, u32 frameCount) {
 }
 
 bool Input::IsKeyReleas(KeyCode key) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto state   = glfwGetKey(window, static_cast<int>(key));
 	return state == GLFW_RELEASE;
 }
 
 bool Input::IsMouseButtonPress(MouseButton button) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto state   = glfwGetMouseButton(window, static_cast<int>(button));
 	return state == GLFW_PRESS;
 }
 
 bool Input::IsMouseButtonDown(MouseButton button) {
-	auto* window     = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window     = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto mouseButton = static_cast<int>(button);
 	auto state       = glfwGetMouseButton(window, mouseButton);
 
@@ -78,7 +78,7 @@ bool Input::IsMouseButtonDown(MouseButton button) {
 }
 
 bool Input::IsMouseButtonRepeat(MouseButton button, u32 frameCount) {
-	auto* window     = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window     = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto mouseButton = static_cast<int>(button);
 	auto state       = glfwGetMouseButton(window, mouseButton);
 
@@ -95,13 +95,13 @@ bool Input::IsMouseButtonRepeat(MouseButton button, u32 frameCount) {
 }
 
 bool Input::IsMouseButtonRelease(MouseButton button) {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	auto state   = glfwGetMouseButton(window, static_cast<int>(button));
 	return state == GLFW_RELEASE;
 }
 
 glm::vec2 Input::GetMousePosition() {
-	auto* window = static_cast<GLFWwindow*>(Rava::Engine::instance->GetGLFWWindow());
+	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());
 	double xpos, ypos;
 	glfwGetCursorPos(window, &xpos, &ypos);
 

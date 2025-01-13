@@ -13,4 +13,21 @@ std::string GetPathWithoutFileName(const std::filesystem::path& path) {
 	}
 	return pathWithoutFilename;
 }
+
+bool FileExists(const std::string& filename) {
+	std::ifstream infile(filename.c_str());
+	return infile.good();
+}
+
+bool IsDirectory(const std::string& filename) {
+	bool isDirectory = false;
+	std::filesystem::path path(filename);
+
+	try {
+		isDirectory = is_directory(path);
+	} catch (...) {
+		isDirectory = false;
+	}
+	return isDirectory;
+}
 }  // namespace Rava

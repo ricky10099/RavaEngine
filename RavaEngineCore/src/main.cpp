@@ -6,11 +6,12 @@
 
 int main() {
 	Rava::Engine engine{};
-	engine.LoadScene(std::make_shared<ExampleScene>("Example scene"));
+	engine.LoadScene(std::make_unique<ExampleScene>());
 
 	try {
 		engine.Run();
 	} catch (const std::exception& e) {
+		std::cerr << e.what() << '\n';
 		return EXIT_FAILURE;
 	}
 

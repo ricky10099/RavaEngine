@@ -10,12 +10,19 @@ class Entity {
 	Entity(entt::entity entity, Scene* scene, std::string_view name = "Empty Entity");
 	Entity(const Entity& other) = default;
 
-	virtual void Translate(const glm::vec3& translation);
-	virtual void SetPosition(const glm::vec3& position);
-	virtual void SetRotation(const glm::vec3& rotation);
-	virtual void SetScale(const glm::vec3& scale);
+	virtual void Init(){};
+	virtual void Update(){};
 
 	void SetName(std::string_view name) { m_name = name; }
+
+	void Translate(const glm::vec3& translation);
+	void SetPosition(const glm::vec3& position);
+	void SetRotation(const glm::vec3& rotation);
+	void SetScale(const glm::vec3& scale);
+
+	glm::vec3 GetPosition() { return m_transform->position; }
+	glm::vec3 GetRotation() { return m_transform->rotation; }
+	glm::vec3 GetScale() { return m_transform->scale; }
 
 	entt::entity GetEntityID() const { return m_entity; }
 	std::string_view GetName() const { return m_name; }
@@ -23,24 +30,24 @@ class Entity {
 	template <typename T, typename... Args>
 	T* AddComponent(Args&&... args) {
 		ENGINE_ASSERT(!HasComponent<T>(), "Entity already has component!");
-		return &m_scene->m_registry.emplace<T>(m_entity, std::forward<Args>(args)...);
+		return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
 	}
 
 	template <typename T>
 	T* GetComponent() {
 		ENGINE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-		return &m_scene->m_registry.get<T>(m_entity);
+		return &m_scene->GetRegistry().get<T>(m_entity);
 	}
 
 	template <typename T>
 	void RemoveComponent() {
 		ENGINE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-		m_scene->m_registry.remove<T>(m_entity);
+		m_scene->GetRegistry().remove<T>(m_entity);
 	}
 
 	template <typename T>
 	bool HasComponent() {
-		return m_scene->m_registry.all_of<T>(m_entity);
+		return m_scene->GetRegistry().all_of<T>(m_entity);
 	}
 
    protected:

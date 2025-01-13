@@ -28,8 +28,8 @@ class Camera {
 	glm::vec3 m_rotation{0.0f};         // Current rotation
 	glm::vec3 m_targetPosition{0.0f};   // Target position
 	glm::vec3 m_targetRotation{0.0f};   // Target rotation
-	float m_positionSmoothness = .000001f;  // Higher value = faster movement
-	float m_rotationSmoothness = .000001f;  // Higher value = faster rotation
+	float m_positionSmoothness = 3.0f;  // Higher value = faster movement
+	float m_rotationSmoothness = 3.0f;  // Higher value = faster rotation
 	bool m_initialized         = false;  
 
 	float m_aspect = 1280.0f / 720.0f;

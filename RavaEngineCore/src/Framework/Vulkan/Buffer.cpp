@@ -44,7 +44,7 @@ Buffer::Buffer(u32 size, Buffer::BufferUsage bufferUsage) {
 			m_usageFlags          = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
 			m_memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
-			VkDeviceSize minOffsetAlignment = VKContext->Properties.limits.minUniformBufferOffsetAlignment;
+			VkDeviceSize minOffsetAlignment = VKContext->properties.limits.minUniformBufferOffsetAlignment;
 
 			m_alignmentSize = GetAlignment(m_instanceSize, minOffsetAlignment);
 			m_bufferSize    = m_alignmentSize * m_instanceCount;
@@ -57,7 +57,7 @@ Buffer::Buffer(u32 size, Buffer::BufferUsage bufferUsage) {
 			m_usageFlags          = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 			m_memoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
-			VkDeviceSize minOffsetAlignment = VKContext->Properties.limits.minUniformBufferOffsetAlignment;
+			VkDeviceSize minOffsetAlignment = VKContext->properties.limits.minUniformBufferOffsetAlignment;
 
 			m_alignmentSize = GetAlignment(m_instanceSize, minOffsetAlignment);
 			m_bufferSize    = m_alignmentSize * m_instanceCount;

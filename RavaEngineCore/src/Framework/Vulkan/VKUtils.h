@@ -210,7 +210,7 @@ static void CopyBufferToImage(VkBuffer buffer, VkImage image, u32 width, u32 hei
 	EndSingleTimeCommands(commandBuffer);
 }
 
-static void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) {
+static void TransitionImageLayout(VkImage& image, VkImageLayout oldLayout, VkImageLayout newLayout, u32 mipLevels = 1) {
 	// Create buffer
 	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
 
@@ -223,12 +223,12 @@ static void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImag
 	imageMemoryBarrier.image                           = image;  // Image being accessed and modified as part of barrier
 	imageMemoryBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;  // Aspect of image being altered
 	imageMemoryBarrier.subresourceRange.baseMipLevel   = 0;                          // First mip level to start alterations on
-	imageMemoryBarrier.subresourceRange.levelCount     = 1;  // Number of mip levels to alter starting from baseMipLevel
+	imageMemoryBarrier.subresourceRange.levelCount     = mipLevels;  // Number of mip levels to alter starting from baseMipLevel
 	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;  // First layer to start alterations on
 	imageMemoryBarrier.subresourceRange.layerCount     = 1;  // Number of layers to alter stating from baseArrayLayer
 
-	VkPipelineStageFlags srcStage;
-	VkPipelineStageFlags dstStage;
+	VkPipelineStageFlags srcStage{};
+	VkPipelineStageFlags dstStage{};
 
 	// If transitioning from new image to image ready to receive data...
 	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
@@ -245,6 +245,9 @@ static void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImag
 
 		srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	} else {
+		ENGINE_ERROR("Unsupported Layout Transition!");
+		return;
 	}
 
 	vkCmdPipelineBarrier(
@@ -270,8 +273,9 @@ static void CreateImage(
 	VkImageTiling tiling,
 	VkImageUsageFlags useFlags,
 	VkMemoryPropertyFlags propFlags,
-	VkDeviceMemory* imageMemory,
-	VkImage* image
+	VkDeviceMemory& imageMemory,
+	VkImage& image,
+	u32 mipLevels = 1
 ) {
 	// CREATE IMAGE
 	// Image Creation Info
@@ -281,7 +285,7 @@ static void CreateImage(
 	imageCreateInfo.extent.width      = width;             // Width of image extent
 	imageCreateInfo.extent.height     = height;            // Height of image extent
 	imageCreateInfo.extent.depth      = 1;                 // Depth of image (just 1, no 3D aspect)
-	imageCreateInfo.mipLevels         = 1;                 // Number of mipmap levels
+	imageCreateInfo.mipLevels         = mipLevels;          // Number of mipmap levels
 	imageCreateInfo.arrayLayers       = 1;                 // Number of levels in image array
 	imageCreateInfo.format            = format;            // Format type of image
 	imageCreateInfo.tiling            = tiling;            // How many data should be "tiled" (arranged for optimal reading)
@@ -291,28 +295,27 @@ static void CreateImage(
 	imageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;  // Whether image can be shared between queues
 
 	// Create image
-	// VkImage image;
-	VkResult result = vkCreateImage(VKContext->GetLogicalDevice(), &imageCreateInfo, nullptr, image);
+	VkResult result = vkCreateImage(VKContext->GetLogicalDevice(), &imageCreateInfo, nullptr, &image);
 	VK_CHECK(result, "Failed to create an Image!");
 
 	// CREATE MEMORY FOR IMAGE
 	// Get memory requirements for a type of image
 	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(VKContext->GetLogicalDevice(), *image, &memoryRequirements);
+	vkGetImageMemoryRequirements(VKContext->GetLogicalDevice(), image, &memoryRequirements);
 
 	VkMemoryAllocateInfo memoryAllocInfo = {};
 	memoryAllocInfo.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocInfo.allocationSize       = memoryRequirements.size;
 	memoryAllocInfo.memoryTypeIndex      = FindMemoryType(memoryRequirements.memoryTypeBits, propFlags);
 
-	result = vkAllocateMemory(VKContext->GetLogicalDevice(), &memoryAllocInfo, nullptr, imageMemory);
+	result = vkAllocateMemory(VKContext->GetLogicalDevice(), &memoryAllocInfo, nullptr, &imageMemory);
 	VK_CHECK(result, "Failed to allocate memory for image!");
 
 	// Connect memory to image
-	vkBindImageMemory(VKContext->GetLogicalDevice(), *image, *imageMemory, 0);
+	vkBindImageMemory(VKContext->GetLogicalDevice(), image, imageMemory, 0);
 }
 
-static void CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView* imageView) {
+static void CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView, u32 mipLevels = 1) {
 	VkImageViewCreateInfo viewCreateInfo = {};
 	viewCreateInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewCreateInfo.image                 = image;                  // Image to create view for
@@ -327,13 +330,13 @@ static void CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags a
 	viewCreateInfo.subresourceRange.aspectMask =
 		aspectFlags;                                     // Which aspect of image to view (e.g. COLOR_BIT for viewing colour)
 	viewCreateInfo.subresourceRange.baseMipLevel   = 0;  // Start mipmap level to view from
-	viewCreateInfo.subresourceRange.levelCount     = 1;  // Number of mipmap levels to view
+	viewCreateInfo.subresourceRange.levelCount     = mipLevels;  // Number of mipmap levels to view
 	viewCreateInfo.subresourceRange.baseArrayLayer = 0;  // Start array level to view from
 	viewCreateInfo.subresourceRange.layerCount     = 1;  // Number of array levels to view
 
 	// Create image view and return it
 	// VkImageView imageView;
-	VkResult result = vkCreateImageView(VKContext->GetLogicalDevice(), &viewCreateInfo, nullptr, imageView);
+	VkResult result = vkCreateImageView(VKContext->GetLogicalDevice(), &viewCreateInfo, nullptr, &imageView);
 	VK_CHECK(result, "Failed to create an Image View!");
 }
 

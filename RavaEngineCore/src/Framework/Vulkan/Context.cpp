@@ -123,8 +123,8 @@ void Context::PickPhysicalDevice() {
 	}
 
 	// Information about the device itself (ID, name, type, vendor, etc)
-	vkGetPhysicalDeviceProperties(m_physicalDevice, &Properties);
-	ENGINE_INFO("Physical Device: ", Properties.deviceName);
+	vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
+	ENGINE_INFO("Physical Device: ", properties.deviceName);
 }
 
 void Context::CreateLogicalDevice() {

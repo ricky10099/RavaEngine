@@ -16,7 +16,7 @@ RenderPass::RenderPass(SwapChain* swapChain)
 	// m_BufferEmissionFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 	Create3DRenderPass();
-	//CreateGUIRenderPass();
+	CreateGUIRenderPass();
 	// CreatePostProcessingRenderPass();
 
 	CreateColorAttachmentResources();
@@ -26,7 +26,7 @@ RenderPass::RenderPass(SwapChain* swapChain)
 	// CreateGBufferImageViews();
 
 	Create3DFramebuffers();
-	//CreateGUIFramebuffers();
+	CreateGUIFramebuffers();
 	// CreatePostProcessingFramebuffers();
 }
 
@@ -44,16 +44,16 @@ RenderPass::~RenderPass() {
 	for (auto framebuffer : m_3DFramebuffers) {
 		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
 	}
-	//for (auto framebuffer : m_GUIFramebuffers) {
+	 for (auto framebuffer : m_GUIFramebuffers) {
+		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
+	 }
+	//  for (auto framebuffer : m_PostProcessingFramebuffers) {
 	//	vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
-	//}
-	// for (auto framebuffer : m_PostProcessingFramebuffers) {
-	//	vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
-	// }
+	//  }
 
 	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_3DRenderPass, nullptr);
-	//vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
-	// vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_PostProcessingRenderPass, nullptr);
+	 vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
+	//  vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_PostProcessingRenderPass, nullptr);
 }
 
 void RenderPass::Create3DRenderPass() {
@@ -313,87 +313,94 @@ void RenderPass::Create3DRenderPass() {
 #pragma endregion
 
 	VkResult result = vkCreateRenderPass(VKContext->GetLogicalDevice(), &renderPassInfo, nullptr, &m_3DRenderPass);
-	VK_CHECK(result, "Failed to create Render Pass!");
+	VK_CHECK(result, "Failed to create a 3D Render Pass!");
 }
 
-//void RenderPass::CreateGUIRenderPass() {
-//	// ATTACHMENT_COLOR
-//	VkAttachmentDescription colorAttachment = {};
-//	colorAttachment.format                  = m_swapChain->GetSwapChainImageFormat();
-//	colorAttachment.samples                 = VK_SAMPLE_COUNT_1_BIT;
-//	colorAttachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-//	colorAttachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
-//	colorAttachment.stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-//	colorAttachment.stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-//	colorAttachment.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
-//	colorAttachment.finalLayout             = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-//
-//	VkAttachmentReference colorAttachmentRef = {};
-//	colorAttachmentRef.attachment            = static_cast<u32>(RenderTargetsGUI::ATTACHMENT_COLOR);
-//	colorAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-//
-//	// subpass
-//	VkSubpassDescription subpassGUI    = {};
-//	subpassGUI.flags                   = 0;
-//	subpassGUI.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-//	subpassGUI.inputAttachmentCount    = 0;
-//	subpassGUI.pInputAttachments       = nullptr;
-//	subpassGUI.colorAttachmentCount    = 1;
-//	subpassGUI.pColorAttachments       = &colorAttachmentRef;
-//	subpassGUI.pResolveAttachments     = nullptr;
-//	subpassGUI.pDepthStencilAttachment = nullptr;
-//	subpassGUI.preserveAttachmentCount = 0;
-//	subpassGUI.pPreserveAttachments    = nullptr;
-//
-//	//VkSubpassDescription subpass = {};
-//	//subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-//	//subpass.colorAttachmentCount = 1;
-//	//subpass.pColorAttachments    = &colorAttachmentRef;
-//
-//	//constexpr u32 NUMBER_OF_DEPENDENCIES = 2;
-//	//std::array<VkSubpassDependency, NUMBER_OF_DEPENDENCIES> dependencies{};
-//
-//	//dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-//	//dependencies[0].dstSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
-//	//dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-//	//dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-//	//dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-//	//dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-//	//dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-//
-//	//dependencies[1].srcSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
-//	//dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-//	//dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-//	//dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-//	//dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-//	//dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-//	//dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-//
-//	VkSubpassDependency dependency = {};
-//	dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
-//	dependency.dstSubpass          = 0;
-//	dependency.srcStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-//	dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-//	dependency.srcAccessMask       = 0;
-//	dependency.dstAccessMask       = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-//
-//	// render pass
-//	std::array<VkAttachmentDescription, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {colorAttachment
-//	};
-//	std::array<VkSubpassDescription, static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES)> subpasses            = {subpassGUI};
-//
-//	VkRenderPassCreateInfo renderPassInfo = {};
-//	renderPassInfo.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-//	renderPassInfo.attachmentCount        = static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS);
-//	renderPassInfo.pAttachments           = attachments.data();
-//	renderPassInfo.subpassCount           = static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES);
-//	 renderPassInfo.pSubpasses             = subpasses.data();
-//	renderPassInfo.dependencyCount        = 1;
-//	renderPassInfo.pDependencies          = &dependency;
-//
-//	VkResult result = vkCreateRenderPass(VKContext->GetLogicalDevice(), &renderPassInfo, nullptr, &m_GUIRenderPass);
-//	VK_CHECK(result, "Failed to create Render Pass!");
-//}
+void RenderPass::CreateGUIRenderPass() {
+	// ATTACHMENT_COLOR
+	VkAttachmentDescription colorAttachment = {};
+	 colorAttachment.format                  = m_swapChain->GetSwapChainImageFormat();
+	//colorAttachment.format = FindSupportedFormat(
+	//	{VK_FORMAT_B8G8R8A8_SRGB/*, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM*/},
+	//	/*VK_IMAGE_TILING_OPTIMAL | */VK_IMAGE_TILING_LINEAR,
+	//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	//);
+	colorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment            = static_cast<u32>(RenderTargetsGUI::ATTACHMENT_COLOR);
+	colorAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	// subpass
+	VkSubpassDescription subpassGUI = {};
+	subpassGUI.flags                = 0;
+	subpassGUI.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	// subpassGUI.inputAttachmentCount    = 0;
+	// subpassGUI.pInputAttachments       = nullptr;
+	subpassGUI.colorAttachmentCount = 1;
+	subpassGUI.pColorAttachments    = &colorAttachmentRef;
+	// subpassGUI.pResolveAttachments     = nullptr;
+	// subpassGUI.pDepthStencilAttachment = nullptr;
+	// subpassGUI.preserveAttachmentCount = 0;
+	// subpassGUI.pPreserveAttachments    = nullptr;
+
+	// VkSubpassDescription subpass = {};
+	// subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	// subpass.colorAttachmentCount = 1;
+	// subpass.pColorAttachments    = &colorAttachmentRef;
+
+	// constexpr u32 NUMBER_OF_DEPENDENCIES = 2;
+	// std::array<VkSubpassDependency, NUMBER_OF_DEPENDENCIES> dependencies{};
+
+	// dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	// dependencies[0].dstSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
+	// dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	// dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	// dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	// dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	// dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	// dependencies[1].srcSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
+	// dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	// dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	// dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	// dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	// dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	// dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass          = 0;
+	dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT /*| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT*/;
+	dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT /*| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT*/;
+	dependency.srcAccessMask = 0;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT /* | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT*/;
+
+	// render pass
+	std::array<VkAttachmentDescription, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {colorAttachment
+	};
+	std::array<VkSubpassDescription, static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES)> subpasses            = {subpassGUI};
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount        = static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS);
+	// renderPassInfo.pAttachments           = attachments.data();
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES);
+	// renderPassInfo.pSubpasses             = subpasses.data();
+	renderPassInfo.pSubpasses      = &subpassGUI;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies   = &dependency;
+
+	VkResult result = vkCreateRenderPass(VKContext->GetLogicalDevice(), &renderPassInfo, nullptr, &m_GUIRenderPass);
+	VK_CHECK(result, "Failed to create a GUI Render Pass!");
+}
 
 void RenderPass::CreateColorAttachmentResources() {
 	VkFormat format = m_swapChain->GetSwapChainImageFormat();
@@ -425,8 +432,8 @@ void RenderPass::CreateColorAttachmentResources() {
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		&m_colorAttachmentImageMemory,
-		&m_colorAttachmentImage
+		m_colorAttachmentImageMemory,
+		m_colorAttachmentImage
 	);
 
 	// VkImageViewCreateInfo viewInfo{};
@@ -444,7 +451,7 @@ void RenderPass::CreateColorAttachmentResources() {
 	//	LOG_CORE_CRITICAL("failed to create texture image view!");
 	// }
 
-	CreateImageView(m_colorAttachmentImage, format, VK_IMAGE_ASPECT_COLOR_BIT, &m_colorAttachmentView);
+	CreateImageView(m_colorAttachmentImage, format, VK_IMAGE_ASPECT_COLOR_BIT, m_colorAttachmentView);
 }
 
 void RenderPass::CreateDepthResources() {
@@ -475,8 +482,8 @@ void RenderPass::CreateDepthResources() {
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		&m_depthImageMemory,
-		&m_depthImage
+		m_depthImageMemory,
+		m_depthImage
 	);
 
 	// VkImageViewCreateInfo viewInfo{};
@@ -493,7 +500,7 @@ void RenderPass::CreateDepthResources() {
 	// if (vkCreateImageView(m_Device->Device(), &viewInfo, nullptr, &m_DepthImageView) != VK_SUCCESS) {
 	//	LOG_CORE_CRITICAL("failed to create texture image view!");
 	// }
-	CreateImageView(m_depthImage, m_depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, &m_depthImageView);
+	CreateImageView(m_depthImage, m_depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, m_depthImageView);
 }
 
 void RenderPass::Create3DFramebuffers() {
@@ -527,24 +534,24 @@ void RenderPass::Create3DFramebuffers() {
 	}
 }
 
-//void RenderPass::CreateGUIFramebuffers() {
-//	m_GUIFramebuffers.resize(m_swapChain->ImageCount());
-//	for (size_t i = 0; i < m_swapChain->ImageCount(); i++) {
-//		std::array<VkImageView, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {
-//			m_swapChain->GetImageView(static_cast<u32>(i))
-//		};
-//
-//		VkFramebufferCreateInfo framebufferInfo = {};
-//		framebufferInfo.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-//		framebufferInfo.renderPass              = m_GUIRenderPass;
-//		framebufferInfo.attachmentCount         = static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS);
-//		framebufferInfo.pAttachments            = attachments.data();
-//		framebufferInfo.width                   = m_renderPassExtent.width;
-//		framebufferInfo.height                  = m_renderPassExtent.height;
-//		framebufferInfo.layers                  = 1;
-//
-//		VkResult result = vkCreateFramebuffer(VKContext->GetLogicalDevice(), &framebufferInfo, nullptr, &m_GUIFramebuffers[i]);
-//		VK_CHECK(result, "Failed to create a Framebuffer!")
-//	}
-//}
+void RenderPass::CreateGUIFramebuffers() {
+	m_GUIFramebuffers.resize(m_swapChain->ImageCount());
+	for (size_t i = 0; i < m_swapChain->ImageCount(); i++) {
+		std::array<VkImageView, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {
+			m_swapChain->GetImageView(static_cast<u32>(i))
+		};
+
+		VkFramebufferCreateInfo framebufferInfo = {};
+		framebufferInfo.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass              = m_GUIRenderPass;
+		framebufferInfo.attachmentCount         = static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS);
+		framebufferInfo.pAttachments            = attachments.data();
+		framebufferInfo.width                   = m_renderPassExtent.width;
+		framebufferInfo.height                  = m_renderPassExtent.height;
+		framebufferInfo.layers                  = 1;
+
+		VkResult result = vkCreateFramebuffer(VKContext->GetLogicalDevice(), &framebufferInfo, nullptr, &m_GUIFramebuffers[i]);
+		VK_CHECK(result, "Failed to create a Framebuffer!")
+	}
+}
 }  // namespace Vulkan

@@ -94,7 +94,7 @@ void SwapChain::CreateSwapChain() {
 
 	// Create Swapchain
 	VkResult result = vkCreateSwapchainKHR(VKContext->GetLogicalDevice(), &createInfo, nullptr, &m_swapChain);
-	VK_CHECK(result, "failed to create swap chain!");
+	VK_CHECK(result, "Failed to create swap chain!");
 
 	// we only specified a minimum number of images in the swap chain, so the implementation is
 	// allowed to create a swap chain with more. That's why we'll first query the final number of
@@ -112,7 +112,7 @@ void SwapChain::CreateSwapChain() {
 void SwapChain::CreateSwapChainImageViews() {
 	m_swapChainImageViews.resize(m_swapChainImages.size());
 	for (size_t i = 0; i < m_swapChainImages.size(); i++) {
-		CreateImageView(m_swapChainImages[i], m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, &m_swapChainImageViews[i]);
+		CreateImageView(m_swapChainImages[i], m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, m_swapChainImageViews[i]);
 	}
 }
 
