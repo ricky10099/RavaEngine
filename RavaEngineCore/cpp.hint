@@ -5,3 +5,4 @@
 #define NO_MOVE(type) type(type&&) = delete; type& operator=(type&&) = delete;
 #define EVENT_CLASS_TYPE(x) static EventType GetStaticType() { return EventType::x; } EventType GetEventType() const override { return GetStaticType(); } const char* GetName() const override { return #x "Event"; }
 #define EVENT_CLASS_CATEGORY(x) int GetCategoryFlags() const override { return x; }
+#define ENGINE_ERROR(__VA_ARGS__) Rava::Log::GetEngineLogger()->error(__VA_ARGS__)

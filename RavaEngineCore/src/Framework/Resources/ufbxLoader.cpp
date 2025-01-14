@@ -4,6 +4,7 @@
 
 #include "Framework/RavaUtils.h"
 #include "Framework/Resources/ufbxLoader.h"
+#include "Framework/Resources/Materials.h"
 #include "Framework/Vulkan/MaterialDescriptor.h"
 
 namespace Rava {
@@ -12,7 +13,7 @@ ufbxLoader::ufbxLoader(const std::string& filePath)
 	m_path = GetPathWithoutFileName(filePath);
 }
 
-bool ufbxLoader::Load(const u32 instanceCount) {
+bool ufbxLoader::LoadModel(const u32 instanceCount) {
 	ufbx_load_opts loadOptions{};
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
@@ -41,6 +42,7 @@ bool ufbxLoader::Load(const u32 instanceCount) {
 		return false;
 	}
 
+	LoadSkeletons();
 	LoadMaterials();
 
 	m_instanceCount = instanceCount;

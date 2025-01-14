@@ -3,11 +3,15 @@
 #include <ufbx/ufbx.h>
 
 #include "Framework/Resources/MeshModel.h"
-#include "Framework/Resources/Materials.h"
+
+namespace Vulkan {
+class Buffer;
+}
 
 namespace Rava {
 class Texture;
 class Material;
+struct Skeleton;
 class ufbxLoader {
    public:
 	std::vector<u32> indices{};
@@ -20,7 +24,7 @@ class ufbxLoader {
 	ufbxLoader(const std::string& filePath);
 	~ufbxLoader() = default;
 
-	bool Load(const u32 instanceCount = 1);
+	bool LoadModel(const u32 instanceCount = 1);
 
    private:
 	std::string m_filePath;
@@ -43,5 +47,16 @@ class ufbxLoader {
 
 	void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
 	void CalculateTangents();
+
+   public:
+	Shared<Skeleton> skeleton;
+	Shared<Vulkan::Buffer> skeletonUbo;
+
+   public:
+	bool LoadAnimations(const std::string& filePath);
+	bool LoadAnimations();
+
+   private:
+	void LoadSkeletons();
 };
 }  // namespace Rava

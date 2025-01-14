@@ -337,6 +337,10 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 		DrawVec3Control("Offset Rotation", rotation);
 		component->offset.rotation = glm::radians(rotation);
 		DrawVec3Control("Offset Scale", component->offset.scale, 1.0f);
+		ImGui::BeginDisabled(true);
+		bool hasSkeleton = component->model->HasSkeleton();
+		ImGui::Checkbox("Has skeleton", &hasSkeleton);
+		ImGui::EndDisabled();
 	});
 }
 

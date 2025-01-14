@@ -2,6 +2,7 @@
 
 #include "Framework/Resources/MeshModel.h"
 #include "Framework/Resources/ufbxLoader.h"
+#include "Framework/Resources/Skeleton.h"
 #include "Framework/Vulkan/MaterialDescriptor.h"
 
 namespace Rava {
@@ -29,7 +30,7 @@ std::vector<VkVertexInputAttributeDescription> Vertex::GetAttributeDescriptions(
 
 Unique<MeshModel> MeshModel::CreateMeshModelFromFile(std::string_view filePath) {
 	ufbxLoader loader{filePath.data()};
-	if (!loader.Load()) {
+	if (!loader.LoadModel()) {
 		ENGINE_ERROR("Failed to load Model file {0}", filePath.data());
 		return nullptr;
 	}
@@ -40,8 +41,8 @@ MeshModel::MeshModel(const ufbxLoader& loader) {
 	CopyMeshes(loader.meshes);
 	CreateVertexBuffers(loader.vertices);
 	CreateIndexBuffers(loader.indices);
-	// m_skeleton       = std::move(builder.skeleton);
-	// m_skeletonBuffer = builder.shaderData;
+	m_skeleton    = std::move(loader.skeleton);
+	m_skeletonUbo = std::move(loader.skeletonUbo);
 }
 
 void MeshModel::CopyMeshes(const std::vector<Mesh>& meshes) {

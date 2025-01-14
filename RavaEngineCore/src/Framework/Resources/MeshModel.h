@@ -5,9 +5,9 @@
 #include "Framework/Resources/Materials.h"
 
 namespace Rava {
-//class AssimpLoader;
+// class AssimpLoader;
 class ufbxLoader;
-
+struct Skeleton;
 struct Vertex {
 	glm::vec3 position{};
 	glm::vec4 color{};
@@ -36,20 +36,21 @@ struct Mesh {
 
 class MeshModel {
    public:
-	//MeshModel(const AssimpLoader& loader);
+	// MeshModel(const AssimpLoader& loader);
 	MeshModel(const ufbxLoader& loader);
 	~MeshModel() = default;
 
 	NO_COPY(MeshModel)
 
-	static Unique<MeshModel> CreateMeshModelFromFile(const std::string_view filepath);
+	static Unique<MeshModel> CreateMeshModelFromFile(std::string_view filepath);
 
 	void Bind(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout);
 	void Draw(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout);
 	void DrawMesh(const VkCommandBuffer& commandBuffer, const Mesh& mesh) const;
 
-	//std::shared_ptr<Skeleton> GetSkeleton() const { return m_skeleton; }
-	//std::shared_ptr<RVKBuffer> GetSkeletonBuffer() { return m_skeletonBuffer; }
+	bool HasSkeleton() const { return m_skeleton ? true : false; }
+	// std::shared_ptr<Skeleton> GetSkeleton() const { return m_skeleton; }
+	// std::shared_ptr<RVKBuffer> GetSkeletonBuffer() { return m_skeletonBuffer; }
 
    private:
 	std::vector<Mesh> m_meshes{};
@@ -62,17 +63,16 @@ class MeshModel {
 	u32 m_indexCount;
 
    private:
-	// Skeleton
-	//Shared<Skeleton> m_skeleton;
-	//Shared<RVKBuffer> m_skeletonBuffer;
-
-   private:
 	void CopyMeshes(const std::vector<Mesh>& meshes);
 
 	void CreateVertexBuffers(const std::vector<Vertex>& vertices);
 	void CreateIndexBuffers(const std::vector<u32>& indices);
 
 	void BindDescriptors(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout, Mesh& mesh);
-	//void PushConstantsPbr(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout, const Mesh& mesh);
+	// void PushConstantsPbr(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout, const Mesh& mesh);
+
+   private:
+	Shared<Skeleton> m_skeleton;
+	Shared<Vulkan::Buffer> m_skeletonUbo;
 };
-}  // namespace RVK
+}  // namespace Rava

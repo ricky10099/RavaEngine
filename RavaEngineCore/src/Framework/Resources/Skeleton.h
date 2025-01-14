@@ -1,6 +1,9 @@
 #pragma once
 
 namespace Rava {
+static constexpr int NO_PARENT  = -1;
+static constexpr int ROOT_JOINT = 0;
+
 struct SkeletonUbo {
 	std::vector<glm::mat4> jointsMatrices;
 };
@@ -16,7 +19,7 @@ struct Joint {
 	glm::quat deformedNodeRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);  // R
 	glm::vec3 deformedNodeScale{1.0f};                                   // S
 
-	glm::mat4 GetDeformedBindMatrix() {
+	glm::mat4 GetDeformedBindMatrix() const {
 		// apply scale, rotation, and translation IN THAT ORDER (read from right to the left)
 		// to the original undefomed bind matrix
 		// dynamically called once per frame
@@ -40,6 +43,6 @@ struct Skeleton {
 	std::string_view name;
 	std::vector<Joint> joints;
 	std::map<int, int> globalNodeToJointIndex;
-	SkeletonUbo m_skeletonUbo;
+	SkeletonUbo skeletonUbo;
 };
 }  // namespace Rava
