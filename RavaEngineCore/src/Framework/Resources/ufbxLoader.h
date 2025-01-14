@@ -3,6 +3,7 @@
 #include <ufbx/ufbx.h>
 
 #include "Framework/Resources/MeshModel.h"
+#include "Framework/Resources/Animations.h"
 
 namespace Vulkan {
 class Buffer;
@@ -51,12 +52,13 @@ class ufbxLoader {
    public:
 	Shared<Skeleton> skeleton;
 	Shared<Vulkan::Buffer> skeletonUbo;
+	Unique<Animations> animations;
 
    public:
-	bool LoadAnimations(const std::string& filePath);
 	bool LoadAnimations();
 
    private:
 	void LoadSkeletons();
+	void LoadAnimationClips();
 };
 }  // namespace Rava

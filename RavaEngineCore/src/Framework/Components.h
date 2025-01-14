@@ -71,7 +71,7 @@ struct Model {
 };
 
 struct Animation {
-	Shared<Animations> animationList;
+	Unique<Animations> animationList;
 
 	Animation(std::string_view path)
 		: animationList(Animations::LoadAnimationsFromFile(path)) {}

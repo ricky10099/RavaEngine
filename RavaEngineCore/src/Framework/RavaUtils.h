@@ -2,8 +2,8 @@
 
 #include "ravapch.h"
 
-namespace Rava {
-std::string GetPathWithoutFileName(const std::filesystem::path& path) {
+//namespace Rava {
+static std::string GetPathWithoutFileName(const std::filesystem::path& path) {
 	std::filesystem::path withoutFilename{std::filesystem::path(path.parent_path())};
 	std::string pathWithoutFilename = withoutFilename.string();
 	if (!pathWithoutFilename.empty()) {
@@ -14,12 +14,12 @@ std::string GetPathWithoutFileName(const std::filesystem::path& path) {
 	return pathWithoutFilename;
 }
 
-bool FileExists(const std::string& filename) {
+static bool FileExists(const std::string& filename) {
 	std::ifstream infile(filename.c_str());
 	return infile.good();
 }
 
-bool IsDirectory(const std::string& filename) {
+static bool IsDirectory(const std::string& filename) {
 	bool isDirectory = false;
 	std::filesystem::path path(filename);
 
@@ -30,4 +30,4 @@ bool IsDirectory(const std::string& filename) {
 	}
 	return isDirectory;
 }
-}  // namespace Rava
+//}  // namespace Rava

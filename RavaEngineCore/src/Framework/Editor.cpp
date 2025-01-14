@@ -342,6 +342,34 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 		ImGui::Checkbox("Has skeleton", &hasSkeleton);
 		ImGui::EndDisabled();
 	});
+
+	DrawComponent<Component::Animation>("Animation", entity, [](auto& component) {
+		u32 animationIndex = 0;
+
+		std::string currentAnimationString = component->animationList->GetName(0);
+		if (ImGui::BeginCombo("##Animation Clip", currentAnimationString.c_str())) {
+			for (int i = 0; i < component->animationList->Size(); i++) {
+				bool isSelected = currentAnimationString == component->animationList->GetName(i);
+				if (ImGui::Selectable(component->animationList->GetName(i).c_str(), isSelected)) {
+					currentAnimationString = component->animationList->GetName(i);
+					u32 animationIndex     = i;
+				}
+
+				if (isSelected) {
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+
+		float lineHeight  = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+		ImVec2 buttonSize = {lineHeight + 20.0f, lineHeight};
+		ImGui::SameLine();
+		if (ImGui::Button("Play", buttonSize)) {
+			component->animationList->Start(animationIndex);
+		}
+	});
 }
 
 template <typename T, typename UIFunction>

@@ -1,12 +1,18 @@
 #include "ravapch.h"
 
 #include "Framework/Resources/Animations.h"
-#include "Framework/Resources/AnimationClip.h"
 #include "Framework/Resources/Skeleton.h"
+#include "Framework/Resources/ufbxLoader.h"
 
 namespace Rava {
 Unique<Animations> Animations::LoadAnimationsFromFile(std::string_view filePath) {
+	ufbxLoader loader{filePath.data()};
+	if (!loader.LoadAnimations()) {
+		ENGINE_ERROR("Failed to load Model file {0}", filePath.data());
+		return nullptr;
+	}
 
+	return std::move(loader.animations);
 }
 
 AnimationClip& Animations::operator[](std::string_view animation) {
@@ -21,6 +27,7 @@ void Animations::Push(const Shared<AnimationClip>& animation) {
 	if (animation) {
 		m_animations[animation->GetName()] = animation;
 		m_animationsVector.push_back(animation);
+		m_animationNames.push_back(animation->GetName().data());
 		m_nameToIndex[animation->GetName()] = static_cast<int>(m_animationsVector.size() - 1);
 	} else {
 		ENGINE_ERROR("Animations::Push: Animation is empty!");
@@ -105,7 +112,7 @@ std::string_view Animations::GetName() {
 	if (m_currentAnimation) {
 		return m_currentAnimation->GetName();
 	} else {
-		return std::string("");
+		return "";
 	}
 }
 

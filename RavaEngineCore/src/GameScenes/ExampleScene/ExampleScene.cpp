@@ -33,7 +33,9 @@ void ExampleScene::Init() {
 	m_entity2 = CreateEntity("Fish");
 	// m_entity2->AddComponent<Rava::Component::Model>("Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
 	m_entity2->AddComponent<Rava::Component::Model>("Models/Fish/Fish.fbx");
+	m_entity2->AddComponent<Rava::Component::Animation>("Models/Fish/Fish.fbx");
 	m_entity2->SetScale(glm::vec3{0.05f});
+	LOG_TRACE("Animation {0}", m_entity2->GetComponent<Rava::Component::Animation>()->animationList->GetName(0));
 }
 
 void ExampleScene::Update() {

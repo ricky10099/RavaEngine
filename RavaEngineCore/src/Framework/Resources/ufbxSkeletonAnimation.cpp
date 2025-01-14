@@ -3,16 +3,11 @@
 #include "Framework/RavaUtils.h"
 #include "Framework/Resources/ufbxLoader.h"
 #include "Framework/Resources/Skeleton.h"
+#include "Framework/Resources/Animations.h"
+#include "Framework/Resources/AnimationClip.h"
 #include "Framework/Vulkan/Buffer.h"
 
 namespace Rava {
-bool ufbxLoader::LoadAnimations(const std::string& filePath) {
-	m_filePath = ASSETS_DIR + filePath;
-	m_path     = GetPathWithoutFileName(filePath);
-
-	return LoadAnimations();
-}
-
 bool ufbxLoader::LoadAnimations() {
 	ufbx_load_opts loadOptions{};
 	loadOptions.load_external_files           = true;
@@ -41,6 +36,11 @@ bool ufbxLoader::LoadAnimations() {
 		ENGINE_ERROR("ufbxBuilder::Load: no meshes found in {0}", m_filePath);
 		return false;
 	}
+
+	LoadAnimationClips();
+
+	ufbx_free_scene(m_modelScene);
+	return true;
 }
 
 void ufbxLoader::LoadSkeletons() {
@@ -92,9 +92,9 @@ void ufbxLoader::LoadSkeletons() {
 		auto mat4UfbxToGlm = [](ufbx_matrix const& mat4Ufbx) {
 			glm::mat4 mat4Glm;
 			for (u32 column = 0; column < 4; ++column) {
-				mat4Glm[column].x = mat4Ufbx.cols[column].x;
-				mat4Glm[column].y = mat4Ufbx.cols[column].y;
-				mat4Glm[column].z = mat4Ufbx.cols[column].z;
+				mat4Glm[column].x = (float)mat4Ufbx.cols[column].x;
+				mat4Glm[column].y = (float)mat4Ufbx.cols[column].y;
+				mat4Glm[column].z = (float)mat4Ufbx.cols[column].z;
 				mat4Glm[column].w = column < 3 ? 0.0f : 1.0f;
 			}
 			return mat4Glm;
@@ -129,136 +129,177 @@ void ufbxLoader::LoadSkeletons() {
 		traverseNodeHierarchy(m_modelScene->root_node, NO_PARENT);
 		// m_skeleton->Traverse();
 
-		int bufferSize = numberOfBones * sizeof(glm::mat4);  // in bytes
-		skeletonUbo    = std::make_shared<Vulkan::Buffer>(bufferSize);
+		size_t bufferSize = numberOfBones * sizeof(glm::mat4);  // in bytes
+		skeletonUbo       = std::make_shared<Vulkan::Buffer>(bufferSize);
 		skeletonUbo->Map();
 	}
+}
 
-	// size_t numberOfAnimations = m_modelScene->anim_stacks.count;
-	// for (size_t animationIndex = 0; animationIndex < numberOfAnimations; ++animationIndex) {
-	//	ufbx_anim_stack& fbxAnimation = *m_modelScene->anim_stacks.data[animationIndex];
+void ufbxLoader::LoadAnimationClips() {
+	u32 numberOfSkeletons = 0;
+	u32 meshIndex         = 0;
+	// iterate over all meshes and check if they have a skeleton
+	for (u32 index = 0; index < m_modelScene->meshes.count; ++index) {
+		ufbx_mesh& mesh = *m_modelScene->meshes.data[index];
+		if (mesh.skin_deformers.count) {
+			++numberOfSkeletons;
+			meshIndex = index;
+		}
+	}
 
-	//	std::string animationName(fbxAnimation.name.data);
-	//	// the fbx includes animations twice,
-	//	// as "armature|name" and "name"
-	//	if (animationName.find("|") != std::string::npos) {
-	//		continue;
-	//	}
-	//	LOG_CORE_INFO("name of animation: {0}", animationName);
-	//	std::shared_ptr<SkeletalAnimation> animation = std::make_shared<SkeletalAnimation>(animationName);
+	if (!numberOfSkeletons) {
+		return;
+	}
 
-	//	animation->SetFirstKeyFrameTime(fbxAnimation.time_begin);
-	//	animation->SetLastKeyFrameTime(fbxAnimation.time_end);
+	if (numberOfSkeletons > 1) {
+		ENGINE_WARN("A model should only have a single skin/armature/skeleton. Using mesh {0}.", numberOfSkeletons - 1);
+	}
 
-	//	ufbx_bake_opts bakeOptions = {};
-	//	ufbx_error ufbxError;
-	//	ufbx_unique_ptr<ufbx_baked_anim> fbxBakedAnim{ufbx_bake_anim(m_modelScene, fbxAnimation.anim, &bakeOptions, &ufbxError)};
-	//	if (!fbxBakedAnim) {
-	//		char errorBuffer[512];
-	//		ufbx_format_error(errorBuffer, sizeof(errorBuffer), &ufbxError);
-	//		CORE_ASSERT(false, "failed to bake animation, " + std::string(errorBuffer));
-	//		return;
-	//	}
+	std::unordered_map<std::string, int> nameToBoneIndex;
 
-	//	// helper lambdas to convert asset importer formats to glm
-	//	auto vec3UfbxToGlm           = [](ufbx_vec3 const& vec3Ufbx) { return glm::vec3(vec3Ufbx.x, vec3Ufbx.y, vec3Ufbx.z); };
-	//	auto quaternionUfbxToGlmVec4 = [](ufbx_quat const& quaternionUfbx) {
-	//		glm::vec4 vec4GLM;
-	//		vec4GLM.x = quaternionUfbx.x;
-	//		vec4GLM.y = quaternionUfbx.y;
-	//		vec4GLM.z = quaternionUfbx.z;
-	//		vec4GLM.w = quaternionUfbx.w;
-	//		return vec4GLM;
-	//	};
+	// load skeleton
+	{
+		ufbx_mesh& mesh             = *m_modelScene->meshes.data[meshIndex];
+		ufbx_skin_deformer& fbxSkin = *mesh.skin_deformers.data[0];
+		size_t numberOfBones        = fbxSkin.clusters.count;
 
-	//	u32 channelAndSamplerIndex = 0;
-	//	for (const ufbx_baked_node& fbxChannel : fbxBakedAnim->nodes) {
-	//		const u32 nodeIndex = fbxChannel.typed_id;
-	//		std::string fbxChannelName(m_modelScene->nodes[nodeIndex]->name.data);
-	//		// use fbx channels that actually belong to bones
-	//		bool isBone = nameToBoneIndex.contains(fbxChannelName);
-	//		if (isBone) {
-	//			// Each node of the skeleton has channels that point to samplers
-	//			{  // set up channels
-	//				{
-	//					SkeletalAnimation::Channel channel;
-	//					channel.m_Path         = SkeletalAnimation::Path::TRANSLATION;
-	//					channel.m_SamplerIndex = channelAndSamplerIndex + 0;
-	//					channel.m_Node         = nameToBoneIndex[fbxChannelName];
+		for (u32 boneIndex = 0; boneIndex < numberOfBones; ++boneIndex) {
+			ufbx_skin_cluster& bone   = *fbxSkin.clusters.data[boneIndex];
+			std::string boneName      = bone.name.data;
+			nameToBoneIndex[boneName] = boneIndex;
+		}
+	}
 
-	//					animation->m_Channels.push_back(channel);
-	//				}
-	//				{
-	//					SkeletalAnimation::Channel channel;
-	//					channel.m_Path         = SkeletalAnimation::Path::ROTATION;
-	//					channel.m_SamplerIndex = channelAndSamplerIndex + 1;
-	//					channel.m_Node         = nameToBoneIndex[fbxChannelName];
+	animations = std::make_unique<Animations>();
 
-	//					animation->m_Channels.push_back(channel);
-	//				}
-	//				{
-	//					SkeletalAnimation::Channel channel;
-	//					channel.m_Path         = SkeletalAnimation::Path::SCALE;
-	//					channel.m_SamplerIndex = channelAndSamplerIndex + 2;
-	//					channel.m_Node         = nameToBoneIndex[fbxChannelName];
+	size_t numberOfAnimations = m_modelScene->anim_stacks.count;
+	for (size_t animationIndex = 0; animationIndex < numberOfAnimations; ++animationIndex) {
+		ufbx_anim_stack& fbxAnimation = *m_modelScene->anim_stacks.data[animationIndex];
 
-	//					animation->m_Channels.push_back(channel);
-	//				}
-	//			}
+		std::string animationName(fbxAnimation.name.data);
+		// the fbx includes animations twice,
+		// as "armature|name" and "name"
+		if (animationName.find("|") != std::string::npos) {
+			continue;
+		}
 
-	//			{  // set up samplers
-	//				{
-	//					u32 numberOfKeys = fbxChannel.translation_keys.count;
+		ENGINE_INFO("name of animation: {0}", animationName);
 
-	//					SkeletalAnimation::Sampler sampler;
-	//					sampler.m_Timestamps.resize(numberOfKeys);
-	//					sampler.m_TRSoutputValuesToBeInterpolated.resize(numberOfKeys);
-	//					sampler.m_Interpolation = SkeletalAnimation::InterpolationMethod::LINEAR;
-	//					for (u32 key = 0; key < numberOfKeys; ++key) {
-	//						ufbx_vec3& value                               = fbxChannel.translation_keys.data[key].value;
-	//						sampler.m_TRSoutputValuesToBeInterpolated[key] = glm::vec4(vec3UfbxToGlm(value), 0.0f);
-	//						sampler.m_Timestamps[key]                      = fbxChannel.translation_keys.data[key].time;
-	//					}
+		Shared<AnimationClip> animation = std::make_shared<AnimationClip>(animationName);
 
-	//					animation->m_Samplers.push_back(sampler);
-	//				}
-	//				{
-	//					u32 numberOfKeys = fbxChannel.rotation_keys.count;
+		animation->SetFirstKeyFrameTime(fbxAnimation.time_begin);
+		animation->SetLastKeyFrameTime(fbxAnimation.time_end);
 
-	//					SkeletalAnimation::Sampler sampler;
-	//					sampler.m_Timestamps.resize(numberOfKeys);
-	//					sampler.m_TRSoutputValuesToBeInterpolated.resize(numberOfKeys);
-	//					sampler.m_Interpolation = SkeletalAnimation::InterpolationMethod::LINEAR;
-	//					for (u32 key = 0; key < numberOfKeys; ++key) {
-	//						ufbx_quat& value                               = fbxChannel.rotation_keys.data[key].value;
-	//						sampler.m_TRSoutputValuesToBeInterpolated[key] = quaternionUfbxToGlmVec4(value);
-	//						sampler.m_Timestamps[key]                      = fbxChannel.rotation_keys.data[key].time;
-	//					}
+		ufbx_bake_opts bakeOptions = {};
+		ufbx_error ufbxError{};
+		ufbx_unique_ptr<ufbx_baked_anim> fbxBakedAnim{ufbx_bake_anim(m_modelScene, fbxAnimation.anim, &bakeOptions, &ufbxError)};
 
-	//					animation->m_Samplers.push_back(sampler);
-	//				}
-	//				{
-	//					u32 numberOfKeys = fbxChannel.scale_keys.count;
+		if (!fbxBakedAnim) {
+			char errorBuffer[512];
+			ufbx_format_error(errorBuffer, sizeof(errorBuffer), &ufbxError);
+			ENGINE_ASSERT(false, "failed to bake animation, " + std::string(errorBuffer));
+			return;
+		}
 
-	//					SkeletalAnimation::Sampler sampler;
-	//					sampler.m_Timestamps.resize(numberOfKeys);
-	//					sampler.m_TRSoutputValuesToBeInterpolated.resize(numberOfKeys);
-	//					sampler.m_Interpolation = SkeletalAnimation::InterpolationMethod::LINEAR;
-	//					for (u32 key = 0; key < numberOfKeys; ++key) {
-	//						ufbx_vec3& value                               = fbxChannel.scale_keys.data[key].value;
-	//						sampler.m_TRSoutputValuesToBeInterpolated[key] = glm::vec4(vec3UfbxToGlm(value), 0.0f);
-	//						sampler.m_Timestamps[key]                      = fbxChannel.scale_keys.data[key].time;
-	//					}
+		// helper lambdas to convert asset importer formats to glm
+		auto vec3UfbxToGlm           = [](ufbx_vec3 const& vec3Ufbx) { return glm::vec3(vec3Ufbx.x, vec3Ufbx.y, vec3Ufbx.z); };
+		auto quaternionUfbxToGlmVec4 = [](ufbx_quat const& quaternionUfbx) {
+			glm::vec4 vec4GLM{};
+			vec4GLM.x = (float)quaternionUfbx.x;
+			vec4GLM.y = (float)quaternionUfbx.y;
+			vec4GLM.z = (float)quaternionUfbx.z;
+			vec4GLM.w = (float)quaternionUfbx.w;
+			return vec4GLM;
+		};
 
-	//					animation->m_Samplers.push_back(sampler);
-	//				}
-	//			}
-	//			channelAndSamplerIndex += 3;
-	//		}
-	//	}
+		u32 channelAndSamplerIndex = 0;
+		for (const ufbx_baked_node& fbxChannel : fbxBakedAnim->nodes) {
+			const u32 nodeIndex = fbxChannel.typed_id;
+			std::string fbxChannelName(m_modelScene->nodes[nodeIndex]->name.data);
+			// use fbx channels that actually belong to bones
+			bool isBone = nameToBoneIndex.contains(fbxChannelName);
+			if (isBone) {
+				// Each node of the skeleton has channels that point to samplers
+				{  // set up channels
+					{
+						AnimationClip::Channel channel{};
+						channel.path         = AnimationClip::Path::TRANSLATION;
+						channel.samplerIndex = channelAndSamplerIndex + 0;
+						channel.node         = nameToBoneIndex[fbxChannelName];
 
-	//	m_Animations->Push(animation);
-	//}
+						animation->channels.push_back(channel);
+					}
+					{
+						AnimationClip::Channel channel{};
+						channel.path         = AnimationClip::Path::ROTATION;
+						channel.samplerIndex = channelAndSamplerIndex + 1;
+						channel.node         = nameToBoneIndex[fbxChannelName];
+
+						animation->channels.push_back(channel);
+					}
+					{
+						AnimationClip::Channel channel{};
+						channel.path         = AnimationClip::Path::SCALE;
+						channel.samplerIndex = channelAndSamplerIndex + 2;
+						channel.node         = nameToBoneIndex[fbxChannelName];
+
+						animation->channels.push_back(channel);
+					}
+				}
+
+				{  // set up samplers
+					{
+						u32 numberOfKeys = fbxChannel.translation_keys.count;
+
+						AnimationClip::Sampler sampler;
+						sampler.timestamps.resize(numberOfKeys);
+						sampler.valuesToInterpolate.resize(numberOfKeys);
+						sampler.interpolation = AnimationClip::InterpolationMethod::LINEAR;
+						for (u32 key = 0; key < numberOfKeys; ++key) {
+							ufbx_vec3& value                 = fbxChannel.translation_keys.data[key].value;
+							sampler.valuesToInterpolate[key] = glm::vec4(vec3UfbxToGlm(value), 0.0f);
+							sampler.timestamps[key]          = fbxChannel.translation_keys.data[key].time;
+						}
+
+						animation->samplers.push_back(sampler);
+					}
+					{
+						u32 numberOfKeys = fbxChannel.rotation_keys.count;
+
+						AnimationClip::Sampler sampler;
+						sampler.timestamps.resize(numberOfKeys);
+						sampler.valuesToInterpolate.resize(numberOfKeys);
+						sampler.interpolation = AnimationClip::InterpolationMethod::LINEAR;
+						for (u32 key = 0; key < numberOfKeys; ++key) {
+							ufbx_quat& value                 = fbxChannel.rotation_keys.data[key].value;
+							sampler.valuesToInterpolate[key] = quaternionUfbxToGlmVec4(value);
+							sampler.timestamps[key]          = fbxChannel.rotation_keys.data[key].time;
+						}
+
+						animation->samplers.push_back(sampler);
+					}
+					{
+						u32 numberOfKeys = fbxChannel.scale_keys.count;
+
+						AnimationClip::Sampler sampler;
+						sampler.timestamps.resize(numberOfKeys);
+						sampler.valuesToInterpolate.resize(numberOfKeys);
+						sampler.interpolation = AnimationClip::InterpolationMethod::LINEAR;
+						for (u32 key = 0; key < numberOfKeys; ++key) {
+							ufbx_vec3& value                 = fbxChannel.scale_keys.data[key].value;
+							sampler.valuesToInterpolate[key] = glm::vec4(vec3UfbxToGlm(value), 0.0f);
+							sampler.timestamps[key]          = fbxChannel.scale_keys.data[key].time;
+						}
+
+						animation->samplers.push_back(sampler);
+					}
+				}
+				channelAndSamplerIndex += 3;
+			}
+		}
+
+		animations->Push(animation);
+	}
 
 	// m_SkeletalAnimation = (m_Animations->Size()) ? true : false;
 }
