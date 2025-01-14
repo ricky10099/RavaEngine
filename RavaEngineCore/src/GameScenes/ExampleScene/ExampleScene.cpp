@@ -30,10 +30,10 @@ void ExampleScene::Init() {
 	m_testLight = CreateEntity("testLight");
 	m_testLight->AddComponent<Rava::Component::PointLight>(glm::vec3(1.f, 0.f, 0.f), 0.1f, 0.1f);
 
-	m_entity2 = CreateEntity("Dragon");
+	m_entity2 = CreateEntity("Fish");
 	// m_entity2->AddComponent<Rava::Component::Model>("Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
 	m_entity2->AddComponent<Rava::Component::Model>("Models/Fish/Fish.fbx");
-	m_entity2->SetScale(glm::vec3{0.001f});
+	m_entity2->SetScale(glm::vec3{0.05f});
 }
 
 void ExampleScene::Update() {

@@ -17,7 +17,7 @@ class Buffer {
 		VkDeviceSize minOffsetAlignment = 1
 	);
 
-	Buffer(u32 size, BufferUsage bufferUsage = BufferUsage::UNIFORM_BUFFER_VISIBLE_TO_CPU);
+	Buffer(size_t size, BufferUsage bufferUsage = BufferUsage::UNIFORM_BUFFER_VISIBLE_TO_CPU);
 
 	~Buffer();
 

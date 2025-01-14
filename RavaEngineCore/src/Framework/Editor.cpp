@@ -47,9 +47,10 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport / Platform Windows
 
 	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	// ImGui::StyleColorsClassic();
-	SetDarkThemeColors();
+	// ImGui::StyleColorsDark();
+	SetEditorStlye();
+	SetEditorThemeColors();
+
 	// Setup Platform/Renderer backends
 	// Initialize imgui for vulkan
 	ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)Engine::s_Instance->GetGLFWWindow(), true);
@@ -148,8 +149,8 @@ void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame)
 void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGui::Begin("Scene Hierarchy");
 
-	for (size_t i = 0; i < scene->GetEntitySize(); ++i) {
-		DrawEntityNode(scene, scene->GetEntity((u32)i), i);
+	for (u32 i = 0; i < scene->GetEntitySize(); ++i) {
+		DrawEntityNode(scene, scene->GetEntity(i), i);
 		auto item = scene->m_entities[i];
 		if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
 			int n_next = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
@@ -458,14 +459,22 @@ void Editor::DisplayAddComponentEntry(const std::string& entryName) {
 	}
 }
 
-void Editor::SetDarkThemeColors() {
+void Editor::SetEditorStlye() {
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	style.TabBarOverlineSize = 0.0f;
+	style.TabBarBorderSize   = 0.0f;
+	style.TabRounding        = 5.0f;
+}
+
+void Editor::SetEditorThemeColors() {
 	auto& colors              = ImGui::GetStyle().Colors;
 	colors[ImGuiCol_WindowBg] = ImVec4{0.1f, 0.105f, 0.11f, 1.0f};
 
 	// Headers
 	colors[ImGuiCol_Header]        = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
-	colors[ImGuiCol_HeaderHovered] = ImVec4{0.3f, 0.305f, 0.31f, 1.0f};
-	colors[ImGuiCol_HeaderActive]  = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.9f, 0.3f, 0.0f, 0.8f);
+	colors[ImGuiCol_HeaderActive]  = ImVec4{0.9f, 0.3f, 0.0f, 1.0f};
 
 	// Buttons
 	colors[ImGuiCol_Button]        = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
@@ -478,15 +487,19 @@ void Editor::SetDarkThemeColors() {
 	colors[ImGuiCol_FrameBgActive]  = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 
 	// Tabs
-	colors[ImGuiCol_Tab]                = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
-	colors[ImGuiCol_TabHovered]         = ImVec4{0.38f, 0.3805f, 0.381f, 1.0f};
-	colors[ImGuiCol_TabActive]          = ImVec4{0.28f, 0.2805f, 0.281f, 1.0f};
-	colors[ImGuiCol_TabUnfocused]       = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
-	colors[ImGuiCol_TabUnfocusedActive] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
+	colors[ImGuiCol_Tab]               = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TabHovered]        = ImVec4{0.38f, 0.3805f, 0.381f, 1.0f};
+	colors[ImGuiCol_TabSelected]       = ImVec4{1.0f, 0.3529f, 0.0f, 1.0f};
+	colors[ImGuiCol_TabDimmed]         = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+	colors[ImGuiCol_TabDimmedSelected] = ImVec4{0.2f, 0.205f, 0.21f, 1.0f};
 
 	// Title
 	colors[ImGuiCol_TitleBg]          = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 	colors[ImGuiCol_TitleBgActive]    = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
 	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{0.15f, 0.1505f, 0.151f, 1.0f};
+
+	// Docking
+	colors[ImGuiCol_DockingPreview] = ImVec4(0.9f, 0.3f, 0.0f, 0.8f);
+	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 }
 }  // namespace Rava

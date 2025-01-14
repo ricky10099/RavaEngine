@@ -41,6 +41,7 @@ class Editor {
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>
 	void DisplayAddComponentEntry(const std::string& entryName);
-	void SetDarkThemeColors();
+	void SetEditorStlye();
+	void SetEditorThemeColors();
 };
-}  // namespace Rava
+}  // namespace Rava6

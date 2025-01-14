@@ -20,7 +20,7 @@ class Input {
 
    private:
 	static std::unordered_map<int, bool> m_keyProcessed;
-	static std::unordered_map<int, int> m_keyHoldFrames;
+	static std::unordered_map<int, u32> m_keyHoldFrames;
 	static std::unordered_map<int, bool> m_mouseProcessed;
-	static std::unordered_map<int, int> m_mouseHoldFrames;
+	static std::unordered_map<int, u32> m_mouseHoldFrames;
 };

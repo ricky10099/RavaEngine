@@ -53,7 +53,7 @@ bool ufbxLoader::Load(const u32 instanceCount) {
 }
 
 void ufbxLoader::LoadMaterials() {
-	u32 numMaterials = m_modelScene->materials.count;
+	u32 numMaterials = static_cast<u32>(m_modelScene->materials.count);
 	materials.resize(numMaterials);
 	// m_materialTextures.resize(numMaterials);
 	for (u32 materialIndex = 0; materialIndex < numMaterials; ++materialIndex) {
@@ -82,7 +82,7 @@ void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pb
 			ufbx_material_map const& materialMap = fbxMaterial->pbr.base_color;
 			if (materialMap.has_value) {
 				const ufbx_material_map& baseFactorMaterialMap = fbxMaterial->pbr.base_factor;
-				float baseFactor = baseFactorMaterialMap.has_value ? baseFactorMaterialMap.value_real : 1.0f;
+				float baseFactor = baseFactorMaterialMap.has_value ? (float)baseFactorMaterialMap.value_real : 1.0f;
 				if (materialMap.texture) {
 					if (auto texture = LoadTexture(materialMap, Texture::USE_SRGB)) {
 						materialTextures[Material::DIFFUSE_MAP_INDEX] = texture;
@@ -93,10 +93,10 @@ void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pb
 						pbrMaterial.diffuseColor.a = baseFactor;
 					}
 				} else {
-					pbrMaterial.diffuseColor.r = materialMap.value_vec4.x * baseFactor;
-					pbrMaterial.diffuseColor.g = materialMap.value_vec4.y * baseFactor;
-					pbrMaterial.diffuseColor.b = materialMap.value_vec4.z * baseFactor;
-					pbrMaterial.diffuseColor.a = materialMap.value_vec4.w * baseFactor;
+					pbrMaterial.diffuseColor.r = (float)materialMap.value_vec4.x * baseFactor;
+					pbrMaterial.diffuseColor.g = (float)materialMap.value_vec4.y * baseFactor;
+					pbrMaterial.diffuseColor.b = (float)materialMap.value_vec4.z * baseFactor;
+					pbrMaterial.diffuseColor.a = (float)materialMap.value_vec4.w * baseFactor;
 				}
 			}
 			break;
@@ -111,7 +111,7 @@ void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pb
 					}
 				} else  // constant material property
 				{
-					pbrMaterial.roughness = materialMap.value_real;
+					pbrMaterial.roughness = (float)materialMap.value_real;
 				}
 			}
 			break;
@@ -126,7 +126,7 @@ void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pb
 					}
 				} else  // constant material property
 				{
-					pbrMaterial.metallic = materialMap.value_real;
+					pbrMaterial.metallic = (float)materialMap.value_real;
 				}
 			}
 			break;
@@ -158,7 +158,7 @@ void ufbxLoader::LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pb
 		case UFBX_MATERIAL_PBR_EMISSION_FACTOR: {
 			ufbx_material_map const& materialMap = fbxMaterial->pbr.emission_factor;
 			if (materialMap.has_value) {
-				pbrMaterial.emissiveStrength = materialMap.value_real;
+				pbrMaterial.emissiveStrength = (float)materialMap.value_real;
 			}
 			break;
 		}
@@ -212,7 +212,7 @@ std::shared_ptr<Texture> Rava::ufbxLoader::LoadTexture(ufbx_material_map const& 
 void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
 	ufbx_mesh* fbxMesh = fbxNode->mesh;
 	if (fbxMesh) {
-		u32 meshCount = fbxMesh->material_parts.count;
+		u32 meshCount = static_cast<u32>(fbxMesh->material_parts.count);
 		if (meshCount > 0) {
 			vertices.clear();
 			indices.clear();
@@ -231,7 +231,7 @@ void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
 			}
 		}
 	}
-	u32 childCount = fbxNode->children.count;
+	u32 childCount = static_cast<u32>(fbxNode->children.count);
 	for (u32 childIndex = 0; childIndex < childCount; ++childIndex) {
 		LoadNode(fbxNode->children[childIndex]);
 	}
@@ -327,7 +327,7 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 				for (size_t weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
 					ufbx_skin_weight skinWeight = fbxSkin->weights.data[skinVertex.weight_begin + weightIndex];
 					int jointIndex              = skinWeight.cluster_index;
-					float weight                = skinWeight.weight;
+					float weight                = (float)skinWeight.weight;
 
 					switch (weightIndex) {
 						case 0:
@@ -364,7 +364,7 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 #pragma endregion
 
 #pragma region Indices
-	u32 meshAllVertices = vertices.size() - numVerticesBefore;
+	u32 meshAllVertices = static_cast<u32>(vertices.size() - numVerticesBefore);
 
 	ufbx_vertex_stream stream;
 	stream.data         = &vertices[numVerticesBefore];
@@ -388,7 +388,7 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 	}
 
 	vertices.resize(numVerticesBefore + vertexCount);
-	mesh.vertexCount = vertexCount;
+	mesh.vertexCount = static_cast<u32>(vertexCount);
 	mesh.indexCount  = meshAllVertices;
 #pragma endregion
 }
@@ -418,7 +418,7 @@ void ufbxLoader::CalculateTangents() {
 	if (indices.size()) {
 		CalculateTangentsFromIndexBuffer(indices);
 	} else {
-		u32 vertexCount = vertices.size();
+		u32 vertexCount = static_cast<u32>(vertices.size());
 		if (vertexCount) {
 			std::vector<u32> indices;
 			indices.resize(vertexCount);

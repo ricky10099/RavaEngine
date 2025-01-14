@@ -4,9 +4,9 @@
 #include "Framework/Input.h"
 
 std::unordered_map<int, bool> Input::m_keyProcessed;
-std::unordered_map<int, int> Input::m_keyHoldFrames;
+std::unordered_map<int, u32> Input::m_keyHoldFrames;
 std::unordered_map<int, bool> Input::m_mouseProcessed;
-std::unordered_map<int, int> Input::m_mouseHoldFrames;
+std::unordered_map<int, u32> Input::m_mouseHoldFrames;
 
 bool Input::IsKeyPress(KeyCode key) {
 	auto* window = static_cast<GLFWwindow*>(Rava::Engine::s_Instance->GetGLFWWindow());

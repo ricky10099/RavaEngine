@@ -120,10 +120,10 @@ constexpr auto ASSETS_DIR = "Assets/";
 ////////////////////////////////////////////////////////////////////////
 // Typedef
 ////////////////////////////////////////////////////////////////////////
-using s8  = char;
-using s16 = short;
-using s32 = int;
-using s64 = long long;
+using i8  = char;
+using i16 = short;
+using i32 = int;
+using i64 = long long;
 
 using u8  = unsigned char;
 using u16 = unsigned short;
