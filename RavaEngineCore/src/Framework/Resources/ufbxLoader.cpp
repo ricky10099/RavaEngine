@@ -210,14 +210,14 @@ std::shared_ptr<Texture> Rava::ufbxLoader::LoadTexture(ufbx_material_map const& 
 }
 
 void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
-	vertices.clear();
-	indices.clear();
-	meshes.clear();
-
 	ufbx_mesh* fbxMesh = fbxNode->mesh;
 	if (fbxMesh) {
 		u32 meshCount = fbxMesh->material_parts.count;
 		if (meshCount > 0) {
+			vertices.clear();
+			indices.clear();
+			meshes.clear();
+
 			meshes.resize(meshCount);
 			for (u32 meshIndex = 0; meshIndex < meshCount; ++meshIndex) {
 				LoadMesh(fbxNode, meshIndex);

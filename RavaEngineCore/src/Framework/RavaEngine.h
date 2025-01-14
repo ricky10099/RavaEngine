@@ -62,6 +62,7 @@ class Engine {
    private:
 	void UpdateTitleFPS(std::chrono::steady_clock::time_point newTime);
 	void EditorInputHandle();
+	void RunButton();
 	void UpdateEditorCamera();
 	void UpdateSceneAndEntities();
 	void UpdateSceneCamera();

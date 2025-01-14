@@ -106,7 +106,7 @@ void PointLightRenderSystem::Update(FrameInfo& frameInfo, GlobalUbo& ubo, entt::
 			auto& pointLight = view.get<Rava::Component::PointLight>(entity);
 			auto& transform  = view.get<Rava::Component::Transform>(entity);
 
-			assert(lightIndex < MAX_LIGHTS && "Point lights exceed maximum specified");
+			ENGINE_ASSERT(lightIndex < MAX_LIGHTS, "Point lights exceed maximum specified");
 
 			// copy light to ubo
 			ubo.pointLights[lightIndex].position = glm::vec4(transform.position, 1.0f);
@@ -120,14 +120,15 @@ void PointLightRenderSystem::Update(FrameInfo& frameInfo, GlobalUbo& ubo, entt::
 	// Directional light
 	{
 		int lightIndex = 0;
-		auto view      = registry.view<Rava::Component::DirectionalLight>();
+		auto view      = registry.view<Rava::Component::DirectionalLight, Rava::Component::Transform>();
 		for (auto entity : view) {
 			auto& directionalLight = view.get<Rava::Component::DirectionalLight>(entity);
+			auto& transform        = view.get<Rava::Component::Transform>(entity);
 
-			ASSERT(lightIndex < MAX_LIGHTS);
+			ENGINE_ASSERT(lightIndex < MAX_LIGHTS);
 
 			// copy light to ubo
-			ubo.directionalLight.direction = glm::vec4(directionalLight.direction, 0.0f);
+			ubo.directionalLight.direction = glm::vec4(transform.rotation, 0.0f);
 			ubo.directionalLight.color     = glm::vec4(directionalLight.color, directionalLight.lightIntensity);
 
 			lightIndex++;

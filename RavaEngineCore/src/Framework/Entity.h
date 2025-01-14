@@ -9,6 +9,7 @@ class Entity {
 	Entity() = delete;
 	Entity(entt::entity entity, Scene* scene, std::string_view name = "Empty Entity");
 	Entity(const Entity& other) = default;
+	~Entity()                   = default;
 
 	virtual void Init(){};
 	virtual void Update(){};

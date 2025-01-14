@@ -29,7 +29,10 @@ std::vector<VkVertexInputAttributeDescription> Vertex::GetAttributeDescriptions(
 
 Unique<MeshModel> MeshModel::CreateMeshModelFromFile(std::string_view filePath) {
 	ufbxLoader loader{filePath.data()};
-	loader.Load();
+	if (!loader.Load()) {
+		ENGINE_ERROR("Failed to load Model file {0}", filePath.data());
+		return nullptr;
+	}
 	return std::make_unique<MeshModel>(loader);
 }
 

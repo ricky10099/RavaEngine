@@ -61,7 +61,7 @@ void Renderer::Init() {
 	g_DummyBuffer->Flush();
 
 	g_DefaultTexture = std::make_shared<Rava::Texture>(true);
-	g_DefaultTexture->Init("Assets/Images/Rava.png", Rava::Texture::USE_SRGB);
+	g_DefaultTexture->Init("Assets/System/Rava.png", Rava::Texture::USE_SRGB);
 
 	Unique<DescriptorSetLayout> globalDescriptorSetLayout =
 		DescriptorSetLayout::Builder()
@@ -249,13 +249,13 @@ void Renderer::RenderpassEntities(entt::registry& registry, Rava::Camera& curren
 		// m_UniformBuffers[m_CurrentFrameIndex]->WriteToBuffer(&ubo);
 		// m_UniformBuffers[m_CurrentFrameIndex]->Flush();
 
-		//for (auto [entity, cam] : registry.view<Rava::Component::Camera>().each()) {
+		// for (auto [entity, cam] : registry.view<Rava::Component::Camera>().each()) {
 		//	if (cam.currentCamera) {
 		//		ubo.projection  = cam.view.GetProjection();
 		//		ubo.view        = cam.view.GetView();
 		//		ubo.inverseView = cam.view.GetInverseView();
 		//	}
-		//}
+		// }
 		m_pointLightRenderSystem->Update(m_frameInfo, ubo, registry);
 		m_uniformBuffers[m_currentFrameIndex]->WriteToBuffer(&ubo);
 		m_uniformBuffers[m_currentFrameIndex]->Flush();

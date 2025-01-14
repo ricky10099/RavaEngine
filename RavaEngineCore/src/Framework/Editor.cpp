@@ -6,6 +6,7 @@
 #include "Framework/Vulkan/Renderer.h"
 #include "Framework/Components.h"
 #include "Framework/Entity.h"
+#include "Framework/Camera.h"
 
 namespace Rava {
 
@@ -134,11 +135,6 @@ void Editor::Organize(Scene* scene) {
 	ImGui::SetNextWindowSize(ImVec2{400.0f, 100.0f}, ImGuiCond_Once);
 	ImGui::Begin("Render Setting");
 	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
-	auto view = scene->GetRegistry().view<Rava::Component::DirectionalLight>();
-	for (auto entity : view) {
-		auto& directionalLight = view.get<Rava::Component::DirectionalLight>(entity);
-		DrawVec3Control("Directional Light", directionalLight.direction, 1.0f, 150.0f);
-	}
 	ImGui::End();
 
 	ImGui::ShowDemoWindow();
@@ -158,7 +154,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 		if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
 			int n_next = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
 			if (n_next >= 0 && n_next < scene->GetEntitySize()) {
-				scene->m_entities[i] = scene->m_entities[n_next];
+				scene->m_entities[i]      = scene->m_entities[n_next];
 				scene->m_entities[n_next] = item;
 				ImGui::ResetMouseDragDelta();
 			}
@@ -191,7 +187,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 
 void Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index) {
 	ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-	//flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+	// flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 	ImGui::Selectable(entity->GetName().data());
 	// bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, entity->GetName().data());
 
@@ -241,24 +237,110 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 	}
 
 	if (ImGui::BeginPopup("Add Component")) {
+		DisplayAddComponentEntry<Component::Camera>("Camera");
 		DisplayAddComponentEntry<Component::PointLight>("Point Light");
+		DisplayAddComponentEntry<Component::DirectionalLight>("Directional Light");
 
 		ImGui::EndPopup();
 	}
 
 	ImGui::PopItemWidth();
 
-	DrawComponent<Component::Transform>("Transform", entity, [](auto& component) {
-		DrawVec3Control("Position", component->position);
-		glm::vec3 rotation = glm::degrees(component->rotation);
-		DrawVec3Control("Rotation", rotation);
-		component->rotation = glm::radians(rotation);
-		DrawVec3Control("Scale", component->scale, 1.0f);
+	DrawComponent<Component::Transform>(
+		"Transform",
+		entity,
+		[](auto& component) {
+			DrawVec3Control("Position", component->position);
+			glm::vec3 rotation = glm::degrees(component->rotation);
+			DrawVec3Control("Rotation", rotation);
+			component->rotation = glm::radians(rotation);
+			DrawVec3Control("Scale", component->scale, 1.0f);
+		},
+		false
+	);
+
+	DrawComponent<Component::Camera>("Camera", entity, [](auto& component) {
+		auto& camera = component->view;
+
+		ImGui::Checkbox("Main camera", &component->mainCamera);
+
+		const char* projectionTypeStrings[]     = {"Perspective", "Orthographic"};
+		const char* currentProjectionTypeString = projectionTypeStrings[(int)camera.GetProjectionType()];
+		if (ImGui::BeginCombo("Projection", currentProjectionTypeString)) {
+			for (int i = 0; i < 2; i++) {
+				bool isSelected = currentProjectionTypeString == projectionTypeStrings[i];
+				if (ImGui::Selectable(projectionTypeStrings[i], isSelected)) {
+					currentProjectionTypeString = projectionTypeStrings[i];
+					camera.SetProjectionType((Camera::ProjectionType)i);
+				}
+
+				if (isSelected) {
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+
+			ImGui::EndCombo();
+		}
+
+		if (camera.GetProjectionType() == Camera::ProjectionType::Perspective) {
+			float perspectiveVerticalFov = glm::degrees(camera.GetPerspectiveVerticalFOV());
+			if (ImGui::DragFloat("Vertical FOV", &perspectiveVerticalFov)) {
+				camera.SetPerspectiveVerticalFOV(glm::radians(perspectiveVerticalFov));
+			}
+
+			float perspectiveNear = camera.GetPerspectiveNearClip();
+			if (ImGui::DragFloat("Near", &perspectiveNear)) {
+				camera.SetPerspectiveNearClip(perspectiveNear);
+			}
+
+			float perspectiveFar = camera.GetPerspectiveFarClip();
+			if (ImGui::DragFloat("Far", &perspectiveFar)) {
+				camera.SetPerspectiveFarClip(perspectiveFar);
+			}
+		}
+
+		if (camera.GetProjectionType() == Camera::ProjectionType::Orthographic) {
+			float orthoSize = camera.GetOrthographicSize();
+			if (ImGui::DragFloat("Size", &orthoSize)) {
+				camera.SetOrthographicSize(orthoSize);
+			}
+
+			float orthoNear = camera.GetOrthographicNearClip();
+			if (ImGui::DragFloat("Near", &orthoNear)) {
+				camera.SetOrthographicNearClip(orthoNear);
+			}
+
+			float orthoFar = camera.GetOrthographicFarClip();
+			if (ImGui::DragFloat("Far", &orthoFar)) {
+				camera.SetOrthographicFarClip(orthoFar);
+			}
+
+			ImGui::Checkbox("Fixed Aspect Ratio", &component->fixedAspect);
+		}
+	});
+
+	DrawComponent<Component::PointLight>("Point Light", entity, [](auto& component) {
+		ImGui::ColorEdit3("Color", glm::value_ptr(component->color));
+		ImGui::DragFloat("Intensity", &component->lightIntensity, 0.1f, 0.0f, 100.0f);
+		ImGui::DragFloat("Radius", &component->radius, 0.1f, 0.0f, 100.0f);
+	});
+
+	DrawComponent<Component::DirectionalLight>("Directional Light", entity, [](auto& component) {
+		ImGui::ColorEdit3("Color", glm::value_ptr(component->color));
+		ImGui::DragFloat("Intensity", &component->lightIntensity, 0.1f, 0.0f, 100.0f);
+	});
+
+	DrawComponent<Component::Model>("Model", entity, [](auto& component) {
+		DrawVec3Control("Offset Position", component->offset.position);
+		glm::vec3 rotation = glm::degrees(component->offset.rotation);
+		DrawVec3Control("Offset Rotation", rotation);
+		component->offset.rotation = glm::radians(rotation);
+		DrawVec3Control("Offset Scale", component->offset.scale, 1.0f);
 	});
 }
 
 template <typename T, typename UIFunction>
-void Editor::DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction) {
+void Editor::DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction, bool removable) {
 	const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed
 										   | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap
 										   | ImGuiTreeNodeFlags_FramePadding;
@@ -271,27 +353,29 @@ void Editor::DrawComponent(const std::string& name, Shared<Entity> entity, UIFun
 		ImGui::Separator();
 		bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
 		ImGui::PopStyleVar();
-		ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
-		if (ImGui::Button("+", ImVec2{lineHeight, lineHeight})) {
-			ImGui::OpenPopup("ComponentSettings");
-		}
 
-		bool removeComponent = false;
-		if (ImGui::BeginPopup("ComponentSettings")) {
-			if (ImGui::MenuItem("Remove component")) {
-				removeComponent = true;
+		if (removable) {
+			ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+			if (ImGui::Button("+", ImVec2{lineHeight, lineHeight})) {
+				ImGui::OpenPopup("ComponentSettings");
 			}
 
-			ImGui::EndPopup();
+			bool removeComponent = false;
+			if (ImGui::BeginPopup("ComponentSettings")) {
+				if (ImGui::MenuItem("Remove component")) {
+					removeComponent = true;
+				}
+
+				ImGui::EndPopup();
+			}
+			if (removeComponent) {
+				entity->RemoveComponent<T>();
+			}
 		}
 
 		if (open) {
 			uiFunction(component);
 			ImGui::TreePop();
-		}
-
-		if (removeComponent) {
-			entity->RemoveComponent<T>();
 		}
 	}
 }
@@ -324,10 +408,10 @@ void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float 
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%g");
 	ImGui::PopItemWidth();
-	ImGui::SameLine();
 
+	ImGui::SameLine();
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.3f, 0.8f, 0.3f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.2f, 0.7f, 0.2f, 1.0f});
@@ -339,10 +423,10 @@ void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float 
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%g");
 	ImGui::PopItemWidth();
-	ImGui::SameLine();
 
+	ImGui::SameLine();
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.2f, 0.35f, 0.9f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.1f, 0.25f, 0.8f, 1.0f});
@@ -354,7 +438,7 @@ void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float 
 	ImGui::PopStyleColor(3);
 
 	ImGui::SameLine();
-	ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
+	ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%g");
 	ImGui::PopItemWidth();
 
 	ImGui::PopStyleVar();

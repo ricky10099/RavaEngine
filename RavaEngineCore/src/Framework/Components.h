@@ -71,14 +71,14 @@ struct Model {
 
 struct Camera {
 	Rava::Camera view;
-	bool currentCamera    = false;
-	bool fixedAspectRatio = false;
+	bool mainCamera    = false;
+	bool fixedAspect = false;
 	bool smoothTranslate  = true;
 
 	Camera()
 		: Camera(false) {}
 	Camera(bool isCurrentCamera)
-		: currentCamera(isCurrentCamera) {}
+		: mainCamera(isCurrentCamera) {}
 };
 
 struct PointLight {
@@ -98,7 +98,7 @@ struct PointLight {
 struct DirectionalLight {
 	glm::vec3 color         = {1.0f, 1.0f, 1.0f};
 	float lightIntensity    = 1.0f;
-	glm::vec3 direction     = {-1.0f, -3.0f, -1.0f};
+	//glm::vec3 direction     = {-1.0f, -3.0f, -1.0f};
 	//Rava::Camera* lightView = nullptr;
 	//int renderPass          = 0;
 
@@ -107,7 +107,7 @@ struct DirectionalLight {
 	DirectionalLight(glm::vec3 col, float intensity = 0.2f, glm::vec3 dir = {-1.0f, -3.0f, -1.0f}) {
 		color          = col;
 		lightIntensity = intensity;
-		direction      = dir;
+		//direction      = dir;
 	}
 };
 

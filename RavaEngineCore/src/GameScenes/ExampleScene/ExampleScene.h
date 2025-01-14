@@ -5,11 +5,13 @@
 
 class ExampleScene : public Rava::Scene {
    public:
-	//ExampleScene(std::string_view name = "Exmaple Scene");
+	ExampleScene()
+		: Rava::Scene("Example Scene") {}
 	~ExampleScene() = default;
 
 	virtual void Init() override;
 	virtual void Update() override;
+	virtual void ClearRegistry();
 
 	private:
 	Shared<Rava::Entity> m_entity;

@@ -43,7 +43,7 @@ void Window::InitWindow() {
 	// Set icon
 	GLFWimage icon;
 	int channels;
-	std::string iconPathStr = "Assets/Images/Rava.png";
+	std::string iconPathStr = "Assets/System/Rava.png";
 	icon.pixels             = stbi_load(iconPathStr.c_str(), &icon.width, &icon.height, &channels, 4);
 	if (icon.pixels) {
 		glfwSetWindowIcon(m_window, 1, &icon);

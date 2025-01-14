@@ -46,7 +46,7 @@ using namespace std::literals::chrono_literals;
 ////////////////////////////////////////////////////////////////////////
 // stb_image
 ////////////////////////////////////////////////////////////////////////
-//#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 
 ////////////////////////////////////////////////////////////////////////
 // glm
@@ -54,6 +54,7 @@ using namespace std::literals::chrono_literals;
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #	define GLM_ENABLE_EXPERIMENTAL
 #endif
@@ -70,7 +71,7 @@ using namespace std::literals::chrono_literals;
 ////////////////////////////////////////////////////////////////////////
 // ufbx
 ////////////////////////////////////////////////////////////////////////
-//#include <ufbx/ufbx.h>
+// #include <ufbx/ufbx.h>
 
 ////////////////////////////////////////////////////////////////////////
 // EnTT
@@ -116,7 +117,6 @@ constexpr auto ASSETS_DIR = "Assets/";
 	type(type&&)            = default; \
 	type& operator=(type&&) = default;
 
-
 ////////////////////////////////////////////////////////////////////////
 // Typedef
 ////////////////////////////////////////////////////////////////////////
@@ -130,11 +130,14 @@ using u16 = unsigned short;
 using u32 = unsigned int;
 using u64 = unsigned long long;
 
-template<typename T>
+template <typename T>
+using Unique = std::unique_ptr<T>;
+
+template <typename T>
 using Shared = std::shared_ptr<T>;
 
 template <typename T>
-using Unique = std::unique_ptr<T>;
+using Weak = std::weak_ptr<T>;
 
 ////////////////////////////////////////////////////////////////////////
 // Assert

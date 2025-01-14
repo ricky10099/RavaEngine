@@ -17,10 +17,12 @@ class Editor {
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
 
-	static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+	void SetSelectedEntity(Shared<Entity> entity) { m_selectedEntity = entity; }
+
+	static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 70.0f);
 
 	template <typename T, typename UIFunction>
-	static void DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction);
+	static void DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction, bool removable = true);
 
    private:
 	VkDescriptorPool m_descriptorPool;

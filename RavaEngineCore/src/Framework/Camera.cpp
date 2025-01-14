@@ -1,10 +1,58 @@
 #include "ravapch.h"
 
 #include "Framework/Camera.h"
+#include "Framework/Timestep.h"
 
 namespace Rava {
 Camera::Camera() {
 	SetPerspectiveProjection(glm::radians(50.f), m_aspect, 0.1f, 100.f);
+}
+
+void Camera::RecalculateProjection() {
+	if (m_projectionType == ProjectionType::Perspective) {
+		SetPerspectiveProjection(m_perspectiveFOV, m_aspect, m_perspectiveNear, m_perspectiveFar);
+	} else {
+		float orthoLeft   = -m_orthographicSize * m_aspect * 0.5f;
+		float orthoRight  = m_orthographicSize * m_aspect * 0.5f;
+		float orthoTop    = m_orthographicSize * 0.5f;
+		float orthoBottom = -m_orthographicSize * 0.5f;
+
+		SetOrthographicProjection3D(orthoLeft, orthoRight, orthoTop, orthoBottom, m_orthographicNear, m_orthographicFar);
+	}
+}
+
+void Camera::UpdateView() {
+	if (!m_initialized) {
+		return;
+	}
+	m_position = glm::mix(m_position, m_targetPosition, m_positionSmoothness * Timestep::Count());
+	m_rotation = glm::mix(m_rotation, m_targetRotation, m_rotationSmoothness * Timestep::Count());
+
+	SetViewYXZ(m_position, m_rotation);
+}
+
+void Camera::MoveCamera(glm::vec3 position, glm::vec3 rotation) {
+	if (m_isSmoothTranslate) {
+		SetTargetViewYXZ(position, rotation);
+		UpdateView();
+	} else {
+		SetViewYXZ(position, rotation);
+	}
+}
+
+void Rava::Camera::SetProjectionType(ProjectionType type) {
+	m_projectionType = type;
+	RecalculateProjection();
+}
+
+void Camera::SetPerspectiveProjection(float fovy, float aspect, float zNear, float zFar) {
+	m_perspectiveFOV  = fovy;
+	m_aspect          = aspect;
+	m_perspectiveNear = zNear;
+	m_perspectiveFar  = zFar;
+
+	ENGINE_ASSERT(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
+	m_projectionMatrix = glm::perspective(m_perspectiveFOV, m_aspect, m_perspectiveNear, m_perspectiveFar);
 }
 
 void Camera::SetOrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar) {
@@ -17,9 +65,8 @@ void Camera::SetOrthographicProjection(float left, float right, float top, float
 	m_projectionMatrix[3][2] = -zNear / (zFar - zNear);
 }
 
-void Camera::SetPerspectiveProjection(float fovy, float aspect, float zNear, float zFar) {
-	ENGINE_ASSERT(glm::abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
-	m_projectionMatrix = glm::perspective(fovy, aspect, zNear, zFar);
+void Camera::SetOrthographicProjection3D(float left, float right, float top, float bottom, float zNear, float zFar) {
+	m_projectionMatrix = glm::ortho(-left, -right, bottom, top, zNear, zFar);
 }
 
 void Camera::SetViewTarget(glm::vec3 position, glm::vec3 target, glm::vec3 up) {
@@ -65,6 +112,7 @@ void Camera::SetViewYXZ(glm::vec3 position, glm::vec3 rotation) {
 	m_inverseViewMatrix[3][1] = position.y;
 	m_inverseViewMatrix[3][2] = position.z;
 }
+
 void Camera::SetTargetViewYXZ(glm::vec3 targetPosition, glm::vec3 targetRotation) {
 	if (!m_initialized) {
 		m_position    = targetPosition;
@@ -75,19 +123,4 @@ void Camera::SetTargetViewYXZ(glm::vec3 targetPosition, glm::vec3 targetRotation
 	m_targetPosition = targetPosition;
 	m_targetRotation = targetRotation;
 }
-
-void Camera::UpdateView(float deltaTime) {
-	//float t                 = glm::clamp(m_positionSmoothness * deltaTime, 0.0f, 1.0f);
-	//static float slowFactor = 0.1f;  // Start very slow
-	//t *= slowFactor;
-	//slowFactor = glm::min(slowFactor + (deltaTime * 0.5f), 1.0f);  // Gradually increase to 1.0
-	if (!m_initialized) {
-		return;
-	}
-	m_position = glm::mix(m_position, m_targetPosition, m_positionSmoothness * deltaTime);
-	m_rotation = glm::mix(m_rotation, m_targetRotation, m_rotationSmoothness * deltaTime);
-
-	SetViewYXZ(m_position, m_rotation);
-}
-
 }  // namespace Rava
