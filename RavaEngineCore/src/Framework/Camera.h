@@ -71,7 +71,7 @@ class Camera {
 	glm::vec3 m_targetPosition{0.0f};   // Target position
 	glm::vec3 m_targetRotation{0.0f};   // Target rotation
 	float m_positionSmoothness = 3.0f;  // Higher value = faster movement
-	float m_rotationSmoothness = 3.0f;  // Higher value = faster rotation
+	float m_rotationSmoothness = 10.0f;  // Higher value = faster rotation
 	bool m_initialized         = false;
 
    private:

@@ -12,7 +12,7 @@ class Camera;
 class Engine {
    public:
 	static Engine* s_Instance;
-	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 0.0f);
 	u16 frameLimit       = 144;
 
 	// static constexpr int WINDOW_WIDTH  = 1280;
@@ -56,11 +56,13 @@ class Engine {
 	Camera m_mainCamera;
 	Camera m_editorCamera;
 	glm::vec3 m_editorCameraPosition = {0.0f, 2.0f, 2.0f};
-	glm::vec3 m_editorCameraRotation = {};
+	glm::vec3 m_editorCameraRotation = {0.0f, 0.0f, 0.0f};
+	glm::vec2 m_mouseRotateStartPos = {0.0f, 0.0f};
+	glm::vec2 m_mouseTranslateStartPos = {0.0f, 0.0f};
 
-
-   private:
-	void UpdateTitleFPS(std::chrono::steady_clock::time_point newTime);
+	private
+		: void
+		  UpdateTitleFPS(std::chrono::steady_clock::time_point newTime);
 	void EditorInputHandle();
 	void RunButton();
 	void UpdateEditorCamera();
