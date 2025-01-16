@@ -56,9 +56,11 @@ class ufbxLoader {
 
    public:
 	bool LoadAnimations();
+	bool AddAnimation();
 
    private:
 	void LoadSkeletons();
 	void LoadAnimationClips();
+	void AddAnimationClip();
 };
 }  // namespace Rava

@@ -3,6 +3,7 @@
 #include "Framework/RavaEngine.h"
 #include "Framework/Vulkan/Renderer.h"
 #include "Framework/Resources/Texture.h"
+#include "Framework/Resources/Skeleton.h"
 #include "Framework/Components.h"
 
 std::shared_ptr<Rava::Texture> g_TextureAtlas;
@@ -107,10 +108,20 @@ void Renderer::Init() {
 			)  // metallic map
 			.Build();
 
+	Unique<DescriptorSetLayout> animationDescriptorSetLayout =
+		DescriptorSetLayout::Builder()
+			.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)  // shader data for animation
+			.Build();
+
 	std::vector<VkDescriptorSetLayout> descriptorSetLayoutsDefaultDiffuse = {m_globalDescriptorSetLayout};
 
 	std::vector<VkDescriptorSetLayout> descriptorSetLayoutsPBR = {
 		m_globalDescriptorSetLayout, pbrMaterialDescriptorSetLayout->GetDescriptorSetLayout()
+	};
+	std::vector<VkDescriptorSetLayout> descriptorSetLayoutsAnimation = {
+		m_globalDescriptorSetLayout,
+		pbrMaterialDescriptorSetLayout->GetDescriptorSetLayout(),
+		animationDescriptorSetLayout->GetDescriptorSetLayout()
 	};
 
 	for (u32 i = 0; i < MAX_FRAMES_SYNC; i++) {
@@ -122,22 +133,19 @@ void Renderer::Init() {
 			.Build(m_globalDescriptorSets[i]);
 	}
 
-	for (u32 i = 0; i < MAX_FRAMES_SYNC; i++) {
-		VkDescriptorBufferInfo bufferInfo = m_uniformBuffers[i]->DescriptorInfo();
-		DescriptorWriter(*globalDescriptorSetLayout, *s_descriptorPool)
-			.WriteBuffer(0, &bufferInfo)
-			//.WriteImage(1, imageInfo0)
-			//.WriteImage(2, imageInfo1)
-			.Build(m_globalDescriptorSets[i]);
-	}
-
-	// std::vector<VkDescriptorSetLayout> entityDescriptorSetLayouts = {m_globalDescriptorSetLayout};
-	m_entityRenderSystem = std::make_unique<EntityRenderSystem>(m_renderPass->Get3DRenderPass(), descriptorSetLayoutsPBR);
+	m_entityRenderSystem = std::make_unique<EntityRenderSystem>(m_renderPass->Get3DRenderPass(), descriptorSetLayoutsAnimation);
+	m_entityAnimationRenderSystem =
+		std::make_unique<EntityAnimationRenderSystem>(m_renderPass->Get3DRenderPass(), descriptorSetLayoutsAnimation);
 	m_pointLightRenderSystem =
 		std::make_unique<PointLightRenderSystem>(m_renderPass->Get3DRenderPass(), m_globalDescriptorSetLayout);
 
 	// m_Imgui = Imgui::Create(m_RenderPass->GetGUIRenderPass(), static_cast<u32>(m_SwapChain->ImageCount()));
 	m_editor = std::make_unique<Rava::Editor>(m_renderPass->GetGUIRenderPass(), static_cast<u32>(m_swapChain->ImageCount()));
+	for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
+
+		m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
+
+	}
 }
 
 void Renderer::RecreateSwapChain() {
@@ -160,11 +168,12 @@ void Renderer::RecreateSwapChain() {
 			ENGINE_CRITICAL("swap chain image or depth format has changed");
 		}
 	}
-	// if (m_editor) {
-	// for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
-	//	m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
-	// }
-	//}
+
+	if (m_editor) {
+		for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
+			m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
+		}
+	}
 }
 
 void Renderer::RecreateRenderpass() {
@@ -213,6 +222,7 @@ void Renderer::BeginFrame() {
 	}
 
 	m_frameInProgress = true;
+	m_frameCounter++;
 
 	auto commandBuffer = GetCurrentCommandBuffer();
 	VkCommandBufferBeginInfo beginInfo{};
@@ -234,6 +244,19 @@ void Renderer::BeginFrame() {
 	}
 
 	m_editor->NewFrame();
+}
+
+void Renderer::UpdateAnimations(entt::registry& registry) {
+	auto view = registry.view<Rava::Component::Model, Rava::Component::Transform, Rava::Component::Animation>();
+	for (auto entity : view) {
+		auto& mesh      = view.get<Rava::Component::Model>(entity);
+		auto& animation = view.get<Rava::Component::Animation>(entity);
+		auto skeleton   = mesh.model->GetSkeleton();
+		if (mesh.enable) {
+			animation.animationList->Update(*skeleton, m_frameCounter);
+			mesh.model->UpdateAnimation(m_frameCounter);
+		}
+	}
 }
 
 void Renderer::RenderpassEntities(entt::registry& registry, Rava::Camera& currentCamera) {
@@ -377,7 +400,7 @@ void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) const {
 }
 
 void Renderer::UpdateEditor(Rava::Scene* scene) {
-	m_editor->Organize(scene);
+	m_editor->Organize(scene, m_currentImageIndex);
 }
 
 void Renderer::RenderEntities(Rava::Scene* scene) {
@@ -388,6 +411,7 @@ void Renderer::RenderEntities(Rava::Scene* scene) {
 
 		// 3D objects
 		m_entityRenderSystem->Render(m_frameInfo, registry);
+		m_entityAnimationRenderSystem->Render(m_frameInfo, registry);
 		// m_RenderSystemPbrSA->RenderEntities(m_frameInfo, registry);
 		// m_RenderSystemGrass->RenderEntities(m_frameInfo, registry);
 	}
@@ -401,9 +425,18 @@ void Renderer::RenderEnv(entt::registry& registry) {
 
 void Renderer::EndScene() {
 	if (m_currentCommandBuffer) {
+		//m_swapChain->TransitionSwapChainImageLayout(
+		//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_currentImageIndex, m_currentCommandBuffer
+		//);
 		m_editor->Render(m_currentCommandBuffer);
+		//m_swapChain->TransitionSwapChainImageLayout(
+		//	VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		//	m_currentImageIndex,
+		//	m_currentCommandBuffer
+		//);
 		EndRenderPass(/*m_currentCommandBuffer*/);  // end GUI render pass
 		EndFrame();
+		//m_swapChain->TransitionSwapChainImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	}
 }
 

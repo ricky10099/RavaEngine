@@ -24,18 +24,22 @@ void ExampleScene::Init() {
 	}
 
 	m_entity = CreateEntity("Test");
-	m_entity->AddComponent<Rava::Component::Model>("Models/Male.obj");
+	m_entity->AddComponent<Rava::Component::Model>("Assets/Models/Male.obj");
 	m_entity->GetComponent<Rava::Component::Transform>()->SetScale(glm::vec3{0.5f})->SetPosition(glm::vec3(0.0f, 0.5f, 0.0f));
 
 	m_testLight = CreateEntity("testLight");
 	m_testLight->AddComponent<Rava::Component::PointLight>(glm::vec3(1.f, 0.f, 0.f), 0.1f, 0.1f);
 
 	m_entity2 = CreateEntity("Fish");
-	// m_entity2->AddComponent<Rava::Component::Model>("Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
-	m_entity2->AddComponent<Rava::Component::Model>("Models/Fish/Fish.fbx");
-	m_entity2->AddComponent<Rava::Component::Animation>("Models/Fish/Fish.fbx");
-	m_entity2->SetScale(glm::vec3{0.05f});
+	m_entity2->AddComponent<Rava::Component::Model>("Assets/Models/Fish/Fish.fbx");
+	m_entity2->AddComponent<Rava::Component::Animation>("Assets/Models/Fish/Fish.fbx");
+	m_entity2->SetScale(glm::vec3{0.01f});
 	LOG_TRACE("Animation {0}", m_entity2->GetComponent<Rava::Component::Animation>()->animationList->GetName(0));
+
+	m_entity3 = CreateEntity("Dragon");
+	m_entity3->AddComponent<Rava::Component::Model>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
+	m_entity3->AddComponent<Rava::Component::Animation>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
+	m_entity3->SetScale(glm::vec3{0.001f});
 }
 
 void ExampleScene::Update() {

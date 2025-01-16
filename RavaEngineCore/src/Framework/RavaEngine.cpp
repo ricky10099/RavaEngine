@@ -64,12 +64,13 @@ void Engine::Run() {
 		}
 
 		m_renderer.BeginFrame();
+		m_renderer.UpdateEditor(m_currentScene.get());
+		m_renderer.UpdateAnimations(m_currentScene->GetRegistry());
 		m_renderer.RenderpassEntities(m_currentScene->GetRegistry(), m_mainCamera);
 		m_renderer.RenderEntities(m_currentScene.get());
 		m_renderer.RenderEnv(m_currentScene->GetRegistry());
 
 		m_renderer.RenderpassGUI();
-		m_renderer.UpdateEditor(m_currentScene.get());
 		m_renderer.EndScene();
 
 		m_frameCount++;

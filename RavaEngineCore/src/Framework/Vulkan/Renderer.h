@@ -6,6 +6,7 @@
 #include "Framework/Vulkan/Descriptor.h"
 #include "Framework/Vulkan/RenderSystem/PointLightRenderSystem.h"
 #include "Framework/Vulkan/RenderSystem/EntityRenderSystem.h"
+#include "Framework/Vulkan/RenderSystem/EntityAnimationRenderSystem.h"
 #include "Framework/Vulkan/Buffer.h"
 #include "Framework/Camera.h"
 #include "Framework/Editor.h"
@@ -35,6 +36,7 @@ class Renderer {
 	void EndRenderPass(/*VkCommandBuffer commandBuffer*/) const;
 
 	void UpdateEditor(Rava::Scene* scene);
+	void UpdateAnimations(entt::registry& registry);
 	//void Render(Scene* scene);
 
 	//void BeginFrame(Camera* camera);
@@ -50,7 +52,6 @@ class Renderer {
 	void EndScene();
 	//void DrawWithTransform(const Sprite& sprite, const glm::mat4& transform) ;
 	//void Draw(const Sprite& sprite, const glm::mat4& position, const glm::vec4& color, const float textureID = 1.0f);
-	//void UpdateAnimations(entt::registry& registry, const Timestep& timestep) ;
 
 	/*void SetAmbientLightIntensity(float ambientLightIntensity) {
 		m_ambientLightIntensity = ambientLightIntensity;
@@ -85,6 +86,7 @@ class Renderer {
 	// std::unique_ptr<VK_ShadowMap> m_ShadowMap[NUMBER_OF_SHADOW_MAPS];
 
 	std::unique_ptr<EntityRenderSystem> m_entityRenderSystem;
+	std::unique_ptr<EntityAnimationRenderSystem> m_entityAnimationRenderSystem;
 	std::unique_ptr<PointLightRenderSystem> m_pointLightRenderSystem;
 	//std::unique_ptr<VK_RenderSystemPbrSA> m_RenderSystemPbrSA;
 	//std::unique_ptr<VK_RenderSystemGrass> m_RenderSystemGrass;

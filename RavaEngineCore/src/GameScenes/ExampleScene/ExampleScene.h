@@ -15,7 +15,8 @@ class ExampleScene : public Rava::Scene {
 
 	private:
 	Shared<Rava::Entity> m_entity;
-	Shared<Rava::Entity> m_entity2;
+	 Shared<Rava::Entity> m_entity2;
+	 Shared<Rava::Entity> m_entity3;
 	Shared<Rava::Entity> m_testLight;
 
 	std::array<Shared<Rava::Entity>, 6> m_pointLights;

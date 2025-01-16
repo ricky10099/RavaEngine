@@ -32,23 +32,28 @@ struct Mesh {
 	u32 vertexCount;
 	u32 instanceCount;
 	Material material;
+	Shared<Vulkan::Buffer> skeletonBuffer;
+	VkDescriptorSet skeletonDescriptorSet;
 };
 
 class MeshModel {
    public:
 	// MeshModel(const AssimpLoader& loader);
 	MeshModel(const ufbxLoader& loader);
-	~MeshModel() = default;
+	~MeshModel();
 
 	NO_COPY(MeshModel)
 
 	static Unique<MeshModel> CreateMeshModelFromFile(std::string_view filepath);
 
-	void Bind(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout);
+	void UpdateAnimation(u32 frameCounter);
+
+	void Bind(VkCommandBuffer commandBuffer);
 	void Draw(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout);
 	void DrawMesh(const VkCommandBuffer& commandBuffer, const Mesh& mesh) const;
 
 	bool HasSkeleton() const { return m_skeleton ? true : false; }
+	Shared<Skeleton> GetSkeleton() { return m_skeleton; }
 	// std::shared_ptr<Skeleton> GetSkeleton() const { return m_skeleton; }
 	// std::shared_ptr<RVKBuffer> GetSkeletonBuffer() { return m_skeletonBuffer; }
 

@@ -25,6 +25,7 @@ using namespace std::literals::chrono_literals;
 #include <unordered_set>
 #include <set>
 #include <filesystem>
+#include <shobjidl.h> 
 
 ////////////////////////////////////////////////////////////////////////
 // spdlog

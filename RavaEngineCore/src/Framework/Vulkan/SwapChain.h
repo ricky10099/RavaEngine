@@ -14,6 +14,7 @@ class SwapChain {
 	VkResult AcquireNextImage(u32* imageIndex);
 	VkResult SubmitCommandBuffers(const VkCommandBuffer* buffers, u32* imageIndex);
 	bool CompareSwapFormats(const SwapChain& swapChain) const;
+	void TransitionSwapChainImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, u32 currentImageIndex, VkCommandBuffer commandBuffer);
 
 	VkImageView GetImageView(int index) { return m_swapChainImageViews[index]; }
 	size_t ImageCount() { return m_swapChainImages.size(); }

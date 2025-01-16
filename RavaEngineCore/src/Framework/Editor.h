@@ -13,7 +13,7 @@ class Editor {
 
 	void NewFrame();
 	void Render(VkCommandBuffer commandBuffer);
-	void Organize(Scene* scene);
+	void Organize(Scene* scene, u32 currentFrame);
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
 
@@ -37,10 +37,12 @@ class Editor {
 
    private:
 	void DrawSceneHierarchy(Scene* scene);
-	void DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
+	bool DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>
 	void DisplayAddComponentEntry(const std::string& entryName);
+	template <typename T>
+	void DisplayAddComponentFromFile(const std::string& entryName);
 	void SetEditorStlye();
 	void SetEditorThemeColors();
 };

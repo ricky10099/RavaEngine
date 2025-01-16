@@ -6,10 +6,14 @@
 #include "Framework/Resources/ufbxLoader.h"
 #include "Framework/Resources/Materials.h"
 #include "Framework/Vulkan/MaterialDescriptor.h"
+#include "Framework/Vulkan/Descriptor.h"
+#include "Framework/Vulkan/Renderer.h"
+
+extern std::shared_ptr<Vulkan::Buffer> g_DummyBuffer;
 
 namespace Rava {
 ufbxLoader::ufbxLoader(const std::string& filePath)
-	: m_filePath(ASSETS_DIR + filePath) {
+	: m_filePath(filePath) {
 	m_path = GetPathWithoutFileName(filePath);
 }
 
@@ -414,6 +418,20 @@ void ufbxLoader::AssignMaterial(Mesh& mesh, int const materialIndex) {
 		material.materialDescriptor = std::make_shared<Vulkan::MaterialDescriptor>(mesh.material, mesh.material.materialTextures);
 	}
 	ENGINE_INFO("Material assigned (ufbx): material index {0}", materialIndex);
+
+	if (skeletonUbo) {
+		mesh.skeletonBuffer = skeletonUbo;
+	} else {
+		mesh.skeletonBuffer = g_DummyBuffer;
+	}
+
+	Vulkan::DescriptorSetLayout::Builder builder{};
+	builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+	Unique<Vulkan::DescriptorSetLayout> localDescriptorSetLayout = builder.Build();
+	Vulkan::DescriptorWriter descriptorWriter(*localDescriptorSetLayout, *Vulkan::Renderer::s_descriptorPool);
+	VkDescriptorBufferInfo bufferInfo = mesh.skeletonBuffer->DescriptorInfo();
+	descriptorWriter.WriteBuffer(0, &bufferInfo);
+	descriptorWriter.Build(mesh.skeletonDescriptorSet);
 }
 
 void ufbxLoader::CalculateTangents() {

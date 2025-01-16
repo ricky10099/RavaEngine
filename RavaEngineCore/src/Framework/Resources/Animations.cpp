@@ -15,6 +15,16 @@ Unique<Animations> Animations::LoadAnimationsFromFile(std::string_view filePath)
 	return std::move(loader.animations);
 }
 
+bool Animations::AddAnimationFromFile(std::string_view filePath) {
+	ufbxLoader loader{filePath.data()};
+	return loader.LoadAnimations();
+	// ENGINE_ERROR("Failed to load Model file {0}", filePath.data());
+	//	return nullptr;
+	//}
+
+	// return std::move(loader.animations);
+}
+
 AnimationClip& Animations::operator[](std::string_view animation) {
 	return *m_animations[animation];
 }

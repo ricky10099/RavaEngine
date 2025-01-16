@@ -1,7 +1,7 @@
 #include "ravapch.h"
 
 #include "Framework/Vulkan/VKUtils.h"
-#include "Framework/Vulkan/RenderSystem/EntityRenderSystem.h"
+#include "Framework/Vulkan/RenderSystem/EntityAnimationRenderSystem.h"
 #include "Framework/Resources/MeshModel.h"
 #include "Framework/Components.h"
 
@@ -11,22 +11,22 @@ struct EntityPushConstantData {
 	glm::mat4 normalMatrix{1.f};
 };
 
-EntityRenderSystem::EntityRenderSystem(VkRenderPass renderPass, std::vector<VkDescriptorSetLayout> globalSetLayout) {
+EntityAnimationRenderSystem::EntityAnimationRenderSystem(
+	VkRenderPass renderPass, std::vector<VkDescriptorSetLayout>& globalSetLayout
+) {
 	CreatePipelineLayout(globalSetLayout);
 	CreatePipeline(renderPass);
 }
 
-EntityRenderSystem::~EntityRenderSystem() {
+EntityAnimationRenderSystem::~EntityAnimationRenderSystem() {
 	vkDestroyPipelineLayout(VKContext->GetLogicalDevice(), m_pipelineLayout, nullptr);
 }
 
-void EntityRenderSystem::CreatePipelineLayout(std::vector<VkDescriptorSetLayout> globalSetLayout) {
+void EntityAnimationRenderSystem::CreatePipelineLayout(std::vector<VkDescriptorSetLayout>& globalSetLayout) {
 	VkPushConstantRange pushConstantRange{};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pushConstantRange.offset     = 0;
 	pushConstantRange.size       = sizeof(EntityPushConstantData);
-
-	// std::vector<VkDescriptorSetLayout> descriptorSetLayouts{ globalSetLayout };
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -39,20 +39,20 @@ void EntityRenderSystem::CreatePipelineLayout(std::vector<VkDescriptorSetLayout>
 	VK_CHECK(result, "Failed to Create Pipeline Layout!");
 }
 
-void EntityRenderSystem::CreatePipeline(VkRenderPass renderPass) {
+void EntityAnimationRenderSystem::CreatePipeline(VkRenderPass renderPass) {
 	ENGINE_ASSERT(m_pipelineLayout != nullptr, "Cannot Create Pipeline before Pipeline Layout!");
 
 	PipelineConfig pipelineConfig{};
 	Pipeline::DefaultPipelineConfig(pipelineConfig);
 	pipelineConfig.renderPass     = renderPass;
 	pipelineConfig.pipelineLayout = m_pipelineLayout;
-	m_pipeline = std::make_unique<Pipeline>("Shaders/Model.vert.spv", "Shaders/Model.frag.spv", pipelineConfig);
+	m_pipeline = std::make_unique<Pipeline>("Shaders/ModelAnimation.vert.spv", "Shaders/Model.frag.spv", pipelineConfig);
 }
 
-void EntityRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registry) {
+void EntityAnimationRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registry) {
 	m_pipeline->Bind(frameInfo.commandBuffer);
 
-	auto view2 = registry.view<Rava::Component::Model, Rava::Component::Transform>(entt::exclude<Rava::Component::Animation>);
+	auto view2 = registry.view<Rava::Component::Model, Rava::Component::Transform, Rava::Component::Animation>();
 	for (auto entity : view2) {
 		auto& mesh      = view2.get<Rava::Component::Model>(entity);
 		auto& transform = view2.get<Rava::Component::Transform>(entity);

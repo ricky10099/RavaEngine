@@ -7,6 +7,7 @@ class AnimationClip;
 struct Skeleton;
 class Animations {
 	friend class Editor;
+
    public:
 	// used for range-based loops to traverse the array elements in m_AnimationsVector
 	struct Iterator {
@@ -29,8 +30,8 @@ class Animations {
 	void Push(const Shared<AnimationClip>& animation);
 
    public:
-
 	static Unique<Animations> LoadAnimationsFromFile(std::string_view filePath);
+	bool AddAnimationFromFile(std::string_view filePath);
 
 	void Start(std::string_view animation);  // by name
 	void Start(size_t index);                // by index

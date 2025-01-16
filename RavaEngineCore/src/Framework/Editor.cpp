@@ -1,6 +1,7 @@
 #include "ravapch.h"
 
 #include "Framework/Editor.h"
+#include "Framework/RavaUtils.h"
 #include "Framework/Vulkan/VKUtils.h"
 #include "Framework/RavaEngine.h"
 #include "Framework/Vulkan/Renderer.h"
@@ -76,6 +77,7 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	// ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
 	// VK_Core::m_Device->EndSingleTimeCommands(commandBuffer, QueueTypes::GRAPHICS);
 	// ImGui_ImplVulkan_DestroyFontUploadObjects();
+
 	m_descriptorSets.resize(imageCount);
 
 	VkSamplerCreateInfo samplerInfo{};
@@ -129,7 +131,7 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 	}
 }
 
-void Editor::Organize(Scene* scene) {
+void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::SetNextWindowBgAlpha(1.0f);
 	DrawSceneHierarchy(scene);
 
@@ -139,6 +141,11 @@ void Editor::Organize(Scene* scene) {
 	ImGui::End();
 
 	ImGui::ShowDemoWindow();
+
+	//    ImGui::Begin("Vulkan Viewport");
+	//ImVec2 windowSize = ImGui::GetContentRegionAvail();
+	//	ImGui::Image((ImTextureID)m_descriptorSets[currentFrame], windowSize);
+	//ImGui::End();
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {
@@ -150,14 +157,15 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGui::Begin("Scene Hierarchy");
 
 	for (u32 i = 0; i < scene->GetEntitySize(); ++i) {
-		DrawEntityNode(scene, scene->GetEntity(i), i);
-		auto item = scene->m_entities[i];
-		if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
-			int n_next = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
-			if (n_next >= 0 && n_next < scene->GetEntitySize()) {
-				scene->m_entities[i]      = scene->m_entities[n_next];
-				scene->m_entities[n_next] = item;
-				ImGui::ResetMouseDragDelta();
+		if (DrawEntityNode(scene, scene->GetEntity(i), i)) {
+			auto item = scene->m_entities[i];
+			if (ImGui::IsItemActive() && !ImGui::IsItemHovered()) {
+				int n_next = i + (ImGui::GetMouseDragDelta(0).y < 0.f ? -1 : 1);
+				if (n_next >= 0 && n_next < scene->GetEntitySize()) {
+					scene->m_entities[i]      = scene->m_entities[n_next];
+					scene->m_entities[n_next] = item;
+					ImGui::ResetMouseDragDelta();
+				}
 			}
 		}
 	}
@@ -186,7 +194,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGui::End();
 }
 
-void Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index) {
+bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index) {
 	ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
 	// flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
 	ImGui::Selectable(entity->GetName().data());
@@ -219,7 +227,10 @@ void Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t i
 		if (m_selectedEntity == entity) {
 			m_selectedEntity = {};
 		}
+		return false;
 	}
+
+	return true;
 }
 
 void Editor::DrawComponents(Shared<Entity> entity) {
@@ -241,9 +252,12 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 		DisplayAddComponentEntry<Component::Camera>("Camera");
 		DisplayAddComponentEntry<Component::PointLight>("Point Light");
 		DisplayAddComponentEntry<Component::DirectionalLight>("Directional Light");
-
+		DisplayAddComponentFromFile<Component::Model>("Model");
+		DisplayAddComponentFromFile<Component::Animation>("Animation");
 		ImGui::EndPopup();
 	}
+
+
 
 	ImGui::PopItemWidth();
 
@@ -346,28 +360,30 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 	DrawComponent<Component::Animation>("Animation", entity, [](auto& component) {
 		u32 animationIndex = 0;
 
-		std::string currentAnimationString = component->animationList->GetName(0);
-		if (ImGui::BeginCombo("##Animation Clip", currentAnimationString.c_str())) {
-			for (int i = 0; i < component->animationList->Size(); i++) {
-				bool isSelected = currentAnimationString == component->animationList->GetName(i);
-				if (ImGui::Selectable(component->animationList->GetName(i).c_str(), isSelected)) {
-					currentAnimationString = component->animationList->GetName(i);
-					u32 animationIndex     = i;
+		if (component->animationList) {
+			std::string currentAnimationString = component->animationList->GetName(0);
+			if (ImGui::BeginCombo("##Animation Clip", currentAnimationString.c_str())) {
+				for (int i = 0; i < component->animationList->Size(); i++) {
+					bool isSelected = currentAnimationString == component->animationList->GetName(i);
+					if (ImGui::Selectable(component->animationList->GetName(i).c_str(), isSelected)) {
+						currentAnimationString = component->animationList->GetName(i);
+						u32 animationIndex     = i;
+					}
+
+					if (isSelected) {
+						ImGui::SetItemDefaultFocus();
+					}
 				}
 
-				if (isSelected) {
-					ImGui::SetItemDefaultFocus();
-				}
+				ImGui::EndCombo();
 			}
 
-			ImGui::EndCombo();
-		}
-
-		float lineHeight  = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-		ImVec2 buttonSize = {lineHeight + 20.0f, lineHeight};
-		ImGui::SameLine();
-		if (ImGui::Button("Play", buttonSize)) {
-			component->animationList->Start(animationIndex);
+			float lineHeight  = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+			ImVec2 buttonSize = {lineHeight + 20.0f, lineHeight};
+			ImGui::SameLine();
+			if (ImGui::Button("Play", buttonSize)) {
+				component->animationList->Start(animationIndex);
+			}
 		}
 	});
 }
@@ -486,6 +502,22 @@ void Editor::DisplayAddComponentEntry(const std::string& entryName) {
 	if (!m_selectedEntity->HasComponent<T>()) {
 		if (ImGui::MenuItem(entryName.c_str())) {
 			m_selectedEntity->AddComponent<T>();
+			ImGui::CloseCurrentPopup();
+		}
+	}
+}
+
+template <typename T>
+void Editor::DisplayAddComponentFromFile(const std::string& entryName) {
+	if (!m_selectedEntity->HasComponent<T>()) {
+		if (ImGui::MenuItem(entryName.c_str())) {
+			bool result = false;
+			std::string filePath{""};
+			result = OpenFileDialog(filePath);
+			if (result) {
+				LOG_TRACE(filePath);
+			}
+			m_selectedEntity->AddComponent<T>(filePath);
 			ImGui::CloseCurrentPopup();
 		}
 	}

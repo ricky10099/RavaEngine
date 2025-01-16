@@ -9,7 +9,7 @@ AnimationClip::AnimationClip(std::string_view name)
 
 void AnimationClip::Update(Skeleton& skeleton) {
 	if (!IsRunning()) {
-		ENGINE_TRACE("Animation '{0}' expired", m_name);
+		//ENGINE_TRACE("Animation '{0}' expired", m_name);
 		return;
 	}
 
@@ -24,7 +24,7 @@ void AnimationClip::Update(Skeleton& skeleton) {
 		int jointIndex = skeleton.globalNodeToJointIndex[channel.node];
 		auto& joint    = skeleton.joints[jointIndex];
 
-		for (size_t i = 0; i < sampler.timestamps.size(); ++i) {
+		for (size_t i = 0; i < sampler.timestamps.size() - 1; ++i) {
 			if ((m_currentKeyFrameTime >= sampler.timestamps[i]) && (m_currentKeyFrameTime <= sampler.timestamps[i + 1])) {
 				switch (sampler.interpolation) {
 					case InterpolationMethod::LINEAR: {
