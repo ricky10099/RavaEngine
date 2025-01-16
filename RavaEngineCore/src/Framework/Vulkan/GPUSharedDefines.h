@@ -13,5 +13,5 @@
 #define GLSL_HAS_EMISSIVE_MAP           (0x1 << 0x6)
 
 // skeleton
-#define MAX_JOINTS          100
+#define MAX_JOINTS          500
 #define MAX_JOINT_INFLUENCE 4

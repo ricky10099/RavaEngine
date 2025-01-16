@@ -61,8 +61,8 @@ void main() {
         }
 
         vec4 localPosition  = skeletonUbo.jointsMatrices[jointIds[i]] * vec4(position,1.0f);
-//        animatedPosition += localPosition * weights[i];
-        animatedPosition += skeletonUbo.jointsMatrices[jointIds[i]] * weights[i];
+        animatedPosition += localPosition * weights[i];
+        //animatedPosition += skeletonUbo.jointsMatrices[jointIds[i]] * weights[i];
         jointTransform += skeletonUbo.jointsMatrices[jointIds[i]] * weights[i];
     }
 

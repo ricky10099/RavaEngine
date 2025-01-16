@@ -142,9 +142,7 @@ void Renderer::Init() {
 	// m_Imgui = Imgui::Create(m_RenderPass->GetGUIRenderPass(), static_cast<u32>(m_SwapChain->ImageCount()));
 	m_editor = std::make_unique<Rava::Editor>(m_renderPass->GetGUIRenderPass(), static_cast<u32>(m_swapChain->ImageCount()));
 	for (u32 i = 0; i < m_swapChain->ImageCount(); ++i) {
-
 		m_editor->RecreateDescriptorSet(m_swapChain->GetImageView(i), i);
-
 	}
 }
 
@@ -291,6 +289,12 @@ void Renderer::RenderpassEntities(entt::registry& registry, Rava::Camera& curren
 void Renderer::RenderpassGUI() {
 	if (m_currentCommandBuffer) {
 		EndRenderPass();  // end 3D renderpass
+		//m_swapChain->TransitionSwapChainImageLayout(
+		//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		//	VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		//	m_currentImageIndex,
+		//	m_currentCommandBuffer
+		//);
 		BeginGUIRenderPass();
 	}
 }
@@ -426,17 +430,18 @@ void Renderer::RenderEnv(entt::registry& registry) {
 void Renderer::EndScene() {
 	if (m_currentCommandBuffer) {
 		//m_swapChain->TransitionSwapChainImageLayout(
-		//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, m_currentImageIndex, m_currentCommandBuffer
-		//);
-		m_editor->Render(m_currentCommandBuffer);
-		//m_swapChain->TransitionSwapChainImageLayout(
-		//	VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		//	VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		//	m_currentImageIndex,
 		//	m_currentCommandBuffer
 		//);
+		m_editor->Render(m_currentCommandBuffer);
 		EndRenderPass(/*m_currentCommandBuffer*/);  // end GUI render pass
+		/*m_swapChain->TransitionSwapChainImageLayout(
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, m_currentImageIndex, m_currentCommandBuffer
+		);*/
 		EndFrame();
-		//m_swapChain->TransitionSwapChainImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		// m_swapChain->TransitionSwapChainImageLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	}
 }
 

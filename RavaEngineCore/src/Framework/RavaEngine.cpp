@@ -111,23 +111,26 @@ void Engine::EditorInputHandle() {
 	}
 
 	if (Input::IsMouseButtonPress(Mouse::Button1)) {
+		glm::vec3 moveDirection{0.0f};
+		glm::vec3 rotation{0.0f};
+
 		if (Input::IsKeyPress(Key::W)) {
-			m_editorCameraPosition += glm::vec3{0.0, 0.0, -5.0f} * Timestep::Count();
+			moveDirection += m_editorCameraForward;
 		}
 		if (Input::IsKeyPress(Key::S)) {
-			m_editorCameraPosition += glm::vec3{0.0, 0.0, 5.0f} * Timestep::Count();
+			moveDirection -= m_editorCameraForward;
 		}
 		if (Input::IsKeyPress(Key::A)) {
-			m_editorCameraPosition += glm::vec3{-5.0, 0.0, 0.0f} * Timestep::Count();
+			moveDirection -= m_editorCameraRight;
 		}
 		if (Input::IsKeyPress(Key::D)) {
-			m_editorCameraPosition += glm::vec3{5.0, 0.0, 0.0f} * Timestep::Count();
+			moveDirection += m_editorCameraRight;
 		}
 		if (Input::IsKeyPress(Key::Q)) {
-			m_editorCameraPosition += glm::vec3{0.0, 5.0, 0.0f} * Timestep::Count();
+			moveDirection += m_editorCameraUp;
 		}
 		if (Input::IsKeyPress(Key::E)) {
-			m_editorCameraPosition += glm::vec3{0.0, -5.0, 0.0f} * Timestep::Count();
+			moveDirection -= m_editorCameraUp;
 		}
 
 		if (Input::IsMouseButtonDown()) {
@@ -135,15 +138,36 @@ void Engine::EditorInputHandle() {
 		}
 
 		if (Input::IsMouseButtonPress()) {
-			m_editorCameraPosition.z +=
-				(Input::GetMouseY() - m_mouseTranslateStartPos.y) / m_ravaWindow.Height() * 5.0f * Timestep::Count();
-			m_editorCameraPosition.y -=
-				(Input::GetMouseX() - m_mouseTranslateStartPos.x) / m_ravaWindow.Width() * 5.0f * Timestep::Count();
+			if (Input::GetMouseY() - m_mouseTranslateStartPos.y > 100.0f) {
+				moveDirection -= m_editorCameraForward;
+			} else if (Input::GetMouseY() - m_mouseTranslateStartPos.y < -100.0f) {
+				moveDirection += m_editorCameraForward;
+			}
+
+			if (Input::GetMouseX() - m_mouseTranslateStartPos.x > 100.0f) {
+				moveDirection += m_editorCameraUp;
+			} else if (Input::GetMouseX() - m_mouseTranslateStartPos.x < -100.0f) {
+				moveDirection -= m_editorCameraUp;
+			}
 		} else {
-			m_editorCameraRotation.x -=
-				(Input::GetMouseY() - m_mouseRotateStartPos.y) / m_ravaWindow.Height() * 5.0f * Timestep::Count();
-			m_editorCameraRotation.y -=
-				(Input::GetMouseX() - m_mouseRotateStartPos.x) / m_ravaWindow.Width() * 5.0f * Timestep::Count();
+			if (Input::GetMouseX() - m_mouseRotateStartPos.x > 100.0f) {
+				rotation.y -= 1.0f;
+			} else if (Input::GetMouseX() - m_mouseRotateStartPos.x < -100.0f) {
+				rotation.y += 1.0f;
+			}
+
+			if (Input::GetMouseY() - m_mouseRotateStartPos.y > 100.0f) {
+				rotation.x -= 1.0f;
+			} else if (Input::GetMouseY() - m_mouseRotateStartPos.y < -100.0f) {
+				rotation.x += 1.0f;
+			}
+		}
+
+		if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
+			m_editorCameraRotation += 0.5f * Timestep::Count() * glm::normalize(rotation);
+		}
+		if (glm::dot(moveDirection, moveDirection) > std::numeric_limits<float>::epsilon()) {
+			m_editorCameraPosition += 3.0f * Timestep::Count() * glm::normalize(moveDirection);
 		}
 	}
 
@@ -181,6 +205,9 @@ void Engine::UpdateEditorCamera() {
 
 	m_editorCamera.MoveCamera(m_editorCameraPosition, m_editorCameraRotation);
 	m_editorCamera.RecalculateProjection();
+	m_editorCameraForward = {-sin(m_editorCameraRotation.y), 0.0f, -cos(m_editorCameraRotation.y)};
+	m_editorCameraRight   = {-m_editorCameraForward.z, 0.0f, m_editorCameraForward.x};
+	m_editorCameraUp      = {0.0f, 1.0f, 0.0f};
 }
 
 void Engine::UpdateSceneAndEntities() {
