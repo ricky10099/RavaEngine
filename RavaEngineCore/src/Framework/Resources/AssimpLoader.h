@@ -41,28 +41,28 @@ struct Skeleton;
 	bool m_fbxNoTangents;
 
    private:
-	void LoadMaterials();
-	void LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pbr_map materialProperty, int materialIndex);
-	std::shared_ptr<Texture> LoadTexture(ufbx_material_map const& materialMap, bool useSRGB);
+	//void LoadMaterials();
+	//void LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pbr_map materialProperty, int materialIndex);
+	//std::shared_ptr<Texture> LoadTexture(ufbx_material_map const& materialMap, bool useSRGB);
 	void LoadNode(aiNode* node, aiMatrix4x4 parentTransform, int parentNode);
 	void LoadMesh(const aiMesh* fbxMesh, const u32 meshIndex);
-	void AssignMaterial(Mesh& submesh, int const materialIndex);
+	//void AssignMaterial(Mesh& submesh, int const materialIndex);
 
-	void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
-	void CalculateTangents();
+	//void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
+	//void CalculateTangents();
 
    public:
 	Shared<Skeleton> skeleton;
 	Shared<Vulkan::Buffer> skeletonUbo;
-	Unique<Animations> animations;
+	//Unique<Animations> animations;
 
-   public:
-	bool LoadAnimations();
-	bool AddAnimation();
+ //  public:
+	//bool LoadAnimations();
+	//bool AddAnimation();
 
-   private:
-	void LoadSkeletons();
-	void LoadAnimationClips();
-	void AddAnimationClip();
+ //  private:
+	//void LoadSkeletons();
+	//void LoadAnimationClips();
+	//void AddAnimationClip();
 };
 }

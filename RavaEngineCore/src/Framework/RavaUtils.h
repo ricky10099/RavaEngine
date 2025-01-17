@@ -47,8 +47,16 @@ static bool OpenFileDialog(std::string& filePath) {
 		return FALSE;
 	}
 
+	char currentPath[FILENAME_MAX];
+	if (!_getcwd(currentPath, sizeof(currentPath))) {
+		return errno;
+	}
+
+	std::string defaultPath   = currentPath + std::string("\\Assets\\");
+	std::wstring wdefaultPath = std::wstring(defaultPath.begin(), defaultPath.end());
+
 	IShellItem* pCurFolder = NULL;
-	LPCWSTR deafultPath    = L"Assets/";
+	LPCWSTR deafultPath    = wdefaultPath.c_str();
 	f_SysHr                = SHCreateItemFromParsingName(deafultPath, NULL, IID_PPV_ARGS(&pCurFolder));
 	if (SUCCEEDED(f_SysHr)) {
 		f_FileSystem->SetDefaultFolder(pCurFolder);

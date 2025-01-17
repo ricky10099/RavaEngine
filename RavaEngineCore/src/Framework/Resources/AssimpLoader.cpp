@@ -20,6 +20,8 @@ bool AssimpLoader::LoadModel(const u32 instanceCount) {
 
 
 	LoadNode(m_modelScene->mRootNode, aiMatrix4x4(), -1);
+
+	return true;
 }
 
 void AssimpLoader::LoadNode(aiNode* node, aiMatrix4x4 parentTransform, int parentNode) {

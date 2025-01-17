@@ -18,7 +18,7 @@ ufbxLoader::ufbxLoader(const std::string& filePath)
 }
 
 bool ufbxLoader::LoadModel(const u32 instanceCount) {
-	ufbx_load_opts loadOptions{};
+	ufbx_load_opts loadOptions{.ignore_animation = true};
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;

@@ -23,9 +23,9 @@ struct Joint {
 		// apply scale, rotation, and translation IN THAT ORDER (read from right to the left)
 		// to the original undefomed bind matrix
 		// dynamically called once per frame
-		return glm::translate(glm::mat4(1.0f), deformedNodeTranslation) *  // T
-			   glm::mat4(deformedNodeRotation) *                           // R
-			   glm::scale(glm::mat4(1.0f), deformedNodeScale);             // S
+		return glm::scale(glm::mat4(1.0f), deformedNodeScale) *           // S
+			   glm::mat4(deformedNodeRotation) *                          // R
+			   glm::translate(glm::mat4(1.0f), deformedNodeTranslation);  // T
 	}
 
 	// parents and children for the tree hierachy

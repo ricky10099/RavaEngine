@@ -140,7 +140,7 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	//    ImGui::Begin("Vulkan Viewport");
 	//ImVec2 windowSize = ImGui::GetContentRegionAvail();
@@ -514,10 +514,9 @@ void Editor::DisplayAddComponentFromFile(const std::string& entryName) {
 			bool result = false;
 			std::string filePath{""};
 			result = OpenFileDialog(filePath);
-			if (result) {
-				LOG_TRACE(filePath);
+			if (result && filePath != "") {
+				m_selectedEntity->AddComponent<T>(filePath);
 			}
-			m_selectedEntity->AddComponent<T>(filePath);
 			ImGui::CloseCurrentPopup();
 		}
 	}

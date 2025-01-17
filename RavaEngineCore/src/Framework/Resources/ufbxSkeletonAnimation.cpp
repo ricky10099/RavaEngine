@@ -44,7 +44,7 @@ bool ufbxLoader::LoadAnimations() {
 }
 
 bool ufbxLoader::AddAnimation() {
-	ufbx_load_opts loadOptions{};
+	ufbx_load_opts loadOptions{ .ignore_geometry = true};
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;
