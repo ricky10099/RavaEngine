@@ -132,6 +132,7 @@ void ufbxLoader::LoadSkeletons() {
 				mat4Glm[column].y = (float)mat4Ufbx.cols[column].y;
 				mat4Glm[column].z = (float)mat4Ufbx.cols[column].z;
 				mat4Glm[column].w = column < 3 ? 0.0f : 1.0f;
+				
 			}
 			return mat4Glm;
 		};
@@ -149,6 +150,9 @@ void ufbxLoader::LoadSkeletons() {
 				bones[boneIndex].name              = nodeName;
 				ufbx_skin_cluster& bone            = *fbxSkin.clusters.data[boneIndex];
 				bones[boneIndex].inverseBindMatrix = mat4UfbxToGlm(bone.geometry_to_bone);
+				ENGINE_TRACE(
+					"\nBone: {} Inverse Bind Matrix: {}", bones[boneIndex].name, glm::to_string(bones[boneIndex].inverseBindMatrix)
+				);
 				bones[boneIndex].parentJoint       = parent;
 			}
 			for (u32 childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
