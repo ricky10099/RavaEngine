@@ -1,7 +1,6 @@
 #include "ravapch.h"
 
 #include "Framework/Resources/AnimationClip.h"
-#include "Framework/Resources/Skeleton.h"
 
 namespace Rava {
 AnimationClip::AnimationClip(std::string_view name)
@@ -9,7 +8,6 @@ AnimationClip::AnimationClip(std::string_view name)
 
 void AnimationClip::Update(Skeleton& skeleton) {
 	if (!IsRunning()) {
-		//ENGINE_TRACE("Animation '{0}' expired", m_name);
 		return;
 	}
 
@@ -19,87 +17,26 @@ void AnimationClip::Update(Skeleton& skeleton) {
 		m_currentKeyFrameTime = m_firstKeyFrameTime;
 	}
 
-	for (auto& channel : channels) {
-		auto& sampler  = samplers[channel.samplerIndex];
-		int jointIndex = skeleton.globalNodeToJointIndex[channel.node];
-		auto& joint    = skeleton.joints[jointIndex];
+	float frame_time = (m_currentKeyFrameTime - m_firstKeyFrameTime) * 30;
+	u32 f0           = glm::min((u32)frame_time + 0, m_totalFrameCount - 1);
+	u32 f1           = glm::min((u32)frame_time + 1, m_totalFrameCount - 1);
+	float t          = glm::min(frame_time - (float)f0, 1.0f);
 
-		for (size_t i = 0; i < sampler.timestamps.size() - 1; ++i) {
-			if ((m_currentKeyFrameTime >= sampler.timestamps[i]) && (m_currentKeyFrameTime <= sampler.timestamps[i + 1])) {
-				switch (sampler.interpolation) {
-					case InterpolationMethod::LINEAR: {
-						float a =
-							(m_currentKeyFrameTime - sampler.timestamps[i]) / (sampler.timestamps[i + 1] - sampler.timestamps[i]);
-						switch (channel.path) {
-							case Path::TRANSLATION: {
-								joint.deformedNodeTranslation =
-									glm::mix(sampler.valuesToInterpolate[i], sampler.valuesToInterpolate[i + 1], a);
+	for (u32 i = 0; i < skeleton.bones.size(); ++i) {
+		Bone bone           = skeleton.bones[i];
+		AnimNodes animNodes = animNodesList[i];
 
-								break;
-							}
-							case Path::ROTATION: {
-								glm::quat quaternion1{};
-								quaternion1.x = sampler.valuesToInterpolate[i].x;
-								quaternion1.y = sampler.valuesToInterpolate[i].y;
-								quaternion1.z = sampler.valuesToInterpolate[i].z;
+		glm::quat rot =
+			&animNodes.rotations
+				? glm::lerp(animNodes.rotations[f0].quaternion, animNodes.rotations[f1].quaternion, m_currentKeyFrameTime)
+				: animNodes.rotations[0].quaternion;
+		glm::vec3 pos   = &animNodes.positions
+							? glm::mix(animNodes.positions[f0].xyz, animNodes.positions[f1].xyz, m_currentKeyFrameTime)
+							: animNodes.positions[0].xyz;
+		glm::vec3 scale = &animNodes.scales ? glm::mix(animNodes.scales[f0].xyz, animNodes.scales[f1].xyz, m_currentKeyFrameTime)
+											: animNodes.scales[0].xyz;
 
-								glm::quat quaternion2{};
-								quaternion2.x = sampler.valuesToInterpolate[i + 1].x;
-								quaternion2.y = sampler.valuesToInterpolate[i + 1].y;
-								quaternion2.z = sampler.valuesToInterpolate[i + 1].z;
-
-								joint.deformedNodeRotation = glm::normalize(glm::slerp(quaternion1, quaternion2, a));
-
-								break;
-							}
-							case Path::SCALE: {
-								joint.deformedNodeScale =
-									glm::mix(sampler.valuesToInterpolate[i], sampler.valuesToInterpolate[i + 1], a);
-
-								break;
-							}
-							default:
-								ENGINE_ERROR("Path not found");
-						}
-
-						break;
-					}
-					case InterpolationMethod::STEP: {
-						switch (channel.path) {
-							case Path::TRANSLATION: {
-								joint.deformedNodeTranslation = glm::vec3(sampler.valuesToInterpolate[i]);
-
-								break;
-							}
-							case Path::ROTATION: {
-								joint.deformedNodeRotation.x = sampler.valuesToInterpolate[i].x;
-								joint.deformedNodeRotation.y = sampler.valuesToInterpolate[i].y;
-								joint.deformedNodeRotation.z = sampler.valuesToInterpolate[i].z;
-								joint.deformedNodeRotation.w = sampler.valuesToInterpolate[i].w;
-
-								break;
-							}
-							case Path::SCALE: {
-								joint.deformedNodeScale = glm::vec3(sampler.valuesToInterpolate[i]);
-
-								break;
-							}
-							default:
-								ENGINE_ERROR("Path not found");
-						}
-
-						break;
-					}
-					case InterpolationMethod::CUBICSPLINE: {
-						ENGINE_WARN("Animation::Update(): Interploation method CUBICSPLINE not supported!");
-						break;
-					}
-					default:
-						ENGINE_WARN("Animation::Update(): Interploation method not supported");
-						break;
-				}
-			}
-		}
+		bone.boneOffset = glm::translate(glm::mat4(1.0f), pos) * glm::mat4(rot) * glm::scale(glm::mat4(1.0f), scale);
 	}
 }
 }  // namespace Rava

@@ -36,7 +36,7 @@ class ufbxLoader {
 	u32 m_instanceCount = 1;
 	u32 m_instanceIndex = 0;
 
-	bool m_fbxNoTangents;
+	bool m_fbxNoTangents = false;
 
    private:
 	void LoadMaterials();
@@ -61,6 +61,6 @@ class ufbxLoader {
    private:
 	void LoadSkeletons();
 	void LoadAnimationClips();
-	void AddAnimationClip();
+	//void AddAnimationClip();
 };
 }  // namespace Rava

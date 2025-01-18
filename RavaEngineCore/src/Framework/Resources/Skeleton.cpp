@@ -3,152 +3,63 @@
 #include "Framework/Resources/Skeleton.h"
 
 namespace Rava {
-void Skeleton::Traverse() {
-	ENGINE_TRACE("Skeleton: {0}", name);
-	u32 indent = 0;
-	std::string indentStr(indent, ' ');
-	auto& joint = joints[0];  // root joint
-	Traverse(joint, indent + 1);
-}
-void Skeleton::Traverse(Joint const& joint, u32 indent) {
-	std::string indentStr(indent, ' ');
-	size_t numberOfChildren = joint.children.size();
-
-	ENGINE_TRACE(
-		"{0}name: {1}, m_Parent: {2}, m_Children.size(): {3}", indentStr, joint.name, joint.parentJoint, numberOfChildren
-	);
-
-	for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
-		int jointIndex = joint.children[childIndex];
-		ENGINE_TRACE("{0}child {1}: index: {2}", indentStr, childIndex, jointIndex);
-	}
-
-	for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
-		int jointIndex = joint.children[childIndex];
-		Traverse(joints[jointIndex], indent + 1);
-	}
-}
+//void Skeleton::Traverse() {
+//	ENGINE_TRACE("Skeleton: {0}", name);
+//	u32 indent = 0;
+//	std::string indentStr(indent, ' ');
+//	auto& joint = joints[0];  // root joint
+//	Traverse(joint, indent + 1);
+//}
+//void Skeleton::Traverse(Joint const& joint, u32 indent) {
+//	std::string indentStr(indent, ' ');
+//	size_t numberOfChildren = joint.children.size();
+//
+//	ENGINE_TRACE(
+//		"{0}name: {1}, m_Parent: {2}, m_Children.size(): {3}", indentStr, joint.name, joint.parentJoint, numberOfChildren
+//	);
+//
+//	for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
+//		int jointIndex = joint.children[childIndex];
+//		ENGINE_TRACE("{0}child {1}: index: {2}", indentStr, childIndex, jointIndex);
+//	}
+//
+//	for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
+//		int jointIndex = joint.children[childIndex];
+//		Traverse(joints[jointIndex], indent + 1);
+//	}
+//}
 
 void Skeleton::Update() {
 	// update the final global transform of all joints
-	int16_t numberOfJoints = static_cast<int16_t>(joints.size());
+	//int16_t numberOfJoints = static_cast<int16_t>(joints.size());
+	i32 numBones = static_cast<i32>(bones.size());
 
 	if (!isAnimated)  // used for debugging to check if the model renders w/o deformation
 	{
-		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
+		for (int16_t jointIndex = 0; jointIndex < numBones; ++jointIndex) {
 			skeletonUbo.jointsMatrices[jointIndex] = glm::mat4(1.0f);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m00{1}, m01{2}, m02{3}, m03{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][0][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m10{1}, m11{2}, m12{3}, m13{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][1][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m20{1}, m21{2}, m22{3}, m23{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][2][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m30{1}, m31{2}, m32{3}, m33{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][3][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][2]
-			//);
 		}
 	} else {
 		// STEP 1: apply animation results
-		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
-			skeletonUbo.jointsMatrices[jointIndex] = joints[jointIndex].GetDeformedBindMatrix();
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m00: {1}, m01: {2}, m02: {3}, m03: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][0][0],
-				skeletonUbo.jointsMatrices[jointIndex][0][1],
-				skeletonUbo.jointsMatrices[jointIndex][0][2],
-				skeletonUbo.jointsMatrices[jointIndex][0][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m10{1}, m11{2}, m12{3}, m13{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][1][0],
-				skeletonUbo.jointsMatrices[jointIndex][1][1],
-				skeletonUbo.jointsMatrices[jointIndex][1][2],
-				skeletonUbo.jointsMatrices[jointIndex][1][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m20{1}, m21{2}, m22{3}, m23{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][2][0],
-				skeletonUbo.jointsMatrices[jointIndex][2][1],
-				skeletonUbo.jointsMatrices[jointIndex][2][2],
-				skeletonUbo.jointsMatrices[jointIndex][2][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m30{1}, m31{2}, m32{3}, m33{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][3][0],
-				skeletonUbo.jointsMatrices[jointIndex][3][1],
-				skeletonUbo.jointsMatrices[jointIndex][3][2],
-				skeletonUbo.jointsMatrices[jointIndex][3][2]
-			);
+		for (int16_t jointIndex = 0; jointIndex < numBones; ++jointIndex) {
+			//skeletonUbo.jointsMatrices[jointIndex] = bones[jointIndex].GetDeformedBindMatrix();
+			Bone bone = bones[jointIndex];
+			if (bone.parent >= 0) {
+				bone.transform = bones[bone.parent].transform * bone.boneOffset;
+			} else {
+				bone.transform = bone.boneOffset;
+			}
+			skeletonUbo.jointsMatrices[jointIndex] = bone.transform;
 		}
 
-		// STEP 2: recursively update final joint matrices
-		UpdateJoint(ROOT_JOINT);
+		//// STEP 2: recursively update final joint matrices
+		//UpdateJoint(ROOT_JOINT);
 
-		// STEP 3: bring back into model space
-		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
-			skeletonUbo.jointsMatrices[jointIndex] =
-				skeletonUbo.jointsMatrices[jointIndex] * joints[jointIndex].inverseBindMatrix;
-
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m00: {1}, m01: {2}, m02: {3}, m03: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][0][0],
-				skeletonUbo.jointsMatrices[jointIndex][0][1],
-				skeletonUbo.jointsMatrices[jointIndex][0][2],
-				skeletonUbo.jointsMatrices[jointIndex][0][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m10: {1}, m11: {2}, m12: {3}, m13: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][1][0],
-				skeletonUbo.jointsMatrices[jointIndex][1][1],
-				skeletonUbo.jointsMatrices[jointIndex][1][2],
-				skeletonUbo.jointsMatrices[jointIndex][1][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m20: {1}, m21: {2}, m22: {3}, m23: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][2][0],
-				skeletonUbo.jointsMatrices[jointIndex][2][1],
-				skeletonUbo.jointsMatrices[jointIndex][2][2],
-				skeletonUbo.jointsMatrices[jointIndex][2][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m30: {1}, m31: {2}, m32: {3}, m33: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][3][0],
-				skeletonUbo.jointsMatrices[jointIndex][3][1],
-				skeletonUbo.jointsMatrices[jointIndex][3][2],
-				skeletonUbo.jointsMatrices[jointIndex][3][3]
-			);
-		}
+		//// STEP 3: bring back into model space
+		//for (int16_t jointIndex = 0; jointIndex < numBones; ++jointIndex) {
+		//	skeletonUbo.jointsMatrices[jointIndex] =
+		//		skeletonUbo.jointsMatrices[jointIndex] * joints[jointIndex].inverseBindMatrix;
+		//}
 	}
 }
 
@@ -156,18 +67,18 @@ void Skeleton::Update() {
 // traverses entire skeleton from top (a.k.a root a.k.a hip bone)
 // This way, it is guaranteed that the global parent transform is already updated
 void Skeleton::UpdateJoint(i16 jointIndex) {
-	auto& currentJoint = joints[jointIndex];  // just a reference for easier code
+	//auto& currentJoint = joints[jointIndex];  // just a reference for easier code
 
-	int16_t parentJoint = currentJoint.parentJoint;
-	if (parentJoint != NO_PARENT) {
-		skeletonUbo.jointsMatrices[jointIndex] = skeletonUbo.jointsMatrices[parentJoint] * skeletonUbo.jointsMatrices[jointIndex];
-	}
+	//int16_t parentJoint = currentJoint.parentJoint;
+	//if (parentJoint != NO_PARENT) {
+	//	skeletonUbo.jointsMatrices[jointIndex] = skeletonUbo.jointsMatrices[parentJoint] * skeletonUbo.jointsMatrices[jointIndex];
+	//}
 
-	// update children
-	size_t numberOfChildren = currentJoint.children.size();
-	for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
-		int childJoint = currentJoint.children[childIndex];
-		UpdateJoint(childJoint);
-	}
+	//// update children
+	//size_t numberOfChildren = currentJoint.children.size();
+	//for (size_t childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
+	//	int childJoint = currentJoint.children[childIndex];
+	//	UpdateJoint(childJoint);
+	//}
 }
 }  // namespace Rava

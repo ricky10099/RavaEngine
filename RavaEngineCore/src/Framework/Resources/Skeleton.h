@@ -33,15 +33,24 @@ struct Joint {
 	std::vector<int> children;
 };
 
+struct Bone {
+	i32 parent;
+	i32 boneID;
+	glm::mat4 transform;
+	glm::mat4 boneOffset;
+	std::vector<i32> children;
+};
+
 struct Skeleton {
-	void Traverse();
-	void Traverse(Joint const& joint, u32 indent = 0);
+	//void Traverse();
+	//void Traverse(Joint const& joint, u32 indent = 0);
 	void Update();
 	void UpdateJoint(i16 joint);  // signed because -1 maybe used for invalid joint
 
 	bool isAnimated = true;
 	std::string_view name;
-	std::vector<Joint> joints;
+	//std::vector<Joint> joints;
+	std::vector<Bone> bones;
 	std::map<int, int> globalNodeToJointIndex;
 	SkeletonUbo skeletonUbo;
 };
