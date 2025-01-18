@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Framework/Timestep.h"
+#include "Framework/Resources/Skeleton.h"
 
 namespace Rava {
 struct Skeleton;
@@ -20,17 +21,17 @@ class AnimationClip {
 		CUBICSPLINE
 	};
 
-	struct Channel {
-		Path path;
-		int samplerIndex;
-		int node;
-	};
+	//struct Channel {
+	//	Path path;
+	//	int samplerIndex;
+	//	int node;
+	//};
 
-	struct Sampler {
-		std::vector<float> timestamps;
-		std::vector<glm::vec4> valuesToInterpolate;
-		InterpolationMethod interpolation;
-	};
+	//struct Sampler {
+	//	std::vector<float> timestamps;
+	//	std::vector<glm::vec4> valuesToInterpolate;
+	//	InterpolationMethod interpolation;
+	//};
 
 	struct Frame {
 		double time;
@@ -57,9 +58,9 @@ class AnimationClip {
 	};
 
    public:
-	std::vector<Sampler> samplers;
-	std::vector<Channel> channels;
-	std::vector<AnimNodes> animNodes;
+	//std::vector<Sampler> samplers;
+	//std::vector<Channel> channels;
+	std::vector<AnimNodes> animNodesList;
 
    public:
 	AnimationClip(std::string_view name);
@@ -72,12 +73,14 @@ class AnimationClip {
 	void SetRepeat(bool repeat) { m_repeat = repeat; }
 	void SetFirstKeyFrameTime(float firstKeyFrameTime) { m_firstKeyFrameTime = firstKeyFrameTime; }
 	void SetLastKeyFrameTime(float lastKeyFrameTime) { m_lastKeyFrameTime = lastKeyFrameTime; }
+	void SetTotalFrameCount(u32 totalFrameCount) { m_totalFrameCount = totalFrameCount; }
 
 	bool IsRunning() const { return (m_repeat || (m_currentKeyFrameTime <= m_lastKeyFrameTime)); }
 	bool WillExpire() const { return (!m_repeat && ((m_currentKeyFrameTime + Timestep::Count()) > m_lastKeyFrameTime)); }
 	std::string_view GetName() const { return m_name; }
 	float GetDuration() const { return m_lastKeyFrameTime - m_firstKeyFrameTime; }
 	float GetCurrentFrameTime() const { return m_currentKeyFrameTime - m_firstKeyFrameTime; }
+	u32 GetTotalFrameTime() const { return m_totalFrameCount; }
 
    private:
 	std::string_view m_name;
@@ -88,5 +91,6 @@ class AnimationClip {
 	float m_firstKeyFrameTime   = 0.0f;
 	float m_lastKeyFrameTime    = 0.0f;
 	float m_currentKeyFrameTime = 0.0f;
+	u32 m_totalFrameCount       = 0;
 };
 }  // namespace Rava
