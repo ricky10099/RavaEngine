@@ -37,75 +37,11 @@ void Skeleton::Update() {
 	{
 		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
 			skeletonUbo.jointsMatrices[jointIndex] = glm::mat4(1.0f);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m00{1}, m01{2}, m02{3}, m03{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][0][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][0][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m10{1}, m11{2}, m12{3}, m13{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][1][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][1][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m20{1}, m21{2}, m22{3}, m23{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][2][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][2][3]
-			//);
-			//LOG_TRACE(
-			//	"jointsMatrices[{0}]: m30{1}, m31{2}, m32{3}, m33{4}",
-			//	jointIndex,
-			//	skeletonUbo.jointsMatrices[jointIndex][3][0],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][1],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][2],
-			//	skeletonUbo.jointsMatrices[jointIndex][3][2]
-			//);
 		}
 	} else {
 		// STEP 1: apply animation results
 		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
 			skeletonUbo.jointsMatrices[jointIndex] = joints[jointIndex].GetDeformedBindMatrix();
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m00: {1}, m01: {2}, m02: {3}, m03: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][0][0],
-				skeletonUbo.jointsMatrices[jointIndex][0][1],
-				skeletonUbo.jointsMatrices[jointIndex][0][2],
-				skeletonUbo.jointsMatrices[jointIndex][0][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m10{1}, m11{2}, m12{3}, m13{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][1][0],
-				skeletonUbo.jointsMatrices[jointIndex][1][1],
-				skeletonUbo.jointsMatrices[jointIndex][1][2],
-				skeletonUbo.jointsMatrices[jointIndex][1][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m20{1}, m21{2}, m22{3}, m23{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][2][0],
-				skeletonUbo.jointsMatrices[jointIndex][2][1],
-				skeletonUbo.jointsMatrices[jointIndex][2][2],
-				skeletonUbo.jointsMatrices[jointIndex][2][3]
-			);
-			LOG_TRACE(
-				"b4u jointsMatrices[{0}]: m30{1}, m31{2}, m32{3}, m33{4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][3][0],
-				skeletonUbo.jointsMatrices[jointIndex][3][1],
-				skeletonUbo.jointsMatrices[jointIndex][3][2],
-				skeletonUbo.jointsMatrices[jointIndex][3][2]
-			);
 		}
 
 		// STEP 2: recursively update final joint matrices
@@ -115,39 +51,6 @@ void Skeleton::Update() {
 		for (int16_t jointIndex = 0; jointIndex < numberOfJoints; ++jointIndex) {
 			skeletonUbo.jointsMatrices[jointIndex] =
 				skeletonUbo.jointsMatrices[jointIndex] * joints[jointIndex].inverseBindMatrix;
-
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m00: {1}, m01: {2}, m02: {3}, m03: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][0][0],
-				skeletonUbo.jointsMatrices[jointIndex][0][1],
-				skeletonUbo.jointsMatrices[jointIndex][0][2],
-				skeletonUbo.jointsMatrices[jointIndex][0][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m10: {1}, m11: {2}, m12: {3}, m13: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][1][0],
-				skeletonUbo.jointsMatrices[jointIndex][1][1],
-				skeletonUbo.jointsMatrices[jointIndex][1][2],
-				skeletonUbo.jointsMatrices[jointIndex][1][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m20: {1}, m21: {2}, m22: {3}, m23: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][2][0],
-				skeletonUbo.jointsMatrices[jointIndex][2][1],
-				skeletonUbo.jointsMatrices[jointIndex][2][2],
-				skeletonUbo.jointsMatrices[jointIndex][2][3]
-			);
-			LOG_TRACE(
-				"jointsMatrices[{0}]: m30: {1}, m31: {2}, m32: {3}, m33: {4}",
-				jointIndex,
-				skeletonUbo.jointsMatrices[jointIndex][3][0],
-				skeletonUbo.jointsMatrices[jointIndex][3][1],
-				skeletonUbo.jointsMatrices[jointIndex][3][2],
-				skeletonUbo.jointsMatrices[jointIndex][3][3]
-			);
 		}
 	}
 }

@@ -18,15 +18,17 @@ ufbxLoader::ufbxLoader(const std::string& filePath)
 }
 
 bool ufbxLoader::LoadModel(const u32 instanceCount) {
-	ufbx_load_opts loadOptions{.ignore_animation = true};
+	ufbx_load_opts loadOptions{};
+	loadOptions.ignore_animation              = true;
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;
-	loadOptions.target_axes                   = {
+	loadOptions.target_axes                   = ufbx_axes_left_handed_z_up;
+		/*{
 						  .right = UFBX_COORDINATE_AXIS_POSITIVE_X,
 						  .up    = UFBX_COORDINATE_AXIS_POSITIVE_Y,
 						  .front = UFBX_COORDINATE_AXIS_POSITIVE_Z,
-    };
+    };*/
 	loadOptions.target_unit_meters = 1.0f;
 
 	// load raw data of the file (can be fbx or obj)
@@ -399,7 +401,7 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 #pragma endregion
 }
 
-void ufbxLoader::AssignMaterial(Mesh& mesh, int const materialIndex) {
+void ufbxLoader::AssignMaterial(Mesh& mesh, const int materialIndex) {
 	// material
 	{
 		if (!(static_cast<size_t>(materialIndex) < materials.size())) {

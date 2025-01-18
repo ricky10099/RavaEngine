@@ -9,7 +9,6 @@ AnimationClip::AnimationClip(std::string_view name)
 
 void AnimationClip::Update(Skeleton& skeleton) {
 	if (!IsRunning()) {
-		//ENGINE_TRACE("Animation '{0}' expired", m_name);
 		return;
 	}
 

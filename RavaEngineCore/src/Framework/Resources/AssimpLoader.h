@@ -2,7 +2,6 @@
 
 #include "Framework/Resources/MeshModel.h"
 
-
 namespace Vulkan {
 class Buffer;
 }
@@ -12,7 +11,7 @@ class Texture;
 class Material;
 class Animations;
 struct Skeleton;
-	class AssimpLoader {
+class AssimpLoader {
    public:
 	std::vector<u32> indices{};
 	std::vector<Vertex> vertices{};
@@ -41,28 +40,30 @@ struct Skeleton;
 	bool m_fbxNoTangents;
 
    private:
-	//void LoadMaterials();
-	//void LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pbr_map materialProperty, int materialIndex);
-	//std::shared_ptr<Texture> LoadTexture(ufbx_material_map const& materialMap, bool useSRGB);
-	void LoadNode(aiNode* node, aiMatrix4x4 parentTransform, int parentNode);
+	void LoadMaterials();
+	void LoadProperties(const aiMaterial* fbxMaterial, Material::PBRMaterial& pbrMaterial);
+	void LoadMap(const aiMaterial* fbxMaterial, aiTextureType textureType, int materialIndex);
+	// void LoadMaterial(const ufbx_material* fbxMaterial, ufbx_material_pbr_map materialProperty, int materialIndex);
+	std::shared_ptr<Texture> LoadTexture(const std::string& filepath, bool useSRGB);
+	void LoadNode(aiNode* node);
 	void LoadMesh(const aiMesh* fbxMesh, const u32 meshIndex);
-	//void AssignMaterial(Mesh& submesh, int const materialIndex);
+	void AssignMaterial(Mesh& mesh, const int materialIndex);
 
-	//void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
-	//void CalculateTangents();
+	void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
+	void CalculateTangents();
 
    public:
 	Shared<Skeleton> skeleton;
 	Shared<Vulkan::Buffer> skeletonUbo;
-	//Unique<Animations> animations;
+	// Unique<Animations> animations;
 
- //  public:
-	//bool LoadAnimations();
-	//bool AddAnimation();
+	//  public:
+	// bool LoadAnimations();
+	// bool AddAnimation();
 
- //  private:
+   private:
 	//void LoadSkeletons();
-	//void LoadAnimationClips();
-	//void AddAnimationClip();
+	// void LoadAnimationClips();
+	// void AddAnimationClip();
 };
-}
+}  // namespace Rava

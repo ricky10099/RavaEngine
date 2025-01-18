@@ -16,8 +16,6 @@ class Timestep {
 	std::chrono::duration<float, std::chrono::seconds::period> GetSeconds() const;
 	std::chrono::duration<float, std::chrono::milliseconds::period> GetMilliseconds() const;
 
-
-
    private:
 	static std::chrono::duration<float, std::chrono::seconds::period> m_timestep;
 };

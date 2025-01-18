@@ -10,14 +10,16 @@
 namespace Rava {
 bool ufbxLoader::LoadAnimations() {
 	ufbx_load_opts loadOptions{};
+	loadOptions.ignore_geometry               = true;
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;
-	loadOptions.target_axes                   = {
-						  .right = UFBX_COORDINATE_AXIS_POSITIVE_X,
-						  .up    = UFBX_COORDINATE_AXIS_POSITIVE_Y,
-						  .front = UFBX_COORDINATE_AXIS_POSITIVE_Z,
-    };
+	loadOptions.target_axes                   = ufbx_axes_left_handed_y_up;
+	//{
+	//					  .right = UFBX_COORDINATE_AXIS_POSITIVE_X,
+	//					  .up    = UFBX_COORDINATE_AXIS_POSITIVE_Y,
+	//					  .front = UFBX_COORDINATE_AXIS_POSITIVE_Z,
+	//   };
 	loadOptions.target_unit_meters = 1.0f;
 
 	// load raw data of the file (can be fbx or obj)
@@ -44,7 +46,7 @@ bool ufbxLoader::LoadAnimations() {
 }
 
 bool ufbxLoader::AddAnimation() {
-	ufbx_load_opts loadOptions{ .ignore_geometry = true};
+	ufbx_load_opts loadOptions{.ignore_geometry = true};
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;
@@ -78,10 +80,10 @@ bool ufbxLoader::AddAnimation() {
 	return true;
 }
 
-
 void ufbxLoader::LoadSkeletons() {
 	u32 numberOfSkeletons = 0;
 	u32 meshIndex         = 0;
+
 	// iterate over all meshes and check if they have a skeleton
 	for (u32 index = 0; index < m_modelScene->meshes.count; ++index) {
 		ufbx_mesh& mesh = *m_modelScene->meshes.data[index];
@@ -98,7 +100,6 @@ void ufbxLoader::LoadSkeletons() {
 		ENGINE_WARN("A model should only have a single skin/armature/skeleton. Using mesh {0}.", numberOfSkeletons - 1);
 	}
 
-	// m_Animations = std::make_shared<SkeletalAnimations>();
 	skeleton = std::make_shared<Skeleton>();
 	std::unordered_map<std::string, int> nameToBoneIndex;
 
@@ -149,7 +150,10 @@ void ufbxLoader::LoadSkeletons() {
 				bones[boneIndex].name              = nodeName;
 				ufbx_skin_cluster& bone            = *fbxSkin.clusters.data[boneIndex];
 				bones[boneIndex].inverseBindMatrix = mat4UfbxToGlm(bone.geometry_to_bone);
-				bones[boneIndex].parentJoint       = parent;
+				ENGINE_TRACE(
+					"Bone: {} Inverse Bind Matrix: {}", bones[boneIndex].name, glm::to_string(bones[boneIndex].inverseBindMatrix)
+				);
+				bones[boneIndex].parentJoint = parent;
 			}
 			for (u32 childIndex = 0; childIndex < numberOfChildren; ++childIndex) {
 				if (isBone) {
