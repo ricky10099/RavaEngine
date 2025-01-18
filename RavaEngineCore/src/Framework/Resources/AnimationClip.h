@@ -4,6 +4,7 @@
 
 namespace Rava {
 struct Skeleton;
+struct Bone;
 class Timestep;
 class AnimationClip {
    public:
@@ -31,9 +32,34 @@ class AnimationClip {
 		InterpolationMethod interpolation;
 	};
 
+	struct Frame {
+		double time;
+	};
+
+	struct Position : public Frame {
+		glm::vec3 xyz;
+	};
+
+	struct Rotation : public Frame {
+		glm::quat quaternion;
+	};
+
+	struct Scaling : public Frame {
+		glm::vec3 xyz;
+	};
+
+	/// a frame of animation for all of the bones.
+	struct AnimNodes {
+		Bone modelBone;
+		std::vector<Position> positions;
+		std::vector<Rotation> rotations;
+		std::vector<Scaling> scales;
+	};
+
    public:
 	std::vector<Sampler> samplers;
 	std::vector<Channel> channels;
+	std::vector<AnimNodes> animNodes;
 
    public:
 	AnimationClip(std::string_view name);
