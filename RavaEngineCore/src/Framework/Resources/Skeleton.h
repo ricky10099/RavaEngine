@@ -35,7 +35,6 @@ struct Joint {
 
 struct Bone {
 	std::string name;
-	i32 ufbxNodeIndex;
 	i32 parentIndex;
 	std::vector<Bone> children;
 	glm::mat4 offsetMatrix;
@@ -44,10 +43,7 @@ struct Bone {
 };
 
 struct Skeleton {
-	//void Traverse();
-	//void Traverse(Joint const& joint, u32 indent = 0);
 	void Update();
-	void UpdateJoint(i16 joint);  // signed because -1 maybe used for invalid joint
 
 	bool isAnimated = true;
 	std::string_view name;

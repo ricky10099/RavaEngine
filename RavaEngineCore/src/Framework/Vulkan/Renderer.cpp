@@ -20,12 +20,10 @@ Renderer::Renderer(Rava::Window* window)
 	, m_currentFrameIndex{0}  //, m_showDebugShadowMap{false}
 	, m_frameInProgress{false}
 	, m_shadersCompiled{false} {
-	ENGINE_INFO("Initializing Renderer.");
 	// Init();
 }
 
 Renderer::~Renderer() {
-	ENGINE_INFO("Destruct Renderer");
 	FreeCommandBuffers();
 }
 

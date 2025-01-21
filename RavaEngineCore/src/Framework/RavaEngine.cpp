@@ -29,7 +29,6 @@ Engine::Engine() {
 }
 
 Engine::~Engine() {
-	ENGINE_INFO("Destruct Engine");
 }
 
 void Engine::Run() {
@@ -50,9 +49,7 @@ void Engine::Run() {
 			case EngineState::Run:
 				UpdateSceneCamera();
 				UpdateSceneAndEntities();
-#if RAVA_DEBUG
 				RunButton();
-#endif
 				break;
 			case EngineState::Debug:
 				UpdateSceneAndEntities();
@@ -157,7 +154,7 @@ void Engine::EditorInputHandle() {
 		}
 
 		if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
-			m_editorCameraRotation = currentRotation + 0.5f * rotation;
+			m_editorCameraRotation = currentRotation - 1.0f * rotation;
 		}
 		if (glm::dot(moveDirection, moveDirection) > std::numeric_limits<float>::epsilon()) {
 			m_editorCameraPosition += 3.0f * Timestep::Count() * glm::normalize(moveDirection);

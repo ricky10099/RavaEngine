@@ -23,12 +23,7 @@ bool ufbxLoader::LoadModel(const u32 instanceCount) {
 	loadOptions.load_external_files           = true;
 	loadOptions.ignore_missing_external_files = true;
 	loadOptions.generate_missing_normals      = true;
-	loadOptions.target_axes                   = ufbx_axes_left_handed_z_up;
-		/*{
-						  .right = UFBX_COORDINATE_AXIS_POSITIVE_X,
-						  .up    = UFBX_COORDINATE_AXIS_POSITIVE_Y,
-						  .front = UFBX_COORDINATE_AXIS_POSITIVE_Z,
-    };*/
+	loadOptions.target_axes                   = ufbx_axes_left_handed_y_up;
 	loadOptions.target_unit_meters = 1.0f;
 
 	// load raw data of the file (can be fbx or obj)
@@ -346,29 +341,31 @@ void ufbxLoader::LoadMesh(const ufbx_node* fbxNode, const u32 meshIndex) {
 
 				for (size_t weightIndex = 0; weightIndex < numWeights; ++weightIndex) {
 					ufbx_skin_weight skinWeight = fbxSkin->weights.data[skinVertex.weight_begin + weightIndex];
-					int jointIndex              = skinWeight.cluster_index;
-					float weight                = (float)skinWeight.weight;
+					//int jointIndex              = skinWeight.cluster_index;
+					//float weight                = (float)skinWeight.weight;
+					vertex.jointIds[weightIndex] = skinWeight.cluster_index;
+					vertex.weights[weightIndex]  = (float)skinWeight.weight;
 
-					switch (weightIndex) {
-						case 0:
-							vertex.jointIds.x = jointIndex;
-							vertex.weights.x  = weight;
-							break;
-						case 1:
-							vertex.jointIds.y = jointIndex;
-							vertex.weights.y  = weight;
-							break;
-						case 2:
-							vertex.jointIds.z = jointIndex;
-							vertex.weights.z  = weight;
-							break;
-						case 3:
-							vertex.jointIds.w = jointIndex;
-							vertex.weights.w  = weight;
-							break;
-						default:
-							break;
-					}
+					//switch (weightIndex) {
+					//	case 0:
+					//		vertex.jointIds.x = jointIndex;
+					//		vertex.weights.x  = weight;
+					//		break;
+					//	case 1:
+					//		vertex.jointIds.y = jointIndex;
+					//		vertex.weights.y  = weight;
+					//		break;
+					//	case 2:
+					//		vertex.jointIds.z = jointIndex;
+					//		vertex.weights.z  = weight;
+					//		break;
+					//	case 3:
+					//		vertex.jointIds.w = jointIndex;
+					//		vertex.weights.w  = weight;
+					//		break;
+					//	default:
+					//		break;
+					//}
 				}
 
 				// normalize weights

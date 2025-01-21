@@ -8,13 +8,10 @@
 namespace Rava {
 Window::Window(std::string_view name)
 	: m_windowName(name) {
-	ENGINE_INFO("Initializing Window");
 	InitWindow();
 }
 
 Window::~Window() {
-	ENGINE_INFO("Destruct Window");
-
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
 }

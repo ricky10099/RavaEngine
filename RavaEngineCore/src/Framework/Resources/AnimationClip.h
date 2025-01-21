@@ -63,11 +63,6 @@ class AnimationClip {
 
 	/// a frame of animation for all of the bones.
 	struct AnimNode {
-		// Node modelNode;
-		// std::vector<Position> positions;
-		// std::vector<Rotation> rotations;
-		// std::vector<Scaling> scales;
-
 		float timeBegin;
 		float framerate;
 		size_t frameCount;

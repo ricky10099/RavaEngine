@@ -7,7 +7,6 @@ namespace Vulkan {
 RenderPass::RenderPass(SwapChain* swapChain)
 	: m_renderPassExtent{swapChain->GetSwapChainExtent()}
 	, m_swapChain{swapChain} {
-	ENGINE_INFO("Initializing Render Pass");
 	m_depthFormat = FindDepthFormat();
 	// m_BufferPositionFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 	// m_BufferNormalFormat   = VK_FORMAT_R16G16B16A16_SFLOAT;
@@ -16,8 +15,8 @@ RenderPass::RenderPass(SwapChain* swapChain)
 	// m_BufferEmissionFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
 	Create3DRenderPass();
-	CreateGUIRenderPass();
 	// CreatePostProcessingRenderPass();
+	CreateGUIRenderPass();
 
 	CreateColorAttachmentResources();
 	CreateDepthResources();
@@ -26,13 +25,11 @@ RenderPass::RenderPass(SwapChain* swapChain)
 	// CreateGBufferImageViews();
 
 	Create3DFramebuffers();
-	CreateGUIFramebuffers();
 	// CreatePostProcessingFramebuffers();
+	CreateGUIFramebuffers();
 }
 
 RenderPass::~RenderPass() {
-	ENGINE_INFO("Destruct RenderPass");
-
 	vkDestroyImageView(VKContext->GetLogicalDevice(), m_depthImageView, nullptr);
 	vkDestroyImage(VKContext->GetLogicalDevice(), m_depthImage, nullptr);
 	vkFreeMemory(VKContext->GetLogicalDevice(), m_depthImageMemory, nullptr);
@@ -44,16 +41,16 @@ RenderPass::~RenderPass() {
 	for (auto framebuffer : m_3DFramebuffers) {
 		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
 	}
-	for (auto framebuffer : m_GUIFramebuffers) {
-		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
-	}
 	//  for (auto framebuffer : m_PostProcessingFramebuffers) {
 	//	vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
 	//  }
+	for (auto framebuffer : m_GUIFramebuffers) {
+		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
+	}
 
 	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_3DRenderPass, nullptr);
-	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
 	//  vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_PostProcessingRenderPass, nullptr);
+	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
 }
 
 void RenderPass::Create3DRenderPass() {
@@ -366,21 +363,13 @@ void RenderPass::CreateGUIRenderPass() {
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// render pass
-	std::array<VkAttachmentDescription, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {colorAttachment
-	};
-	std::array<VkSubpassDescription, static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES)> subpasses            = {subpassGUI};
-
 	VkRenderPassCreateInfo renderPassInfo = {};
 	renderPassInfo.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount        = static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS);
-	// renderPassInfo.pAttachments           = attachments.data();
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES);
-	// renderPassInfo.pSubpasses             = subpasses.data();
 	renderPassInfo.pSubpasses      = &subpassGUI;
 	renderPassInfo.dependencyCount = NUMBER_OF_DEPENDENCIES;
-	// renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = dependencies.data();
 
 	VkResult result = vkCreateRenderPass(VKContext->GetLogicalDevice(), &renderPassInfo, nullptr, &m_GUIRenderPass);

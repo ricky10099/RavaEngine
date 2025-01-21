@@ -41,8 +41,6 @@ MeshModel::MeshModel(const ufbxLoader& loader) {
 	CopyMeshes(loader.meshes);
 	CreateVertexBuffers(loader.vertices);
 	CreateIndexBuffers(loader.indices);
-	//m_skeleton    = std::move(loader.skeleton);
-	//m_skeletonUbo = std::move(loader.skeletonUbo);
 	m_skeleton    = loader.skeleton;
 	m_skeletonUbo = loader.skeletonUbo;
 }

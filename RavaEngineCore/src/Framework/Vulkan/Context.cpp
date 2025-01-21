@@ -8,7 +8,6 @@ Context* Context::m_context = nullptr;
 
 Context::Context(Rava::Window* window)
 	: m_ravaWindow(window) {
-	ENGINE_INFO("Initializing Vulkan Context");
 	if (m_context == nullptr) {
 		m_context = this;
 	} else {
@@ -24,7 +23,6 @@ Context::Context(Rava::Window* window)
 }
 
 Context::~Context() {
-	ENGINE_INFO("Destruct VKContext");
 	vkDestroyCommandPool(m_device, m_commandPool, nullptr);
 	vkDestroyDevice(m_device, nullptr);
 

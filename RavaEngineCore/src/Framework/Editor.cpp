@@ -103,7 +103,6 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 }
 
 Editor::~Editor() {
-	ENGINE_INFO("Destruct Editor");
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

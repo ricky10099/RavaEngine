@@ -17,7 +17,6 @@ SwapChain::SwapChain(VkExtent2D extent, std::shared_ptr<SwapChain> previous)
 }
 
 void SwapChain::Init() {
-	ENGINE_INFO("Initializing Swap Chain.");
 	CreateSwapChain();
 	CreateSwapChainImageViews();
 	CreateSyncObjects();

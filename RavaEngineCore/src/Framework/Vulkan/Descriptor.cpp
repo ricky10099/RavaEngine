@@ -41,7 +41,6 @@ DescriptorSetLayout::DescriptorSetLayout(std::unordered_map<u32, VkDescriptorSet
 }
 
 DescriptorSetLayout::~DescriptorSetLayout() {
-	ENGINE_INFO("Destruct DescriptorSetLayout");
 	vkDestroyDescriptorSetLayout(VKContext->GetLogicalDevice(), m_descriptorSetLayout, nullptr);
 }
 
@@ -80,7 +79,6 @@ DescriptorPool::DescriptorPool(
 }
 
 DescriptorPool::~DescriptorPool() {
-	ENGINE_INFO("Destruct DescriptorPool");
 	vkDestroyDescriptorPool(VKContext->GetLogicalDevice(), m_descriptorPool, nullptr);
 }
 

@@ -30,9 +30,8 @@ void AnimationClip::Update(Skeleton& skeleton) {
 		glm::vec3 pos   = glm::mix(animNodes.pos[f0], animNodes.pos[f1], t);
 		glm::vec3 scale = glm::mix(animNodes.scale[f0], animNodes.scale[f1], t);
 
-		bone.localTransform = glm::translate(glm::mat4(1.0f), pos) * glm::mat4_cast(rot) * glm::scale(glm::mat4(1.0f), scale);
-
-		// bone.boneOffset = glm::translate(glm::mat4(1.0f), pos) * glm::mat4(rot) * glm::scale(glm::mat4(1.0f), scale);
+		//bone.localTransform = glm::translate(glm::mat4(1.0f), pos) * glm::mat4_cast(rot) * glm::scale(glm::mat4(1.0f), scale);
+		bone.localTransform = glm::scale(glm::mat4(1.0f), scale) * glm::mat4_cast(rot) * glm::translate(glm::mat4(1.0f), pos);
 	}
 }
 }  // namespace Rava
