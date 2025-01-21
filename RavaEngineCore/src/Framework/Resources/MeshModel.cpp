@@ -2,6 +2,7 @@
 
 #include "Framework/Resources/MeshModel.h"
 #include "Framework/Resources/ufbxLoader.h"
+#include "Framework/Resources/Skeleton.h"
 #include "Framework/Vulkan/MaterialDescriptor.h"
 
 namespace Rava {
@@ -29,7 +30,10 @@ std::vector<VkVertexInputAttributeDescription> Vertex::GetAttributeDescriptions(
 
 Unique<MeshModel> MeshModel::CreateMeshModelFromFile(std::string_view filePath) {
 	ufbxLoader loader{filePath.data()};
-	loader.Load();
+	if (!loader.LoadModel()) {
+		ENGINE_ERROR("Failed to load Model file {0}", filePath.data());
+		return nullptr;
+	}
 	return std::make_unique<MeshModel>(loader);
 }
 
@@ -37,8 +41,14 @@ MeshModel::MeshModel(const ufbxLoader& loader) {
 	CopyMeshes(loader.meshes);
 	CreateVertexBuffers(loader.vertices);
 	CreateIndexBuffers(loader.indices);
-	// m_skeleton       = std::move(builder.skeleton);
-	// m_skeletonBuffer = builder.shaderData;
+	//m_skeleton    = std::move(loader.skeleton);
+	//m_skeletonUbo = std::move(loader.skeletonUbo);
+	m_skeleton    = loader.skeleton;
+	m_skeletonUbo = loader.skeletonUbo;
+}
+
+MeshModel::~MeshModel() {
+	vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 }
 
 void MeshModel::CopyMeshes(const std::vector<Mesh>& meshes) {
@@ -104,13 +114,21 @@ void MeshModel::CreateIndexBuffers(const std::vector<u32>& indices) {
 	Vulkan::CopyBuffer(stagingBuffer.GetBuffer(), m_indexBuffer->GetBuffer(), bufferSize);
 }
 
-void MeshModel::Bind(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout) {
+void MeshModel::UpdateAnimation(u32 frameCounter) {
+	m_skeleton->Update();
+
+	// update ubo
+	m_skeletonUbo.get()->WriteToBuffer(m_skeleton->skeletonUbo.jointsMatrices.data());
+	m_skeletonUbo.get()->Flush();
+}
+
+void MeshModel::Bind(VkCommandBuffer commandBuffer) {
 	VkBuffer buffers[]     = {m_vertexBuffer->GetBuffer()};
 	VkDeviceSize offsets[] = {0};
-	vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, buffers, offsets);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets);
 
 	if (m_hasIndexBuffer) {
-		vkCmdBindIndexBuffer(frameInfo.commandBuffer, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(commandBuffer, m_indexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 	}
 }
 
@@ -134,9 +152,9 @@ void MeshModel::BindDescriptors(const FrameInfo& frameInfo, const VkPipelineLayo
 	mesh.material.materialBuffer->Flush();
 
 	const VkDescriptorSet& materialDescriptorSet = mesh.material.materialDescriptor->GetDescriptorSet();
-	//const VkDescriptorSet& skeletonDescriptorSet = mesh.skeletonDescriptorSet;
+	const VkDescriptorSet& skeletonDescriptorSet = mesh.skeletonDescriptorSet;
 
-	std::vector<VkDescriptorSet> descriptorSets = {frameInfo.globalDescriptorSet, materialDescriptorSet/*, skeletonDescriptorSet*/};
+	std::vector<VkDescriptorSet> descriptorSets = {frameInfo.globalDescriptorSet, materialDescriptorSet, skeletonDescriptorSet};
 	vkCmdBindDescriptorSets(
 		frameInfo.commandBuffer,                  // VkCommandBuffer        commandBuffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,          // VkPipelineBindPoint    pipelineBindPoint,

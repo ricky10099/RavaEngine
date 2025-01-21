@@ -36,7 +36,7 @@ Buffer::Buffer(
 	CreateBuffer(m_bufferSize, usageFlags, memoryPropertyFlags, m_buffer, m_memory);
 }
 
-Buffer::Buffer(u32 size, Buffer::BufferUsage bufferUsage) {
+Buffer::Buffer(size_t size, Buffer::BufferUsage bufferUsage) {
 	switch (bufferUsage) {
 		case Buffer::BufferUsage::UNIFORM_BUFFER_VISIBLE_TO_CPU: {
 			m_instanceSize        = size;

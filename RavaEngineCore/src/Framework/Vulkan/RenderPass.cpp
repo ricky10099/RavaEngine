@@ -44,15 +44,15 @@ RenderPass::~RenderPass() {
 	for (auto framebuffer : m_3DFramebuffers) {
 		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
 	}
-	 for (auto framebuffer : m_GUIFramebuffers) {
+	for (auto framebuffer : m_GUIFramebuffers) {
 		vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
-	 }
+	}
 	//  for (auto framebuffer : m_PostProcessingFramebuffers) {
 	//	vkDestroyFramebuffer(VKContext->GetLogicalDevice(), framebuffer, nullptr);
 	//  }
 
 	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_3DRenderPass, nullptr);
-	 vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
+	vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_GUIRenderPass, nullptr);
 	//  vkDestroyRenderPass(VKContext->GetLogicalDevice(), m_PostProcessingRenderPass, nullptr);
 }
 
@@ -63,8 +63,8 @@ void RenderPass::Create3DRenderPass() {
 	colorAttachment.samples                 = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.stencilLoadOp           = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp          = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	colorAttachment.initialLayout           = VK_IMAGE_LAYOUT_UNDEFINED;
 	colorAttachment.finalLayout             = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
@@ -319,68 +319,52 @@ void RenderPass::Create3DRenderPass() {
 void RenderPass::CreateGUIRenderPass() {
 	// ATTACHMENT_COLOR
 	VkAttachmentDescription colorAttachment = {};
-	 colorAttachment.format                  = m_swapChain->GetSwapChainImageFormat();
-	//colorAttachment.format = FindSupportedFormat(
-	//	{VK_FORMAT_B8G8R8A8_SRGB/*, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM*/},
-	//	/*VK_IMAGE_TILING_OPTIMAL | */VK_IMAGE_TILING_LINEAR,
-	//	VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-	//);
-	colorAttachment.samples        = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.format                  = m_swapChain->GetSwapChainImageFormat();
+	colorAttachment.samples                 = VK_SAMPLE_COUNT_1_BIT;
+	// colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.loadOp         = VK_ATTACHMENT_LOAD_OP_LOAD;
 	colorAttachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	// colorAttachment.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	colorAttachment.finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentReference colorAttachmentRef = {};
 	colorAttachmentRef.attachment            = static_cast<u32>(RenderTargetsGUI::ATTACHMENT_COLOR);
 	colorAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	// subpass
-	VkSubpassDescription subpassGUI = {};
-	subpassGUI.flags                = 0;
-	subpassGUI.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	// subpassGUI.inputAttachmentCount    = 0;
-	// subpassGUI.pInputAttachments       = nullptr;
-	subpassGUI.colorAttachmentCount = 1;
-	subpassGUI.pColorAttachments    = &colorAttachmentRef;
-	// subpassGUI.pResolveAttachments     = nullptr;
-	// subpassGUI.pDepthStencilAttachment = nullptr;
-	// subpassGUI.preserveAttachmentCount = 0;
-	// subpassGUI.pPreserveAttachments    = nullptr;
+	VkSubpassDescription subpassGUI    = {};
+	subpassGUI.flags                   = 0;
+	subpassGUI.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpassGUI.inputAttachmentCount    = 0;
+	subpassGUI.pInputAttachments       = nullptr;
+	subpassGUI.colorAttachmentCount    = 1;
+	subpassGUI.pColorAttachments       = &colorAttachmentRef;
+	subpassGUI.pResolveAttachments     = nullptr;
+	subpassGUI.pDepthStencilAttachment = nullptr;
+	subpassGUI.preserveAttachmentCount = 0;
+	subpassGUI.pPreserveAttachments    = nullptr;
 
-	// VkSubpassDescription subpass = {};
-	// subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	// subpass.colorAttachmentCount = 1;
-	// subpass.pColorAttachments    = &colorAttachmentRef;
+	constexpr u32 NUMBER_OF_DEPENDENCIES = 2;
+	std::array<VkSubpassDependency, NUMBER_OF_DEPENDENCIES> dependencies{};
 
-	// constexpr u32 NUMBER_OF_DEPENDENCIES = 2;
-	// std::array<VkSubpassDependency, NUMBER_OF_DEPENDENCIES> dependencies{};
+	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
+	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-	// dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	// dependencies[0].dstSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
-	// dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	// dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	// dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-	// dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	// dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	// dependencies[1].srcSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
-	// dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	// dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	// dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	// dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	// dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-	// dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass          = 0;
-	dependency.srcStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT /*| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT*/;
-	dependency.dstStageMask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT /*| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT*/;
-	dependency.srcAccessMask = 0;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT /* | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT*/;
+	dependencies[1].srcSubpass      = static_cast<u32>(SubPassesGUI::SUBPASS_GUI);
+	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// render pass
 	std::array<VkAttachmentDescription, static_cast<u32>(RenderTargetsGUI::NUMBER_OF_ATTACHMENTS)> attachments = {colorAttachment
@@ -395,8 +379,9 @@ void RenderPass::CreateGUIRenderPass() {
 	renderPassInfo.subpassCount = static_cast<u32>(SubPassesGUI::NUMBER_OF_SUBPASSES);
 	// renderPassInfo.pSubpasses             = subpasses.data();
 	renderPassInfo.pSubpasses      = &subpassGUI;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies   = &dependency;
+	renderPassInfo.dependencyCount = NUMBER_OF_DEPENDENCIES;
+	// renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = dependencies.data();
 
 	VkResult result = vkCreateRenderPass(VKContext->GetLogicalDevice(), &renderPassInfo, nullptr, &m_GUIRenderPass);
 	VK_CHECK(result, "Failed to create a GUI Render Pass!");
@@ -404,26 +389,6 @@ void RenderPass::CreateGUIRenderPass() {
 
 void RenderPass::CreateColorAttachmentResources() {
 	VkFormat format = m_swapChain->GetSwapChainImageFormat();
-
-	// VkImageCreateInfo imageInfo{};
-	// imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	// imageInfo.imageType     = VK_IMAGE_TYPE_2D;
-	// imageInfo.extent.width  = m_renderPassExtent.width;
-	// imageInfo.extent.height = m_renderPassExtent.height;
-	// imageInfo.extent.depth  = 1;
-	// imageInfo.mipLevels     = 1;
-	// imageInfo.arrayLayers   = 1;
-	// imageInfo.format        = format;
-	// imageInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-	// imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	// imageInfo.usage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
-	// imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-	// imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-	// imageInfo.flags         = 0;
-
-	// m_Device->CreateImageWithInfo(
-	//	imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_ColorAttachmentImage, m_ColorAttachmentImageMemory
-	//);
 
 	CreateImage(
 		m_renderPassExtent.width,
@@ -436,44 +401,11 @@ void RenderPass::CreateColorAttachmentResources() {
 		m_colorAttachmentImage
 	);
 
-	// VkImageViewCreateInfo viewInfo{};
-	// viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	// viewInfo.image                           = m_colorAttachmentImage;
-	// viewInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	// viewInfo.format                          = format;
-	// viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	// viewInfo.subresourceRange.baseMipLevel   = 0;
-	// viewInfo.subresourceRange.levelCount     = 1;
-	// viewInfo.subresourceRange.baseArrayLayer = 0;
-	// viewInfo.subresourceRange.layerCount     = 1;
-
-	// if (vkCreateImageView(m_Device->Device(), &viewInfo, nullptr, &m_colorAttachmentView) != VK_SUCCESS) {
-	//	LOG_CORE_CRITICAL("failed to create texture image view!");
-	// }
-
 	CreateImageView(m_colorAttachmentImage, format, VK_IMAGE_ASPECT_COLOR_BIT, m_colorAttachmentView);
 }
 
 void RenderPass::CreateDepthResources() {
 	m_depthFormat = FindDepthFormat();
-
-	// VkImageCreateInfo imageInfo{};
-	// imageInfo.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	// imageInfo.imageType     = VK_IMAGE_TYPE_2D;
-	// imageInfo.extent.width  = m_RenderPassExtent.width;
-	// imageInfo.extent.height = m_RenderPassExtent.height;
-	// imageInfo.extent.depth  = 1;
-	// imageInfo.mipLevels     = 1;
-	// imageInfo.arrayLayers   = 1;
-	// imageInfo.format        = depthFormat;
-	// imageInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-	// imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	// imageInfo.usage         = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	// imageInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-	// imageInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-	// imageInfo.flags         = 0;
-
-	// m_Device->CreateImageWithInfo(imageInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_DepthImage, m_DepthImageMemory);
 
 	CreateImage(
 		m_renderPassExtent.width,
@@ -486,20 +418,6 @@ void RenderPass::CreateDepthResources() {
 		m_depthImage
 	);
 
-	// VkImageViewCreateInfo viewInfo{};
-	// viewInfo.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	// viewInfo.image                           = m_DepthImage;
-	// viewInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	// viewInfo.format                          = depthFormat;
-	// viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT;
-	// viewInfo.subresourceRange.baseMipLevel   = 0;
-	// viewInfo.subresourceRange.levelCount     = 1;
-	// viewInfo.subresourceRange.baseArrayLayer = 0;
-	// viewInfo.subresourceRange.layerCount     = 1;
-
-	// if (vkCreateImageView(m_Device->Device(), &viewInfo, nullptr, &m_DepthImageView) != VK_SUCCESS) {
-	//	LOG_CORE_CRITICAL("failed to create texture image view!");
-	// }
 	CreateImageView(m_depthImage, m_depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, m_depthImageView);
 }
 

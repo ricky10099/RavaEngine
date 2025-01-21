@@ -67,7 +67,8 @@ void SwapChain::CreateSwapChain() {
 	createInfo.imageColorSpace          = surfaceFormat.colorSpace;              // Swapchain colour space
 	createInfo.imageExtent              = extent;                                // Swapchain image extents
 	createInfo.imageArrayLayers         = 1;                                     // Number of layers for each image in chain
-	createInfo.imageUsage               = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;   // What attachment images will be used as
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	;                                                                            // What attachment images will be used as
 	createInfo.preTransform = m_SwapChainSupport.capabilities.currentTransform;  // Transform to perform on swap chain images
 	createInfo.compositeAlpha =
 		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;  // How to handle blending images with external graphics(e.g. other windows)
@@ -112,6 +113,7 @@ void SwapChain::CreateSwapChain() {
 void SwapChain::CreateSwapChainImageViews() {
 	m_swapChainImageViews.resize(m_swapChainImages.size());
 	for (size_t i = 0; i < m_swapChainImages.size(); i++) {
+
 		CreateImageView(m_swapChainImages[i], m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, m_swapChainImageViews[i]);
 	}
 }
@@ -264,6 +266,59 @@ VkResult SwapChain::SubmitCommandBuffers(const VkCommandBuffer* buffers, u32* im
 bool SwapChain::CompareSwapFormats(const SwapChain& swapChain) const {
 	bool imageFormatEqual = (swapChain.m_swapChainImageFormat == m_swapChainImageFormat);
 	return (imageFormatEqual);
+}
+
+void SwapChain::TransitionSwapChainImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, u32 currentImageIndex, VkCommandBuffer commandBuffer) {
+	//Vulkan::TransitionImageLayout(m_swapChainImages[m_currentFrame], oldLayout, newLayout);
+
+	VkImageMemoryBarrier imageMemoryBarrier            = {};
+	imageMemoryBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.oldLayout                       = oldLayout;                // Layout to transition from
+	imageMemoryBarrier.newLayout                       = newLayout;                // Layout to transition to
+	imageMemoryBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition from
+	imageMemoryBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition to
+	imageMemoryBarrier.image = m_swapChainImages[currentImageIndex];  // Image being accessed and modified as part of barrier
+	imageMemoryBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;  // Aspect of image being altered
+	imageMemoryBarrier.subresourceRange.baseMipLevel   = 0;                          // First mip level to start alterations on
+	imageMemoryBarrier.subresourceRange.levelCount     = 1;  // Number of mip levels to alter starting from baseMipLevel
+	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;          // First layer to start alterations on
+	imageMemoryBarrier.subresourceRange.layerCount     = 1;          // Number of layers to alter stating from baseArrayLayer
+
+	VkPipelineStageFlags srcStage{};
+	VkPipelineStageFlags dstStage{};
+
+	// If transitioning from color attachment to shader readable...
+	if (oldLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	// If transitioning from shader read only to present source...
+	else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+		imageMemoryBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		imageMemoryBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+
+		srcStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	} else {
+		ENGINE_ERROR("Unsupported Layout Transition in Swap Chain!");
+		return;
+	}
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		srcStage,
+		dstStage,  // Pipeline stages(match to src and dst AccessMasks)
+		0,         // Dependency flags
+		0,
+		nullptr,  // Memory Barrier count + data
+		0,
+		nullptr,  // Buffer Memory Barrier count + data
+		1,
+		&imageMemoryBarrier  // Image Memory Barrier count + data
+	);
 }
 
 }  // namespace Vulkan

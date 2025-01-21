@@ -5,8 +5,7 @@
 namespace Rava {
 std::chrono::duration<float, std::chrono::seconds::period> Timestep::m_timestep = 0ms;
 
-Timestep::Timestep(std::chrono::duration<float, std::chrono::seconds::period> time)
-	/*: m_timestep(time) */{}
+Timestep::Timestep(std::chrono::duration<float, std::chrono::seconds::period> time) {}
 
 Timestep& Timestep::operator=(const std::chrono::duration<float, std::chrono::seconds::period>& timestep) {
 	this->m_timestep = timestep;

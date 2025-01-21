@@ -25,6 +25,7 @@ using namespace std::literals::chrono_literals;
 #include <unordered_set>
 #include <set>
 #include <filesystem>
+#include <shobjidl.h> 
 
 ////////////////////////////////////////////////////////////////////////
 // spdlog
@@ -46,7 +47,7 @@ using namespace std::literals::chrono_literals;
 ////////////////////////////////////////////////////////////////////////
 // stb_image
 ////////////////////////////////////////////////////////////////////////
-//#define STB_IMAGE_IMPLEMENTATION
+// #define STB_IMAGE_IMPLEMENTATION
 
 ////////////////////////////////////////////////////////////////////////
 // glm
@@ -54,6 +55,7 @@ using namespace std::literals::chrono_literals;
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #	define GLM_ENABLE_EXPERIMENTAL
 #endif
@@ -68,9 +70,12 @@ using namespace std::literals::chrono_literals;
 #include <imgui/backends/imgui_impl_vulkan.h>
 
 ////////////////////////////////////////////////////////////////////////
-// ufbx
+// Assimp
 ////////////////////////////////////////////////////////////////////////
-//#include <ufbx/ufbx.h>
+ #include <Assimp/Importer.hpp>
+ #include <Assimp/scene.h>
+ #include <Assimp/postprocess.h>
+
 
 ////////////////////////////////////////////////////////////////////////
 // EnTT
@@ -116,25 +121,27 @@ constexpr auto ASSETS_DIR = "Assets/";
 	type(type&&)            = default; \
 	type& operator=(type&&) = default;
 
-
 ////////////////////////////////////////////////////////////////////////
 // Typedef
 ////////////////////////////////////////////////////////////////////////
-using s8  = char;
-using s16 = short;
-using s32 = int;
-using s64 = long long;
+using i8  = char;
+using i16 = short;
+using i32 = int;
+using i64 = long long;
 
 using u8  = unsigned char;
 using u16 = unsigned short;
 using u32 = unsigned int;
 using u64 = unsigned long long;
 
-template<typename T>
+template <typename T>
+using Unique = std::unique_ptr<T>;
+
+template <typename T>
 using Shared = std::shared_ptr<T>;
 
 template <typename T>
-using Unique = std::unique_ptr<T>;
+using Weak = std::weak_ptr<T>;
 
 ////////////////////////////////////////////////////////////////////////
 // Assert

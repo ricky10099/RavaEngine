@@ -1,4 +1,4 @@
-#pragma once
+//#pragma once
 
 // light
 #define MAX_LIGHTS 128
@@ -13,5 +13,5 @@
 #define GLSL_HAS_EMISSIVE_MAP           (0x1 << 0x6)
 
 // skeleton
-#define MAX_JOINTS          100
+#define MAX_JOINTS          200
 #define MAX_JOINT_INFLUENCE 4

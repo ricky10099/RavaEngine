@@ -13,14 +13,16 @@ class Editor {
 
 	void NewFrame();
 	void Render(VkCommandBuffer commandBuffer);
-	void Organize(Scene* scene);
+	void Organize(Scene* scene, u32 currentFrame);
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
 
-	static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 100.0f);
+	void SetSelectedEntity(Shared<Entity> entity) { m_selectedEntity = entity; }
+
+	static void DrawVec3Control(const std::string& label, glm::vec3& values, float resetValue = 0.0f, float columnWidth = 70.0f);
 
 	template <typename T, typename UIFunction>
-	static void DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction);
+	static void DrawComponent(const std::string& name, Shared<Entity> entity, UIFunction uiFunction, bool removable = true);
 
    private:
 	VkDescriptorPool m_descriptorPool;
@@ -35,10 +37,13 @@ class Editor {
 
    private:
 	void DrawSceneHierarchy(Scene* scene);
-	void DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
+	bool DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>
 	void DisplayAddComponentEntry(const std::string& entryName);
-	void SetDarkThemeColors();
+	template <typename T>
+	void DisplayAddComponentFromFile(const std::string& entryName);
+	void SetEditorStlye();
+	void SetEditorThemeColors();
 };
-}  // namespace Rava
+}  // namespace Rava6

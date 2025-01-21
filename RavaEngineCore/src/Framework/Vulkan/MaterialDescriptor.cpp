@@ -27,8 +27,6 @@ MaterialDescriptor::MaterialDescriptor(Rava::Material& material, Rava::Material:
 	std::shared_ptr<Rava::Texture> roughnessMap;
 	std::shared_ptr<Rava::Texture> metallicMap;
 	std::shared_ptr<Rava::Texture>& dummy = g_DefaultTexture;
-	// std::shared_ptr<Rava::Texture> dummy = nullptr;
-	// bool success                   = dummy->Init("../models/checker.png", Texture::USE_SRGB);
 
 	diffuseMap = textures[Rava::Material::DIFFUSE_MAP_INDEX] ? textures[Rava::Material::DIFFUSE_MAP_INDEX] : dummy;
 	normalMap  = textures[Rava::Material::NORMAL_MAP_INDEX] ? textures[Rava::Material::NORMAL_MAP_INDEX] : dummy;

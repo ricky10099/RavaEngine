@@ -43,7 +43,7 @@ void Window::InitWindow() {
 	// Set icon
 	GLFWimage icon;
 	int channels;
-	std::string iconPathStr = "Assets/Images/Rava.png";
+	std::string iconPathStr = "Assets/System/Rava.png";
 	icon.pixels             = stbi_load(iconPathStr.c_str(), &icon.width, &icon.height, &channels, 4);
 	if (icon.pixels) {
 		glfwSetWindowIcon(m_window, 1, &icon);
@@ -55,9 +55,6 @@ void Window::InitWindow() {
 }
 
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-	//m_framebufferResized = true;
-	//m_width              = width;
-	//m_height             = height;
 	auto ravaWindow                  = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
 	ravaWindow->m_framebufferResized = true;
 	ravaWindow->m_width              = width;

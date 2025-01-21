@@ -2,6 +2,7 @@
 
 #include "ravapch.h"
 #include "Framework/Resources/MeshModel.h"
+#include "Framework/Resources/Animations.h"
 #include "Framework/Camera.h"
 
 namespace Rava::Component {
@@ -30,9 +31,9 @@ struct Transform {
 
 	glm::mat4 GetTransform() const {
 		return glm::translate(glm::mat4(1.0f), position)
-			 * glm::rotate(glm::mat4(1.0f), glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f))
-			 * glm::rotate(glm::mat4(1.0f), glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f))
-			 * glm::rotate(glm::mat4(1.0f), glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f))
+			 * glm::rotate(glm::mat4(1.0f), rotation.x, glm::vec3(1.0f, 0.0f, 0.0f))
+			 * glm::rotate(glm::mat4(1.0f), rotation.y, glm::vec3(0.0f, 1.0f, 0.0f))
+			 * glm::rotate(glm::mat4(1.0f), rotation.z, glm::vec3(0.0f, 0.0f, 1.0f))
 			 * glm::scale(glm::mat4(1.0f), scale);
 	}
 
@@ -57,8 +58,9 @@ struct Transform {
 };
 
 struct Model {
-	std::shared_ptr<MeshModel> model;
+	Shared<MeshModel> model;
 	Transform offset{glm::vec3(0.0f)};
+	bool enable = true;
 
 	Model()             = delete;
 	Model(const Model&) = default;
@@ -69,16 +71,23 @@ struct Model {
 	void SetOffetScale(const glm::vec3& scale) { offset.scale = scale; }
 };
 
+struct Animation {
+	Unique<Animations> animationList;
+
+	Animation(std::string_view path)
+		: animationList(Animations::LoadAnimationsFromFile(path)) {}
+};
+
 struct Camera {
 	Rava::Camera view;
-	bool currentCamera    = false;
-	bool fixedAspectRatio = false;
-	bool smoothTranslate  = true;
+	bool mainCamera      = false;
+	bool fixedAspect     = false;
+	bool smoothTranslate = true;
 
 	Camera()
 		: Camera(false) {}
 	Camera(bool isCurrentCamera)
-		: currentCamera(isCurrentCamera) {}
+		: mainCamera(isCurrentCamera) {}
 };
 
 struct PointLight {
@@ -96,18 +105,18 @@ struct PointLight {
 };
 
 struct DirectionalLight {
-	glm::vec3 color         = {1.0f, 1.0f, 1.0f};
-	float lightIntensity    = 1.0f;
-	glm::vec3 direction     = {-1.0f, -3.0f, -1.0f};
-	//Rava::Camera* lightView = nullptr;
-	//int renderPass          = 0;
+	glm::vec3 color      = {1.0f, 1.0f, 1.0f};
+	float lightIntensity = 1.0f;
+	// glm::vec3 direction     = {-1.0f, -3.0f, -1.0f};
+	// Rava::Camera* lightView = nullptr;
+	// int renderPass          = 0;
 
 	DirectionalLight()
 		: DirectionalLight({1.0f, 1.0f, 1.0f}){};
 	DirectionalLight(glm::vec3 col, float intensity = 0.2f, glm::vec3 dir = {-1.0f, -3.0f, -1.0f}) {
 		color          = col;
 		lightIntensity = intensity;
-		direction      = dir;
+		// direction      = dir;
 	}
 };
 
