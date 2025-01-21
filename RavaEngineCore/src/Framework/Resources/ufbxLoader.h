@@ -18,7 +18,10 @@ class ufbxLoader {
 	std::vector<u32> indices{};
 	std::vector<Vertex> vertices{};
 	std::vector<Mesh> meshes{};
+	//std::vector<Node> nodes{};
 	std::vector<Material> materials{};
+	std::map<std::string, i32> nodeMap;
+	std::map<std::string, u32> boneMap;
 
    public:
 	ufbxLoader() = delete;
@@ -49,6 +52,10 @@ class ufbxLoader {
 	void CalculateTangentsFromIndexBuffer(const std::vector<u32>& indices);
 	void CalculateTangents();
 
+	glm::mat4 ufbxToglm(const ufbx_matrix& ufbxMat);
+	glm::vec3 ufbxToglm(const ufbx_vec3& ufbxVec3);
+	glm::quat ufbxToglm(const ufbx_quat& ufbxQuat);
+
    public:
 	Shared<Skeleton> skeleton;
 	Shared<Vulkan::Buffer> skeletonUbo;
@@ -61,6 +68,6 @@ class ufbxLoader {
    private:
 	void LoadSkeletons();
 	void LoadAnimationClips();
-	//void AddAnimationClip();
+	// void AddAnimationClip();
 };
 }  // namespace Rava

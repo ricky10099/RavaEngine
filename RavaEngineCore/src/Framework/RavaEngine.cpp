@@ -106,14 +106,16 @@ void Engine::UpdateTitleFPS(std::chrono::steady_clock::time_point newTime) {
 }
 
 void Engine::EditorInputHandle() {
+	static glm::vec3 currentRotation{0.0f};
 	if (Input::IsMouseButtonDown(Mouse::Button1)) {
 		m_mouseRotateStartPos = Input::GetMousePosition();
+		currentRotation       = m_editorCameraRotation;
 	}
 
 	if (Input::IsMouseButtonPress(Mouse::Button1)) {
 		glm::vec3 moveDirection{0.0f};
 		glm::vec3 rotation{0.0f};
-
+		
 		if (Input::IsKeyPress(Key::W)) {
 			moveDirection += m_editorCameraForward;
 		}
@@ -150,21 +152,12 @@ void Engine::EditorInputHandle() {
 				moveDirection -= m_editorCameraUp;
 			}
 		} else {
-			if (Input::GetMouseX() - m_mouseRotateStartPos.x > 100.0f) {
-				rotation.y -= 1.0f;
-			} else if (Input::GetMouseX() - m_mouseRotateStartPos.x < -100.0f) {
-				rotation.y += 1.0f;
-			}
-
-			if (Input::GetMouseY() - m_mouseRotateStartPos.y > 100.0f) {
-				rotation.x -= 1.0f;
-			} else if (Input::GetMouseY() - m_mouseRotateStartPos.y < -100.0f) {
-				rotation.x += 1.0f;
-			}
+			rotation.y = (Input::GetMouseX() - m_mouseRotateStartPos.x) / m_ravaWindow.Width();
+			rotation.x = (Input::GetMouseY() - m_mouseRotateStartPos.y) / m_ravaWindow.Height();
 		}
 
 		if (glm::dot(rotation, rotation) > std::numeric_limits<float>::epsilon()) {
-			m_editorCameraRotation += 0.5f * Timestep::Count() * glm::normalize(rotation);
+			m_editorCameraRotation = currentRotation + 0.5f * rotation;
 		}
 		if (glm::dot(moveDirection, moveDirection) > std::numeric_limits<float>::epsilon()) {
 			m_editorCameraPosition += 3.0f * Timestep::Count() * glm::normalize(moveDirection);

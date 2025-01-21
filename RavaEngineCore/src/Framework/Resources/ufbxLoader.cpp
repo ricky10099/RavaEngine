@@ -218,6 +218,18 @@ std::shared_ptr<Texture> Rava::ufbxLoader::LoadTexture(ufbx_material_map const& 
 }
 
 void ufbxLoader::LoadNode(const ufbx_node* fbxNode) {
+	//ufbx_matrix transform = ufbx_matrix_mul(&parentTransform, &fbxNode->node_to_parent);
+
+	//nodes.push_back(Node{});
+	//nodes.back().parentNode = parentNode;
+	//nodes.back().transform  = ufbxToglm(fbxNode->node_to_parent);
+
+ //   i32 thisID                          = (i32)nodes.size() - 1;
+	//m_nodeMap[fbxNode->name.data] = thisID;
+	//if (parentNode >= 0) {
+	//	nodes[parentNode].children.push_back(thisID);
+	//}
+
 	ufbx_mesh* fbxMesh = fbxNode->mesh;
 	if (fbxMesh) {
 		u32 meshCount = static_cast<u32>(fbxMesh->material_parts.count);

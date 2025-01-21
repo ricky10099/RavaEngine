@@ -39,6 +39,7 @@ bool ufbxLoader::LoadAnimations() {
 		return false;
 	}
 
+	LoadSkeletons();
 	LoadAnimationClips();
 
 	ufbx_free_scene(m_modelScene);
@@ -81,173 +82,89 @@ bool ufbxLoader::AddAnimation() {
 }
 
 void ufbxLoader::LoadSkeletons() {
-	u32 numberOfSkeletons = 0;
-	u32 meshIndex         = 0;
-	size_t numberOfBones  = 0;
-	skeleton              = std::make_shared<Skeleton>();
+	u32 boneCount = 0;
 
-	auto ufbxMatToGlm = [](ufbx_matrix const& ufbxMat) {
-		glm::mat4 glmMat4{};
-		for (u32 column = 0; column < 4; ++column) {
-			glmMat4[column].x = ufbxMat.cols[column].x;
-			glmMat4[column].y = ufbxMat.cols[column].y;
-			glmMat4[column].z = ufbxMat.cols[column].z;
-			glmMat4[column].w = column < 3 ? 0.0f : 1.0f;
-		}
-		return glmMat4;
-	};
+	if (m_modelScene->bones.count == 0) {
+		return;
+	}
 
-	for (size_t i = 0; i < m_modelScene->nodes.count; ++i) {
-		Bone bone{};
-		i32 parent      = m_modelScene->nodes[i]->parent ? m_modelScene->nodes[i]->parent->typed_id : -1;
-		bone.parent     = parent;
-		bone.transform  = ufbxMatToGlm(m_modelScene->nodes[i]->node_to_world);
-		bone.boneOffset = ufbxMatToGlm(m_modelScene->nodes[i]->node_to_parent);
-		bone.boneID     = m_modelScene->nodes[i]->typed_id;
-		if (parent >= 0) {
-			skeleton->bones[parent].children.push_back(bone.boneID);
-		}
-		skeleton->bones.push_back(bone);
-		if (m_modelScene->nodes[i]->bone) {
-			++numberOfBones;
+	skeleton = std::make_shared<Skeleton>();
+
+	for (size_t nodeIndex = 0; nodeIndex < m_modelScene->nodes.count; ++nodeIndex) {
+		ufbx_node* node = m_modelScene->nodes.data[nodeIndex];
+		if (node->attrib_type == UFBX_ELEMENT_BONE) {
+			Bone bone                    = {};
+			bone.name                    = node->name.data;
+			bone.ufbxNodeIndex           = nodeIndex;
+			bone.parentIndex             = node->parent->typed_id == 0 ? -1 : skeleton->boneMap.at(node->parent->name.data);
+			bone.parentIndex             = node->parent && (node->parent->attrib_type == UFBX_ELEMENT_BONE)? skeleton->boneMap.at(node->parent->name.data) : -1;
+			//bone.localTransform          = ufbxToglm(node->node_to_parent);
+			bone.globalTransform          = ufbxToglm(node->node_to_world);
+			bone.offsetMatrix            = ufbxToglm(node->geometry_to_node);
+			i32 boneIndex                = static_cast<int>(skeleton->bones.size());
+			skeleton->boneMap[bone.name] = boneIndex;
+			skeleton->bones.push_back(bone);
+			if (bone.parentIndex != -1) {
+				skeleton->bones[bone.parentIndex].children.push_back(bone);
+			}
+			++boneCount;
 		}
 	}
 
-	skeleton->skeletonUbo.jointsMatrices.resize(m_modelScene->nodes.count);
+	skeleton->skeletonUbo.jointsMatrices.resize(boneCount);
 
-	if (numberOfBones != 0) {
-		size_t bufferSize = numberOfBones * sizeof(glm::mat4);  // in bytes
+	if (boneCount != 0) {
+		size_t bufferSize = boneCount * sizeof(glm::mat4);  // in bytes
 		skeletonUbo       = std::make_shared<Vulkan::Buffer>(bufferSize);
 		skeletonUbo->Map();
 	}
 }
 
 void ufbxLoader::LoadAnimationClips() {
-	u32 numberOfSkeletons = 0;
-	u32 meshIndex         = 0;
-	// iterate over all meshes and check if they have a skeleton
-	for (u32 index = 0; index < m_modelScene->meshes.count; ++index) {
-		ufbx_mesh& mesh = *m_modelScene->meshes.data[index];
-		if (mesh.skin_deformers.count) {
-			++numberOfSkeletons;
-			meshIndex = index;
-		}
-	}
-
-	if (!numberOfSkeletons) {
-		return;
-	}
-
-	if (numberOfSkeletons > 1) {
-		ENGINE_WARN("A model should only have a single skin/armature/skeleton. Using mesh {0}.", numberOfSkeletons - 1);
-	}
-
-	skeleton = std::make_shared<Skeleton>();
-
-	auto ufbxMatToGlm = [](ufbx_matrix const& ufbxMat) {
-		glm::mat4 glmMat4{};
-		for (u32 column = 0; column < 4; ++column) {
-			glmMat4[column].x = ufbxMat.cols[column].x;
-			glmMat4[column].y = ufbxMat.cols[column].y;
-			glmMat4[column].z = ufbxMat.cols[column].z;
-			glmMat4[column].w = column < 3 ? 0.0f : 1.0f;
-		}
-		return glmMat4;
-	};
-
-	for (size_t i = 0; i < m_modelScene->nodes.count; ++i) {
-		Bone bone{};
-		i32 parent      = m_modelScene->nodes[i]->parent ? m_modelScene->nodes[i]->parent->typed_id : -1;
-		bone.parent     = parent;
-		bone.transform  = ufbxMatToGlm(m_modelScene->nodes[i]->node_to_world);
-		bone.boneOffset = ufbxMatToGlm(m_modelScene->nodes[i]->node_to_parent);
-		bone.boneID     = m_modelScene->nodes[i]->typed_id;
-		if (parent >= 0) {
-			skeleton->bones[parent].children.push_back(bone.boneID);
-		}
-		skeleton->bones.push_back(bone);
-	}
-	//std::unordered_map<std::string, int> nameToBoneIndex;
-
-	//// load skeleton
-	//{
-	//	ufbx_mesh& mesh             = *m_modelScene->meshes.data[meshIndex];
-	//	ufbx_skin_deformer& fbxSkin = *mesh.skin_deformers.data[0];
-	//	size_t numberOfBones        = fbxSkin.clusters.count;
-
-	//	for (u32 boneIndex = 0; boneIndex < numberOfBones; ++boneIndex) {
-	//		ufbx_skin_cluster& bone   = *fbxSkin.clusters.data[boneIndex];
-	//		std::string boneName      = bone.name.data;
-	//		nameToBoneIndex[boneName] = boneIndex;
-	//	}
-	//}
-
-	auto ufbxVec3ToGlm = [](ufbx_vec3 const& ufbxVec3) { return glm::vec3(ufbxVec3.x, ufbxVec3.y, ufbxVec3.z); };
-	auto ufbxQuatToGlm = [](ufbx_quat const& ufbxQuat) {
-		glm::quat glmQuat{};
-		glmQuat.x = ufbxQuat.x;
-		glmQuat.y = ufbxQuat.y;
-		glmQuat.z = ufbxQuat.z;
-		glmQuat.w = ufbxQuat.w;
-		return glmQuat;
-	};
-
-	animations = std::make_unique<Animations>();
-
+	animations                = std::make_unique<Animations>();
 	size_t numberOfAnimations = m_modelScene->anim_stacks.count;
 	for (size_t animationIndex = 0; animationIndex < numberOfAnimations; ++animationIndex) {
 		ufbx_anim_stack& fbxAnimation = *m_modelScene->anim_stacks.data[animationIndex];
+
+		const float target_framerate = 30.0f;
+		const int max_frames         = 4096;
+
+		// Sample the animation evenly at `target_framerate` if possible while limiting the maximum
+		// number of frames to `max_frames` by potentially dropping FPS.
+		float duration    = (float)fbxAnimation.time_end - (float)fbxAnimation.time_begin;
+		size_t num_frames = glm::clamp((int)(duration * target_framerate), 2, max_frames);
+		float framerate   = (float)(num_frames - 1) / duration;
+
 		std::string_view animationName(fbxAnimation.name.data);
 
-		float duration   = (float)fbxAnimation.time_end - (float)fbxAnimation.time_begin;
-		size_t numFrames = glm::clamp((duration * 30), 2.0f, 4096.0f);
-		float framerate  = (float)(numFrames - 1) / duration;
-
-		if (animationName.find("|") != std::string::npos) {
-			continue;
-		}
-		ENGINE_INFO("name of animation: {0}", animationName);
-
 		Shared<AnimationClip> animation = std::make_shared<AnimationClip>(animationName);
-		animation->SetFirstKeyFrameTime(fbxAnimation.time_begin);
-		animation->SetLastKeyFrameTime(fbxAnimation.time_end);
+		animation->SetFirstKeyFrameTime((float)fbxAnimation.time_begin);
+		animation->SetLastKeyFrameTime((float)fbxAnimation.time_end);
+		animation->SetFramerate(framerate);
+		animation->SetTotalFrameCount(num_frames);
+
 		animation->animNodesList.resize(skeleton->bones.size());
-		animation->SetTotalFrameCount(numFrames);
-		for (size_t i = 0; i < skeleton->bones.size(); ++i) {
-			ufbx_node* node = m_modelScene->nodes.data[i];
-			animation->animNodesList[i].positions.resize(numFrames);
-			animation->animNodesList[i].rotations.resize(numFrames);
-			animation->animNodesList[i].scales.resize(numFrames);
-			bool const_rot = true, const_pos = true, const_scale = true;
+		for (size_t boneIndex = 0; boneIndex < skeleton->bones.size(); ++boneIndex) {
+			ufbx_node* node                   = m_modelScene->nodes.data[skeleton->bones[boneIndex].ufbxNodeIndex];
+			AnimationClip::AnimNode& animNode = animation->animNodesList[boneIndex];
 
-			for (size_t j = 0; j < numFrames; ++j) {
-				double time = fbxAnimation.time_begin + (double)j / framerate;
+			animNode.rot.resize(num_frames);
+			animNode.pos.resize(num_frames);
+			animNode.scale.resize(num_frames);
 
-				ufbx_transform transform = ufbx_evaluate_transform(fbxAnimation.anim, m_modelScene->nodes.data[i], time);
-				animation->animNodesList[i].positions[j].xyz        = ufbxVec3ToGlm(transform.translation);
-				animation->animNodesList[i].rotations[j].quaternion = ufbxQuatToGlm(transform.rotation);
-				animation->animNodesList[i].scales[j].xyz           = ufbxVec3ToGlm(transform.scale);
+			for (size_t frameIndex = 0; frameIndex < num_frames; frameIndex++) {
+				double time = fbxAnimation.time_begin + (double)frameIndex / framerate;
 
-				if (j > 0) {
-					if (glm::dot(
-							animation->animNodesList[i].rotations[j].quaternion,
-							animation->animNodesList[i].rotations[j - 1].quaternion
-						)
-						< 0.0f) {
-						animation->animNodesList[i].rotations[j].quaternion *= -1;
-					}
+				ufbx_transform transform   = ufbx_evaluate_transform(fbxAnimation.anim, node, time);
+				animNode.rot[frameIndex]   = ufbxToglm(transform.rotation);
+				animNode.pos[frameIndex]   = ufbxToglm(transform.translation);
+				animNode.scale[frameIndex] = ufbxToglm(transform.scale);
 
-					if (!(animation->animNodesList[i].rotations[j].quaternion
-						  == animation->animNodesList[i].rotations[j - 1].quaternion)) {
-						const_rot = false;
-					}
-
-					if (!(animation->animNodesList[i].positions[j].xyz == animation->animNodesList[i].positions[j - 1].xyz)) {
-						const_pos = false;
-					}
-
-					if (!(animation->animNodesList[i].scales[j].xyz == animation->animNodesList[i].scales[j - 1].xyz)) {
-						const_scale = false;
+				if (frameIndex > 0) {
+					// Negated quaternions are equivalent, but interpolating between ones of different
+					// polarity takes a the longer path, so flip the quaternion if necessary.
+					if (glm::dot(animNode.rot[frameIndex], animNode.rot[frameIndex - 1]) < 0.0f) {
+						animNode.rot[frameIndex] *= -1;
 					}
 				}
 			}
@@ -255,7 +172,6 @@ void ufbxLoader::LoadAnimationClips() {
 
 		animations->Push(animation);
 	}
-	// m_SkeletalAnimation = (m_Animations->Size()) ? true : false;
 }
 
 // void ufbxLoader::AddAnimationClip() {

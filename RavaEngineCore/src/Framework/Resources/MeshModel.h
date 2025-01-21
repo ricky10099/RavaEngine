@@ -36,6 +36,14 @@ struct Mesh {
 	VkDescriptorSet skeletonDescriptorSet;
 };
 
+//struct Node {
+//	glm::mat4 transform;
+//	i32 parentNode;
+//	std::vector<i32> children;
+//	i32 boneID = -1;
+//	glm::mat4 boneOffset;
+//};
+
 class MeshModel {
    public:
 	// MeshModel(const AssimpLoader& loader);
@@ -59,6 +67,9 @@ class MeshModel {
 
    private:
 	std::vector<Mesh> m_meshes{};
+	//std::vector<Node> m_nodes{};
+	std::map<std::string, i32> nodeMap;
+
 
 	Unique<Vulkan::Buffer> m_vertexBuffer;
 	u32 m_vertexCount;

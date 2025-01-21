@@ -257,8 +257,6 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 		ImGui::EndPopup();
 	}
 
-
-
 	ImGui::PopItemWidth();
 
 	DrawComponent<Component::Transform>(

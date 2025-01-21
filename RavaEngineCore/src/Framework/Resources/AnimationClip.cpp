@@ -23,20 +23,16 @@ void AnimationClip::Update(Skeleton& skeleton) {
 	float t          = glm::min(frame_time - (float)f0, 1.0f);
 
 	for (u32 i = 0; i < skeleton.bones.size(); ++i) {
-		Bone bone           = skeleton.bones[i];
-		AnimNodes animNodes = animNodesList[i];
+		Bone& bone          = skeleton.bones[i];
+		AnimNode animNodes = animNodesList[i];
 
-		glm::quat rot =
-			&animNodes.rotations
-				? glm::lerp(animNodes.rotations[f0].quaternion, animNodes.rotations[f1].quaternion, m_currentKeyFrameTime)
-				: animNodes.rotations[0].quaternion;
-		glm::vec3 pos   = &animNodes.positions
-							? glm::mix(animNodes.positions[f0].xyz, animNodes.positions[f1].xyz, m_currentKeyFrameTime)
-							: animNodes.positions[0].xyz;
-		glm::vec3 scale = &animNodes.scales ? glm::mix(animNodes.scales[f0].xyz, animNodes.scales[f1].xyz, m_currentKeyFrameTime)
-											: animNodes.scales[0].xyz;
+		glm::quat rot   = glm::lerp(animNodes.rot[f0], animNodes.rot[f1], t);
+		glm::vec3 pos   = glm::mix(animNodes.pos[f0], animNodes.pos[f1], t);
+		glm::vec3 scale = glm::mix(animNodes.scale[f0], animNodes.scale[f1], t);
 
-		bone.boneOffset = glm::translate(glm::mat4(1.0f), pos) * glm::mat4(rot) * glm::scale(glm::mat4(1.0f), scale);
+		bone.localTransform = glm::translate(glm::mat4(1.0f), pos) * glm::mat4_cast(rot) * glm::scale(glm::mat4(1.0f), scale);
+
+		// bone.boneOffset = glm::translate(glm::mat4(1.0f), pos) * glm::mat4(rot) * glm::scale(glm::mat4(1.0f), scale);
 	}
 }
 }  // namespace Rava

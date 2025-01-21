@@ -28,11 +28,11 @@ bool AssimpLoader::LoadModel(const u32 instanceCount) {
 		return false;
 	}
 
-	//LoadSkeletons();
+	MarkNode(scene->mRootNode, aiMatrix4x4(), -1);
 	LoadMaterials();
+	LoadSkeleton();
 
 	meshes.clear();
-
 	// Load in all our meshes
 	LoadNode(scene->mRootNode);
 }
@@ -202,6 +202,24 @@ std::shared_ptr<Texture> AssimpLoader::LoadTexture(const std::string& filepath, 
 		return texture;
 	}
 	return nullptr;
+}
+
+void AssimpLoader::MarkNode(const aiNode* fbxNode, aiMatrix4x4 parentTransform, i32 parentNode) {
+	aiMatrix4x4 transform = parentTransform * fbxNode->mTransformation;
+
+	nodes.push_back(Node{});
+	nodes.back().parentNode = parentNode;
+	nodes.back().transform  = aiToglm(fbxNode->mTransformation);
+
+	 i32 thisID                          = (i32)nodes.size() - 1;
+	nodeMap[fbxNode->mName.C_Str()] = thisID;
+	if (parentNode >= 0) {
+		nodes[parentNode].children.push_back(thisID);
+	}
+
+	for (u32 childIndex = 0; childIndex < fbxNode->mNumChildren; ++childIndex) {
+		MarkNode(fbxNode->mChildren[childIndex], transform, thisID);
+	}
 }
 
 void AssimpLoader::LoadNode(aiNode* node) {

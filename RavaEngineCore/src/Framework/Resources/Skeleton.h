@@ -34,11 +34,13 @@ struct Joint {
 };
 
 struct Bone {
-	i32 parent;
-	i32 boneID;
-	glm::mat4 transform;
-	glm::mat4 boneOffset;
-	std::vector<i32> children;
+	std::string name;
+	i32 ufbxNodeIndex;
+	i32 parentIndex;
+	std::vector<Bone> children;
+	glm::mat4 offsetMatrix;
+	glm::mat4 localTransform{1.0f};
+	glm::mat4 globalTransform{1.0f};
 };
 
 struct Skeleton {
@@ -51,6 +53,7 @@ struct Skeleton {
 	std::string_view name;
 	//std::vector<Joint> joints;
 	std::vector<Bone> bones;
+	std::map<std::string, i32> boneMap;
 	std::map<int, int> globalNodeToJointIndex;
 	SkeletonUbo skeletonUbo;
 };
