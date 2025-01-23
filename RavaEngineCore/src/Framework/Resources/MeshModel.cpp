@@ -43,6 +43,8 @@ MeshModel::MeshModel(const ufbxLoader& loader) {
 	CreateIndexBuffers(loader.indices);
 	m_skeleton    = loader.skeleton;
 	m_skeletonUbo = loader.skeletonUbo;
+	m_vertices    = loader.vertices;
+	m_indices     = loader.indices;
 }
 
 MeshModel::~MeshModel() {
@@ -165,4 +167,20 @@ void MeshModel::BindDescriptors(const FrameInfo& frameInfo, const VkPipelineLayo
 	);
 }
 
+MeshModel::Bounds MeshModel::GetBounds() const {
+	glm::vec3 lower{std::numeric_limits<float>::max()};
+	glm::vec3 upper{std::numeric_limits<float>::lowest()};
+
+	for (auto& v : m_vertices) {
+		lower = min(v.position, lower);
+		upper = max(v.position, upper);
+	}
+
+	return {lower, upper};
+}
+
+float MeshModel::GetWidth() const {
+	auto b = GetBounds();
+	return b.upper.x - b.lower.x;
+}
 }  // namespace Rava

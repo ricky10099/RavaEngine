@@ -36,15 +36,23 @@ struct Mesh {
 	VkDescriptorSet skeletonDescriptorSet;
 };
 
-//struct Node {
+
+
+// struct Node {
 //	glm::mat4 transform;
 //	i32 parentNode;
 //	std::vector<i32> children;
 //	i32 boneID = -1;
 //	glm::mat4 boneOffset;
-//};
+// };
 
 class MeshModel {
+   public:
+	struct Bounds {
+		glm::vec3 lower;
+		glm::vec3 upper;
+	};
+
    public:
 	// MeshModel(const AssimpLoader& loader);
 	MeshModel(const ufbxLoader& loader);
@@ -60,6 +68,8 @@ class MeshModel {
 	void Draw(const FrameInfo& frameInfo, const VkPipelineLayout& pipelineLayout);
 	void DrawMesh(const VkCommandBuffer& commandBuffer, const Mesh& mesh) const;
 
+	Bounds GetBounds() const;
+	float GetWidth() const;
 	bool HasSkeleton() const { return m_skeleton ? true : false; }
 	Shared<Skeleton> GetSkeleton() { return m_skeleton; }
 	// std::shared_ptr<Skeleton> GetSkeleton() const { return m_skeleton; }
@@ -67,9 +77,10 @@ class MeshModel {
 
    private:
 	std::vector<Mesh> m_meshes{};
-	//std::vector<Node> m_nodes{};
+	// std::vector<Node> m_nodes{};
 	std::map<std::string, i32> nodeMap;
-
+	std::vector<Vertex> m_vertices;
+	std::vector<u32> m_indices;
 
 	Unique<Vulkan::Buffer> m_vertexBuffer;
 	u32 m_vertexCount;

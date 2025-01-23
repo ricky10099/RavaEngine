@@ -60,7 +60,7 @@ void Renderer::Init() {
 	g_DummyBuffer->Flush();
 
 	g_DefaultTexture = std::make_shared<Rava::Texture>(true);
-	g_DefaultTexture->Init("Assets/System/Rava.png", Rava::Texture::USE_SRGB);
+	g_DefaultTexture->Init("Assets/System/Images/Rava.png", Rava::Texture::USE_SRGB);
 
 	Unique<DescriptorSetLayout> globalDescriptorSetLayout =
 		DescriptorSetLayout::Builder()

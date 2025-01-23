@@ -1,5 +1,9 @@
 #pragma once
 
+namespace physx {
+class PxScene;
+}
+
 namespace Rava {
 class Entity;
 class Scene {
@@ -8,8 +12,8 @@ class Scene {
 
    public:
 	Scene() = delete;
-	Scene(std::string_view name) : m_name(name) {}
-	virtual ~Scene() = default;
+	Scene(std::string_view name) {}
+	~Scene() = default;
 
 	virtual void Init(){};
 	virtual void Update(){};
@@ -23,17 +27,21 @@ class Scene {
 	std::vector<Shared<Entity>>& GetAllEntities() { return m_entities; }
 	const Shared<Entity>& GetEntity(u32 index) { return m_entities[index]; }
 	size_t GetEntitySize() { return m_entities.size(); }
+	physx::PxScene* GetPxScene() { return m_pxScene; }
 
    protected:
 	std::string_view m_name = typeid(*this).name();
 	entt::registry m_registry;
-
+	physx::PxScene* m_pxScene;
 	std::vector<Shared<Entity>> m_entities;
 
    private:
+	void CreatePhysXScene();
+
 	void ClearScene() {
 		m_registry.clear();
 		m_entities.clear();
+		m_pxScene->release();
 	}
 
 	// bool m_isRunning;

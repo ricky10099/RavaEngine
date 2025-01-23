@@ -47,6 +47,26 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport / Platform Windows
 
+	float fontSize = 18.0f;
+	io.Fonts->AddFontFromFileTTF(
+		"Assets/System/Fonts/GenJyuuGothic/GenJyuuGothicX-Monospace-Regular.ttf",
+		fontSize,
+		nullptr,
+		io.Fonts->GetGlyphRangesChineseFull()
+	);
+	io.Fonts->AddFontFromFileTTF(
+		"Assets/System/Fonts/GenJyuuGothic/GenJyuuGothicX-Monospace-Light.ttf",
+		fontSize,
+		nullptr,
+		io.Fonts->GetGlyphRangesChineseFull()
+	);
+	io.FontDefault = io.Fonts->AddFontFromFileTTF(
+		"Assets/System/Fonts/GenJyuuGothic/GenJyuuGothicX-Monospace-Bold.ttf",
+		fontSize,
+		nullptr,
+		io.Fonts->GetGlyphRangesChineseFull()
+	);
+
 	// Setup Dear ImGui style
 	// ImGui::StyleColorsDark();
 	SetEditorStlye();
@@ -139,12 +159,12 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
 	ImGui::End();
 
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 
 	//    ImGui::Begin("Vulkan Viewport");
-	//ImVec2 windowSize = ImGui::GetContentRegionAvail();
+	// ImVec2 windowSize = ImGui::GetContentRegionAvail();
 	//	ImGui::Image((ImTextureID)m_descriptorSets[currentFrame], windowSize);
-	//ImGui::End();
+	// ImGui::End();
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {
@@ -166,6 +186,8 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 					ImGui::ResetMouseDragDelta();
 				}
 			}
+		} else {
+			break;
 		}
 	}
 
@@ -193,14 +215,18 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGui::End();
 }
 
-bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index) {
-	ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
-	// flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
-	ImGui::Selectable(entity->GetName().data());
-	// bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, entity->GetName().data());
+bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, u32 index) {
+	auto& name = entity->GetComponent<Component::Name>()->data;
+
+	// ImGuiTreeNodeFlags flags = ((m_selectedEntity == entity) ? ImGuiTreeNodeFlags_Selected : 0) |
+	// ImGuiTreeNodeFlags_OpenOnArrow;
+	//  flags |= ImGuiTreeNodeFlags_SpanAvailWidth;
+	ImGui::Selectable(std::string(name + "##" + std::to_string((u32)entity->GetEntityID())).data(), m_selectedIndex == index);
+	// bool opened = ImGui::TreeNodeEx((void*)entity.get(), flags, name.data());
 
 	if (ImGui::IsItemClicked()) {
 		m_selectedEntity = entity;
+		m_selectedIndex  = index;
 	}
 
 	bool entityDeleted = false;
@@ -213,16 +239,16 @@ bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t i
 	}
 
 	// if (opened) {
-	//	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-	//	bool opened              = ImGui::TreeNodeEx((void*)9817239, flags, entity->GetName().data());
-	//	if (opened) {
-	//		ImGui::TreePop();
-	//	}
+	// ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
+	// bool opened              = ImGui::TreeNodeEx((void*)9817239, flags, entity->GetName().data());
+	// if (opened) {
 	//	ImGui::TreePop();
 	// }
+	// ImGui::TreePop();
+	//}
 
 	if (entityDeleted) {
-		scene->DestroyEntity((u32)index);
+		scene->DestroyEntity(index);
 		if (m_selectedEntity == entity) {
 			m_selectedEntity = {};
 		}
@@ -233,13 +259,16 @@ bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t i
 }
 
 void Editor::DrawComponents(Shared<Entity> entity) {
-	char buffer[256];
-	memset(buffer, 0, sizeof(buffer));
-	strncpy_s(buffer, sizeof(buffer), entity->GetName().data(), sizeof(buffer));
-	if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
-		entity->SetName(buffer);
+	if (entity->HasComponent<Component::Name>()) {
+		auto& name = entity->GetComponent<Component::Name>()->data;
+		char buffer[256];
+		memset(buffer, 0, sizeof(buffer));
+		strncpy_s(buffer, sizeof(buffer), name.data(), sizeof(buffer));
+		if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
+			// entity->SetName(buffer);
+			name = std::string(buffer);
+		}
 	}
-
 	ImGui::SameLine();
 	ImGui::PushItemWidth(-1);
 
@@ -440,9 +469,9 @@ void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float 
 	ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
 
-	float lineHeight  = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
-	ImVec2 buttonSize = {lineHeight + 3.0f, lineHeight};
-
+	float lineHeight        = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+	ImVec2 buttonSize       = {lineHeight + 3.0f, lineHeight};
+	ImDrawFlags buttonStyle = ImDrawFlags_RoundCornersLeft;
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{0.9f, 0.2f, 0.2f, 1.0f});
 	ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{0.8f, 0.1f, 0.15f, 1.0f});
@@ -525,6 +554,10 @@ void Editor::SetEditorStlye() {
 	style.TabBarOverlineSize = 0.0f;
 	style.TabBarBorderSize   = 0.0f;
 	style.TabRounding        = 5.0f;
+	style.WindowRounding     = 5.0f;
+	style.FrameRounding      = 5.0f;
+	style.GrabRounding       = 3.0f;
+	style.DisabledAlpha      = 0.4f;
 }
 
 void Editor::SetEditorThemeColors() {

@@ -1,8 +1,15 @@
 #pragma once
 
-#include "Framework/Components.h"
+#include <type_traits>
+
+// #include "Framework/Components.h"
 
 namespace Rava {
+namespace Component {
+struct Name;
+struct Transform;
+struct RigidBody;
+}  // namespace Component
 class Scene;
 class Entity {
    public:
@@ -14,25 +21,42 @@ class Entity {
 	virtual void Init(){};
 	virtual void Update(){};
 
-	void SetName(std::string_view name) { m_name = name; }
+	void SetName(std::string_view name);
 
 	void Translate(const glm::vec3& translation);
 	void SetPosition(const glm::vec3& position);
 	void SetRotation(const glm::vec3& rotation);
 	void SetScale(const glm::vec3& scale);
 
-	glm::vec3 GetPosition() { return m_transform->position; }
-	glm::vec3 GetRotation() { return m_transform->rotation; }
-	glm::vec3 GetScale() { return m_transform->scale; }
+	glm::vec3 GetPosition();
+	glm::vec3 GetRotation();
+	glm::vec3 GetScale();
 
 	entt::entity GetEntityID() const { return m_entity; }
-	std::string_view GetName() const { return m_name; }
+	std::string GetName() const;
+
 
 	template <typename T, typename... Args>
 	T* AddComponent(Args&&... args) {
 		ENGINE_ASSERT(!HasComponent<T>(), "Entity already has component!");
+
+		//// Check if the component's constructor accepts an Entity
+		// if constexpr (std::is_constructible_v<T, Entity&, Args...>) {
+		//	// Pass the current Entity instance to the component
+		//	return &m_scene->GetRegistry().emplace<T>(m_entity, *this, std::forward<Args>(args)...);
+		// } else {
+		//	// Construct without passing the Entity
+		//	return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
+		// }
+
 		return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
 	}
+
+	template <typename... Args>
+	Component::RigidBody* AddRigidBody(Args&&... args) {
+		return AddComponent<Component::RigidBody>(*this, std::forward<Args>(args)...);
+	}
+
 
 	template <typename T>
 	T* GetComponent() {
@@ -52,13 +76,13 @@ class Entity {
 	}
 
    protected:
-	entt::entity m_entity{entt::null};
-	Scene* m_scene = nullptr;
 	// const Entity* m_parent;
 	// std::vector<std::shared_ptr<Entity>> m_children;
-	std::string m_name;
-	// glm::vec3 m_position{0.f, 0.f, 0.f};
-	Component::Transform* m_transform{};
+
+	entt::entity m_entity{entt::null};
+	Scene* m_scene                    = nullptr;
+	Component::Name* m_name           = nullptr;
+	Component::Transform* m_transform = nullptr;
 
 	bool m_isVisible = true;
 };

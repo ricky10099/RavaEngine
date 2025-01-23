@@ -37,6 +37,7 @@ void Engine::Run() {
 	}
 
 	m_timeLastFrame = std::chrono::high_resolution_clock::now();
+	m_physicsSystem.Pause();
 	while (!m_ravaWindow.ShouldClose()) {
 		if (frameLimit != 0) {
 			m_targetFrameTime = 1.0f / frameLimit;
@@ -47,11 +48,14 @@ void Engine::Run() {
 
 		switch (engineState) {
 			case EngineState::Run:
+				m_physicsSystem.Update(m_currentScene.get(), m_timestep);
 				UpdateSceneCamera();
 				UpdateSceneAndEntities();
+				//UpdateRigidBodyTransform();
 				RunButton();
 				break;
 			case EngineState::Debug:
+				m_physicsSystem.Update(m_currentScene.get(), m_timestep);
 				UpdateSceneAndEntities();
 				[[fallthrough]];
 			case EngineState::Edit:
@@ -62,6 +66,7 @@ void Engine::Run() {
 
 		m_renderer.BeginFrame();
 		m_renderer.UpdateEditor(m_currentScene.get());
+		UpdateRigidBodyTransform();
 		m_renderer.UpdateAnimations(m_currentScene->GetRegistry());
 		m_renderer.RenderpassEntities(m_currentScene->GetRegistry(), m_mainCamera);
 		m_renderer.RenderEntities(m_currentScene.get());
@@ -80,10 +85,13 @@ void Engine::Run() {
 void Engine::LoadScene(Unique<Scene> scene) {
 	if (m_currentScene) {
 		vkDeviceWaitIdle(VKContext->GetLogicalDevice());
+		m_physicsSystem.DisconnectPVD();
+		m_currentScene->ClearScene();
 		m_currentScene.reset();
 	}
 	m_currentScene = std::move(scene);
 	ENGINE_INFO("Initializing {0}", m_currentScene->GetName());
+	m_currentScene->CreatePhysXScene();
 	m_currentScene->Init();
 }
 
@@ -164,12 +172,23 @@ void Engine::EditorInputHandle() {
 	if (Input::IsKeyDown(Key::F5)) {
 		if (engineState == EngineState::Edit) {
 			engineState = EngineState::Debug;
+			m_physicsSystem.Unpause();
 		} else if (engineState == EngineState::Debug) {
 			engineState = EngineState::Edit;
+			m_physicsSystem.Pause();
+			m_physicsSystem.DisconnectPVD();
 			vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 			m_currentScene->ClearScene();
 			auto scene = std::move(m_currentScene);
 			LoadScene(std::move(scene));
+		}
+	}
+
+	if (Input::IsKeyDown(Key::F7)) {
+		if (m_physicsSystem.IsPaused()) {
+			m_physicsSystem.Unpause();
+		} else {
+			m_physicsSystem.Pause();
 		}
 	}
 
@@ -180,8 +199,11 @@ void Engine::RunButton() {
 	if (Input::IsKeyDown(Key::F6)) {
 		if (engineState == EngineState::Edit) {
 			engineState = EngineState::Run;
+			m_physicsSystem.Unpause();
 		} else if (engineState == EngineState::Run) {
 			engineState = EngineState::Edit;
+			m_physicsSystem.Pause();
+			m_physicsSystem.DisconnectPVD();
 			vkDeviceWaitIdle(VKContext->GetLogicalDevice());
 			m_currentScene->ClearScene();
 			auto scene = std::move(m_currentScene);
@@ -214,6 +236,20 @@ void Engine::UpdateSceneCamera() {
 		}
 		cam.view.MoveCamera(transform.position, transform.rotation);
 		cam.view.RecalculateProjection();
+	}
+}
+
+void Engine::UpdateRigidBodyTransform() {
+	for (auto [entity, rigidBody, transform] : m_currentScene->GetRegistry().view<Component::RigidBody, Component::Transform>().each()) {
+		glm::vec3 eulerAngles(
+			glm::radians(transform.rotation.x), glm::degrees(transform.rotation.y), glm::radians(transform.rotation.z)
+		);
+		glm::quat rotation   = glm::quat(eulerAngles);
+		physx::PxQuat pxRotation(rotation.x, rotation.y, rotation.z, rotation.w);
+		physx::PxVec3 pxPosition(transform.position.x, transform.position.y, transform.position.z);
+		//physx::PxTransform t = ToTransform(transform.position, transform.GetQuaternion());
+		physx::PxTransform t(pxPosition, pxRotation);
+		rigidBody.actor->setGlobalPose(t);
 	}
 }
 }  // namespace Rava

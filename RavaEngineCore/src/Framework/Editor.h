@@ -34,10 +34,11 @@ class Editor {
 	glm::vec2 m_viewportSize = {0.0f, 0.0f};
 	// glm::vec2 m_viewportBounds[2];
 	Shared<Entity> m_selectedEntity = nullptr;
+	u32 m_selectedIndex             = -1;
 
    private:
 	void DrawSceneHierarchy(Scene* scene);
-	bool DrawEntityNode(Scene* scene, const Shared<Entity>& entity, size_t index);
+	bool DrawEntityNode(Scene* scene, const Shared<Entity>& entity, u32 index);
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>
 	void DisplayAddComponentEntry(const std::string& entryName);

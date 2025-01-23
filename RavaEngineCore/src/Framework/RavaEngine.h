@@ -6,6 +6,7 @@
 #include "Framework/InputEvents/Event.h"
 #include "Framework/Scene.h"
 #include "Framework/Timestep.h"
+#include "Framework/PhysicsSystem.h"
 
 namespace Rava {
 class Camera;
@@ -38,6 +39,8 @@ class Engine {
 
 	GLFWwindow* GetGLFWWindow() { return m_ravaWindow.GetGLFWwindow(); }
 	u32 GetCurrentFrameIndex() { return m_renderer.GetFrameIndex(); }
+	PhysicsSystem& GetPhysicsSystem() { return m_physicsSystem; }
+	physx::PxScene* GetCurrentPxScene() { return m_currentScene->GetPxScene(); }
 
    private:
 	Log m_logger;
@@ -45,6 +48,7 @@ class Engine {
 	Window m_ravaWindow{m_title};
 	static std::unique_ptr<Vulkan::Context> m_context;
 	Vulkan::Renderer m_renderer{&m_ravaWindow};
+	PhysicsSystem m_physicsSystem;
 	Unique<Scene> m_currentScene = nullptr;
 
 	Timestep m_timestep{0ms};
@@ -70,5 +74,6 @@ class Engine {
 	void UpdateEditorCamera();
 	void UpdateSceneAndEntities();
 	void UpdateSceneCamera();
+	void UpdateRigidBodyTransform();
 };
 }  // namespace Rava
