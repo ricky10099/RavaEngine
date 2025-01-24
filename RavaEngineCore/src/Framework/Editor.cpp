@@ -159,7 +159,7 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	//    ImGui::Begin("Vulkan Viewport");
 	// ImVec2 windowSize = ImGui::GetContentRegionAvail();

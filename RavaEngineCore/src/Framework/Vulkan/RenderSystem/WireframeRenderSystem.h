@@ -2,6 +2,7 @@
 
 #include "Framework/Vulkan/Pipeline.h"
 
+struct FrameInfo;
 namespace Vulkan {
 class WireframeRenderSystem {
    public:
@@ -10,7 +11,7 @@ class WireframeRenderSystem {
 
 	NO_COPY(WireframeRenderSystem)
 
-	//void Update(FrameInfo& frameInfo, GlobalUbo& ubo, entt::registry& registry);
+	void Update(FrameInfo& frameInfo, entt::registry& registry);
 	void Render(FrameInfo& frameInfo, entt::registry& registry);
 
    private:

@@ -58,9 +58,9 @@ struct Transform {
 	}
 
 	glm::quat GetQuaternion() {
-		//return glm::quat(glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z)));
-		//return glm::quat(glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z)));
-		//return glm::quat(glm::vec3(rotation.x, rotation.y, rotation.z));
+		// return glm::quat(glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z)));
+		// return glm::quat(glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z)));
+		// return glm::quat(glm::vec3(rotation.x, rotation.y, rotation.z));
 		return glm::quat(glm::radians(rotation));
 	}
 
@@ -231,7 +231,9 @@ struct RigidBody {
 			material->release();
 		}
 		// shape->release();
-		actor->release();
+		if (actor) {
+			actor->release();
+		}
 	}
 
 	void UpdateMassAndInertia(float mass) const {
