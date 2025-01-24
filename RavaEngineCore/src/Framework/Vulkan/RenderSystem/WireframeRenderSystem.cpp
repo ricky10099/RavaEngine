@@ -2,8 +2,10 @@
 
 #include "Framework/Vulkan/VKUtils.h"
 #include "Framework/Vulkan/RenderSystem/WireframeRenderSystem.h"
+#include "Framework/PhysicsSystem.h"
 #include "Framework/Components.h"
 #include "Framework/Timestep.h"
+#include "Framework/Resources/MeshModel.h"
 
 namespace Vulkan {
 struct WireframePushConstants {
@@ -79,41 +81,65 @@ void WireframeRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registr
 		physx::PxShape* shape;
 		rigidBody.actor->getShapes(&shape, 1);
 
-		const physx::PxGeometry& geometry = shape->getGeometry();
+		//const physx::PxGeometry* geometry = &shape->getGeometry();
 
 		// Get wireframe vertices
-		auto wireframeVertices = CreateWireframeVertices(geometry);
+		auto wireframeVertices = Rava::PhysicsSystem::CreateWireframeVertices(shape);
 
 		// Update vertex buffer with wireframe data
-		UpdateVertexBuffer(wireframeVertices);
+		//UpdateVertexBuffer(wireframeVertices);
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		CreateBuffer(
+			wireframeVertices.size() * sizeof(Rava::Vertex),
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			stagingBuffer,
+			stagingBufferMemory
+		);
 
+		// Copy vertex data to staging buffer
+		void* data;
+		vkMapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory, 0, wireframeVertices.size() * sizeof(Rava::Vertex), 0, &data);
+		memcpy(data, wireframeVertices.data(), wireframeVertices.size() * sizeof(Rava::Vertex));
+		vkUnmapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory);
+
+		// Copy from staging buffer to vertex buffer
+		CopyBuffer(stagingBuffer, vertexBuffer, vertices.size() * sizeof(Vertex));
+
+		// Clean up staging buffer
+		vkDestroyBuffer(device, stagingBuffer, nullptr);
+		vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+
+		m_pipeline->Bind(frameInfo.commandBuffer);
 		// Bind wireframe pipeline
-		vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wireframePipeline);
+		//vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->Bind);
 
 		// Draw lines
 		vkCmdDraw(frameInfo.commandBuffer, wireframeVertices.size(), 1, 0, 0);
 	}
 
-	auto view = registry.view<Rava::Component::PointLight, Rava::Component::Transform>();
-	for (auto entity : view) {
-		auto& pointLight = view.get<Rava::Component::PointLight>(entity);
-		auto& transform  = view.get<Rava::Component::Transform>(entity);
+	//auto view = registry.view<Rava::Component::PointLight, Rava::Component::Transform>();
+	//for (auto entity : view) {
+	//	auto& pointLight = view.get<Rava::Component::PointLight>(entity);
+	//	auto& transform  = view.get<Rava::Component::Transform>(entity);
 
-		PointLightPushConstants push{};
-		push.position = glm::vec4(transform.position, 1.f);
-		push.color    = glm::vec4(pointLight.color, pointLight.lightIntensity);
+	//	WireframePushConstants push{};
+	//	push.position = glm::vec4(transform.position, 1.f);
+	//	push.color    = glm::vec4(pointLight.color, pointLight.lightIntensity);
 
-		push.radius = pointLight.radius;
+	//	push.radius = pointLight.radius;
 
-		vkCmdPushConstants(
-			frameInfo.commandBuffer,
-			m_pipelineLayout,
-			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			0,
-			sizeof(PointLightPushConstants),
-			&push
-		);
-		vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
-	}
+	//	vkCmdPushConstants(
+	//		frameInfo.commandBuffer,
+	//		m_pipelineLayout,
+	//		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	//		0,
+	//		sizeof(PointLightPushConstants),
+	//		&push
+	//	);
+	//	vkCmdDraw(frameInfo.commandBuffer, 6, 1, 0, 0);
+	//}
 }
 }  // namespace Vulkan
