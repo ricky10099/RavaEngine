@@ -403,6 +403,7 @@ void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) const {
 
 void Renderer::UpdateEditor(Rava::Scene* scene) {
 	m_editor->Organize(scene, m_currentImageIndex);
+	m_editor->InputHandle();
 }
 
 void Renderer::RenderEntities(Rava::Scene* scene) {

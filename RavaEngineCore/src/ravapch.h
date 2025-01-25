@@ -59,6 +59,7 @@ using namespace std::literals::chrono_literals;
 #ifndef GLM_ENABLE_EXPERIMENTAL
 #	define GLM_ENABLE_EXPERIMENTAL
 #endif
+#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 ////////////////////////////////////////////////////////////////////////
@@ -68,6 +69,11 @@ using namespace std::literals::chrono_literals;
 #include <imgui/imgui_internal.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_vulkan.h>
+
+////////////////////////////////////////////////////////////////////////
+// ImGuizmo
+////////////////////////////////////////////////////////////////////////
+#include <ImGuizmo/ImGuizmo.h>
 
 ////////////////////////////////////////////////////////////////////////
 // Assimp

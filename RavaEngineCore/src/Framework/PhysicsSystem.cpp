@@ -12,11 +12,6 @@ PhysicsSystem::PhysicsSystem()
 	, m_physics(PxCreatePhysics(PX_PHYSICS_VERSION, *m_foundation, physx::PxTolerancesScale(), true, m_pvd))
 	, m_dispatcher(physx::PxDefaultCpuDispatcherCreate(THREADS))
 	, m_defaultMaterial(m_physics->createMaterial(0.8f, 0.8f, 0.6f)) {
-	/*if (m_pvd->connect(*m_pvdTransport, physx::PxPvdInstrumentationFlag::eALL)) {
-		ENGINE_INFO("Connected to PhysX Visual Debugger");
-	} else {
-		ENGINE_INFO("Unable to connect to PhysX Visual Debugger");
-	}*/
 	m_pvd->disconnect();
 
 	ENGINE_INFO("Physics System initialized");
@@ -40,7 +35,7 @@ void PhysicsSystem::DisconnectPVD() {
 
 physx::PxScene* PhysicsSystem::CreatePhysXScene() {
 	physx::PxSceneDesc desc(m_physics->getTolerancesScale());
-	desc.gravity       = {0.0f, 0.0f, 0.0f};
+	desc.gravity       = {0.0f, -9.81f, 0.0f};
 	desc.cpuDispatcher = m_dispatcher;
 	desc.filterShader  = physx::PxDefaultSimulationFilterShader;
 

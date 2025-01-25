@@ -51,7 +51,6 @@ void Engine::Run() {
 				m_physicsSystem.Update(m_currentScene.get(), m_timestep);
 				UpdateSceneCamera();
 				UpdateSceneAndEntities();
-				//UpdateRigidBodyTransform();
 				RunButton();
 				break;
 			case EngineState::Debug:
@@ -65,7 +64,6 @@ void Engine::Run() {
 		}
 
 		m_renderer.BeginFrame();
-		m_renderer.UpdateEditor(m_currentScene.get());
 		UpdateRigidBodyTransform();
 		m_renderer.UpdateAnimations(m_currentScene->GetRegistry());
 		m_renderer.RenderpassEntities(m_currentScene->GetRegistry(), m_mainCamera);
@@ -73,6 +71,7 @@ void Engine::Run() {
 		m_renderer.RenderEnv(m_currentScene->GetRegistry());
 
 		m_renderer.RenderpassGUI();
+		m_renderer.UpdateEditor(m_currentScene.get());
 		m_renderer.EndScene();
 
 		m_frameCount++;

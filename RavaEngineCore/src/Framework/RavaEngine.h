@@ -11,6 +11,8 @@
 namespace Rava {
 class Camera;
 class Engine {
+	friend class Editor;
+
    public:
 	static Engine* s_Instance;
 	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 0.0f);

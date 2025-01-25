@@ -14,6 +14,7 @@ class Editor {
 	void NewFrame();
 	void Render(VkCommandBuffer commandBuffer);
 	void Organize(Scene* scene, u32 currentFrame);
+	void InputHandle();
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
 
@@ -35,6 +36,9 @@ class Editor {
 	// glm::vec2 m_viewportBounds[2];
 	Shared<Entity> m_selectedEntity = nullptr;
 	u32 m_selectedIndex             = -1;
+	int m_gizmoType                 = -1;
+
+
 
    private:
 	void DrawSceneHierarchy(Scene* scene);

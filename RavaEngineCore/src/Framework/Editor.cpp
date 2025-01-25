@@ -8,6 +8,8 @@
 #include "Framework/Components.h"
 #include "Framework/Entity.h"
 #include "Framework/Camera.h"
+#include "Framework/Input.h"
+#include "Framework/Window.h"
 
 namespace Rava {
 
@@ -134,6 +136,7 @@ void Editor::NewFrame() {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
 }
 
 void Editor::Render(VkCommandBuffer commandBuffer) {
@@ -151,7 +154,6 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 }
 
 void Editor::Organize(Scene* scene, u32 currentFrame) {
-	ImGui::SetNextWindowBgAlpha(1.0f);
 	DrawSceneHierarchy(scene);
 
 	ImGui::SetNextWindowSize(ImVec2{400.0f, 100.0f}, ImGuiCond_Once);
@@ -159,12 +161,91 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
 	ImGui::End();
 
-	//ImGui::ShowDemoWindow();
+	ImGui::ShowDemoWindow();
 
+	ImGuizmo::SetOrthographic(false);
+	// ImGuizmo::SetDrawlist();
+
+	const auto& projectionMatrix = Engine::s_Instance->m_editorCamera.GetProjection();
+
+	auto& viewMatrix          = Engine::s_Instance->m_editorCamera.GetView();
+	ImGuiIO& io               = ImGui::GetIO();
+	float viewManipulateRight = io.DisplaySize.x;
+	float viewManipulateTop   = 0;
+	int xpos, ypos;
+	glfwGetWindowPos(Engine::s_Instance->GetGLFWWindow(), &xpos, &ypos);
+	ImGuizmo::SetRect(xpos, ypos, io.DisplaySize.x, io.DisplaySize.y);
+	ImGuizmo::DrawGrid(glm::value_ptr(viewMatrix), glm::value_ptr(projectionMatrix), glm::value_ptr(glm::mat4{1.0f}), 100.f);
+
+	if (m_selectedEntity && m_gizmoType != -1) {
+		auto& transform =
+			Engine::s_Instance->m_currentScene->GetRegistry().get<Component::Transform>(m_selectedEntity->GetEntityID());
+		glm::mat4 mat4 = transform.GetTransform();
+
+		// Snapping
+		bool snap       = Input::IsKeyPress(Key::LeftControl);
+		float snapValue = 0.5f;  // Snap to 0.5m for translation/scale
+		// Snap to 45 degrees for rotation
+		if (m_gizmoType == ImGuizmo::OPERATION::ROTATE) {
+			snapValue = 45.0f;
+		}
+		float snapValues[3] = {snapValue, snapValue, snapValue};
+
+		ImGuizmo::Manipulate(
+			glm::value_ptr(viewMatrix),
+			glm::value_ptr(projectionMatrix),
+			(ImGuizmo::OPERATION)m_gizmoType,
+			ImGuizmo::LOCAL,
+			glm::value_ptr(mat4),
+			nullptr,
+			snap ? snapValues : nullptr
+		);
+
+		glm::vec3 translation;
+		glm::quat rotation;
+		glm::vec3 scale;
+		glm::vec3 skew;
+		glm::vec4 perspective;
+		glm::decompose(mat4, scale, rotation, translation, skew, perspective);
+		glm::vec3 rotationEuler = glm::eulerAngles(rotation);
+
+		if (ImGuizmo::IsUsing()) {
+			//transform.SetPosition(translation);
+			//transform.SetRotation(rotationEuler);
+			//if (scale != glm::vec3(0.0f)) {
+			//	transform.SetScale(scale);
+			//}
+		}
+	}
 	//    ImGui::Begin("Vulkan Viewport");
 	// ImVec2 windowSize = ImGui::GetContentRegionAvail();
 	//	ImGui::Image((ImTextureID)m_descriptorSets[currentFrame], windowSize);
 	// ImGui::End();
+}
+
+void Editor::InputHandle() {
+	if (!Input::IsMouseButtonPress(Mouse::ButtonRight)) {
+		if (Input::IsKeyDown(Key::Q)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = -1;
+			}
+		}
+		if (Input::IsKeyDown(Key::W)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			}
+		}
+		if (Input::IsKeyDown(Key::E)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::ROTATE;
+			}
+		}
+		if (Input::IsKeyDown(Key::R)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::SCALE;
+			}
+		}
+	}
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {

@@ -10,3 +10,6 @@
 [submodule "Externals/ImGui"]
 	path = Externals/ImGui
 	url = https://github.com/ricky10099/imgui.git
+[submodule "Externals/ImGuizmo"]
+	path = Externals/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git
