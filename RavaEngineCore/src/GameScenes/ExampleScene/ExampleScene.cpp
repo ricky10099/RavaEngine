@@ -35,12 +35,13 @@ void ExampleScene::Init() {
 
 	m_entity2 = CreateEntity("Fish");
 	m_entity2->AddComponent<Rava::Component::Model>("Assets/Models/Fish/Fish.fbx");
-	//m_entity2->AddComponent<Rava::Component::Animation>("Assets/Models/Fish/Fish.fbx");
+	// m_entity2->AddComponent<Rava::Component::Animation>("Assets/Models/Fish/Fish.fbx");
 	m_entity2->SetScale(glm::vec3{0.01f});
+	m_entity2->AddRigidBody(Rava::PhysicsSystem::ColliderType::Box, false, true)->UpdateMassAndInertia(0.00001f);
 
 	m_entity3 = CreateEntity("Dragon");
 	m_entity3->AddComponent<Rava::Component::Model>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
-	//m_entity3->AddComponent<Rava::Component::Animation>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
+	// m_entity3->AddComponent<Rava::Component::Animation>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
 	m_entity3->SetScale(glm::vec3{0.001f});
 }
 

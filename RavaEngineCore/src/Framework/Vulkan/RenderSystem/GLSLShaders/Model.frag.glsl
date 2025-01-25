@@ -285,7 +285,9 @@ void main() {
 
     vec3 color = ambientLightColor + Lo;
     color = Uncharted2(color);
-	color = pow(color, vec3(1.0f / 2.0f));
+
+    // Set Gamma as 2.0, may set it changable in future
+	color = pow(color, vec3(1.0 / 2.0));
 
     outColor = diffuseColor * vec4(color, 1.0);
 }

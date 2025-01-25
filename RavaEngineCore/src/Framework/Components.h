@@ -223,6 +223,8 @@ struct RigidBody {
 				break;
 			}
 		}
+
+		
 	}
 	~RigidBody() {
 		if (!useDefaultMaterial) {

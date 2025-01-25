@@ -242,7 +242,11 @@ void Engine::UpdateSceneCamera() {
 void Engine::UpdateRigidBodyTransform() {
 	for (auto [entity, rigidBody, transform] : m_currentScene->GetRegistry().view<Component::RigidBody, Component::Transform>().each()) {
 		glm::vec3 eulerAngles(
-			glm::radians(transform.rotation.x), glm::degrees(transform.rotation.y), glm::radians(transform.rotation.z)
+			glm::radians(transform.rotation.x), glm::radians(transform.rotation.y), glm::radians(transform.rotation.z)
+			//glm::degrees(transform.rotation.x),
+			//glm::degrees(transform.rotation.y),
+			//glm::degrees(transform.rotation.z)
+			//(transform.rotation.x), (transform.rotation.y), (transform.rotation.z)
 		);
 		glm::quat rotation   = glm::quat(eulerAngles);
 		physx::PxQuat pxRotation(rotation.x, rotation.y, rotation.z, rotation.w);

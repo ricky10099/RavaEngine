@@ -60,14 +60,14 @@ void SwapChain::CreateSwapChain() {
 	// Creation information for swap chain
 	VkSwapchainCreateInfoKHR createInfo = {};
 	createInfo.sType                    = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface                  = VKContext->GetSurface();               // Swapchain surface
-	createInfo.minImageCount            = imageCount;                            // Minimum images in swapchain
-	createInfo.imageFormat              = surfaceFormat.format;                  // Swapchain format
-	createInfo.imageColorSpace          = surfaceFormat.colorSpace;              // Swapchain colour space
-	createInfo.imageExtent              = extent;                                // Swapchain image extents
-	createInfo.imageArrayLayers         = 1;                                     // Number of layers for each image in chain
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	;                                                                            // What attachment images will be used as
+	createInfo.surface                  = VKContext->GetSurface();   // Swapchain surface
+	createInfo.minImageCount            = imageCount;                // Minimum images in swapchain
+	createInfo.imageFormat              = surfaceFormat.format;      // Swapchain format
+	createInfo.imageColorSpace          = surfaceFormat.colorSpace;  // Swapchain colour space
+	createInfo.imageExtent              = extent;                    // Swapchain image extents
+	createInfo.imageArrayLayers         = 1;                         // Number of layers for each image in chain
+	// What attachment images will be used as
+	createInfo.imageUsage   = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	createInfo.preTransform = m_SwapChainSupport.capabilities.currentTransform;  // Transform to perform on swap chain images
 	createInfo.compositeAlpha =
 		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;  // How to handle blending images with external graphics(e.g. other windows)
@@ -96,10 +96,6 @@ void SwapChain::CreateSwapChain() {
 	VkResult result = vkCreateSwapchainKHR(VKContext->GetLogicalDevice(), &createInfo, nullptr, &m_swapChain);
 	VK_CHECK(result, "Failed to create swap chain!");
 
-	// we only specified a minimum number of images in the swap chain, so the implementation is
-	// allowed to create a swap chain with more. That's why we'll first query the final number of
-	// images with vkGetSwapchainImagesKHR, then resize the container and finally call it again to
-	// retrieve the handles.
 	vkGetSwapchainImagesKHR(VKContext->GetLogicalDevice(), m_swapChain, &imageCount, nullptr);
 	m_swapChainImages.resize(imageCount);
 	vkGetSwapchainImagesKHR(VKContext->GetLogicalDevice(), m_swapChain, &imageCount, m_swapChainImages.data());
@@ -112,7 +108,6 @@ void SwapChain::CreateSwapChain() {
 void SwapChain::CreateSwapChainImageViews() {
 	m_swapChainImageViews.resize(m_swapChainImages.size());
 	for (size_t i = 0; i < m_swapChainImages.size(); i++) {
-
 		CreateImageView(m_swapChainImages[i], m_swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, m_swapChainImageViews[i]);
 	}
 }
@@ -147,10 +142,9 @@ void SwapChain::CreateSyncObjects() {
 // Format		 : VK_FORMAT_B8G8R8A8_SRGB (VK_FORMAT_R8G8B8A8_SRGB as backup)
 // colorSpace	 : VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
 VkSurfaceFormatKHR SwapChain::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-	// Search for format
 	for (const auto& availableFormat : availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8_SRGB
-			|| availableFormat.format == VK_FORMAT_R8G8B8_SRGB
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB
+			|| availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB
 				   && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			return availableFormat;
 		}
@@ -267,21 +261,21 @@ bool SwapChain::CompareSwapFormats(const SwapChain& swapChain) const {
 	return (imageFormatEqual);
 }
 
-void SwapChain::TransitionSwapChainImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout, u32 currentImageIndex, VkCommandBuffer commandBuffer) {
-	//Vulkan::TransitionImageLayout(m_swapChainImages[m_currentFrame], oldLayout, newLayout);
-
-	VkImageMemoryBarrier imageMemoryBarrier            = {};
-	imageMemoryBarrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageMemoryBarrier.oldLayout                       = oldLayout;                // Layout to transition from
-	imageMemoryBarrier.newLayout                       = newLayout;                // Layout to transition to
-	imageMemoryBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition from
-	imageMemoryBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition to
-	imageMemoryBarrier.image = m_swapChainImages[currentImageIndex];  // Image being accessed and modified as part of barrier
+void SwapChain::TransitionSwapChainImageLayout(
+	VkImageLayout oldLayout, VkImageLayout newLayout, u32 currentImageIndex, VkCommandBuffer commandBuffer
+) {
+	VkImageMemoryBarrier imageMemoryBarrier = {};
+	imageMemoryBarrier.sType                = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	imageMemoryBarrier.oldLayout            = oldLayout;                // Layout to transition from
+	imageMemoryBarrier.newLayout            = newLayout;                // Layout to transition to
+	imageMemoryBarrier.srcQueueFamilyIndex  = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition from
+	imageMemoryBarrier.dstQueueFamilyIndex  = VK_QUEUE_FAMILY_IGNORED;  // Queue family to transition to
+	imageMemoryBarrier.image = m_swapChainImages[currentImageIndex];    // Image being accessed and modified as part of barrier
 	imageMemoryBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;  // Aspect of image being altered
 	imageMemoryBarrier.subresourceRange.baseMipLevel   = 0;                          // First mip level to start alterations on
 	imageMemoryBarrier.subresourceRange.levelCount     = 1;  // Number of mip levels to alter starting from baseMipLevel
-	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;          // First layer to start alterations on
-	imageMemoryBarrier.subresourceRange.layerCount     = 1;          // Number of layers to alter stating from baseArrayLayer
+	imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;  // First layer to start alterations on
+	imageMemoryBarrier.subresourceRange.layerCount     = 1;  // Number of layers to alter stating from baseArrayLayer
 
 	VkPipelineStageFlags srcStage{};
 	VkPipelineStageFlags dstStage{};
@@ -319,5 +313,4 @@ void SwapChain::TransitionSwapChainImageLayout(VkImageLayout oldLayout, VkImageL
 		&imageMemoryBarrier  // Image Memory Barrier count + data
 	);
 }
-
 }  // namespace Vulkan

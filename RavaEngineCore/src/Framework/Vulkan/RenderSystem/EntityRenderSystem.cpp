@@ -61,8 +61,8 @@ void EntityRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registry) 
 			continue;
 		}
 		EntityPushConstantData push{};
-		push.modelMatrix  = mesh.offset.GetTransform() * transform.GetTransform();
-		push.normalMatrix = mesh.offset.NormalMatrix() * transform.NormalMatrix();
+		push.modelMatrix  = transform.GetTransform()  * mesh.offset.GetTransform();
+		push.normalMatrix = transform.NormalMatrix() * mesh.offset.NormalMatrix();
 
 		vkCmdPushConstants(
 			frameInfo.commandBuffer,

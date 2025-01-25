@@ -15,9 +15,6 @@ class Texture {
 	bool Init(const std::string& fileName, bool sRGB, bool flip = true);
 	bool Init(const unsigned char* data, int length, bool sRGB);
 
-	void Resize(u32 width, u32 height);
-	void Blit(u32 x, u32 y, u32 width, u32 height, u32 bytesPerPixel, const void* data);
-	void Blit(u32 x, u32 y, u32 width, u32 height, int dataFormat, int type, const void* data);
 	void SetFilename(const std::string& filename) { m_fileName = filename; }
 
 	VkDescriptorImageInfo& GetDescriptorImageInfo() { return m_descriptorImageInfo; }
@@ -26,7 +23,6 @@ class Texture {
 	VkImage& GetImage() { return m_textureImage; }
 	VkImageView& GetImageView() { return m_imageView; }
 	VkSampler& GetSampler() { return m_sampler; }
-
 	VkDescriptorSet& GetDescriptorSet() { return m_descriptorSet; }
 
    private:
