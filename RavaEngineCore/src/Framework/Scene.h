@@ -40,8 +40,8 @@ class Scene {
 
 	void ClearScene() {
 		m_registry.clear();
-		m_entities.clear();
 		m_pxScene->release();
+		m_entities.clear();
 	}
 
 	// bool m_isRunning;

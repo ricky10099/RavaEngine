@@ -31,84 +31,84 @@ class PhysicsSystem {
 	physx::PxTriangleMesh* CreateTriangleMesh(const MeshModel& mesh);
 	physx::PxConvexMesh* CreateConvexMesh(const MeshModel& mesh);
 
-	static std::vector<Vertex> CreateWireframeVertices(physx::PxShape* shape) {
-		std::vector<Vertex> wireframeVertices;
-		const physx::PxGeometry& geometry = shape->getGeometry();
+	//static std::vector<Vertex> CreateWireframeVertices(physx::PxShape* shape) {
+	//	std::vector<Vertex> wireframeVertices;
+	//	const physx::PxGeometry& geometry = shape->getGeometry();
 
-		// Get the world transform of the shape
-		physx::PxTransform shapeTransform = shape->getLocalPose();
+	//	// Get the world transform of the shape
+	//	physx::PxTransform shapeTransform = shape->getLocalPose();
 
-		// Color for wireframes (you can modify this based on collision state)
-		glm::vec4 wireframeColor(1.0f, 0.0f, 0.0f, 1.0f);  // Red wireframe
+	//	// Color for wireframes (you can modify this based on collision state)
+	//	glm::vec4 wireframeColor(1.0f, 0.0f, 0.0f, 1.0f);  // Red wireframe
 
-		// Handle different geometry types
-		switch (geometry.getType()) {
-			case physx::PxGeometryType::eBOX: {
-				// Cast to box geometry
-				const physx::PxBoxGeometry& boxGeom = (const physx::PxBoxGeometry&)geometry;
-				physx::PxVec3 halfExtents     = boxGeom.halfExtents;
+	//	// Handle different geometry types
+	//	switch (geometry.getType()) {
+	//		case physx::PxGeometryType::eBOX: {
+	//			// Cast to box geometry
+	//			const physx::PxBoxGeometry& boxGeom = (const physx::PxBoxGeometry&)geometry;
+	//			physx::PxVec3 halfExtents     = boxGeom.halfExtents;
 
-				// Generate 8 box corner points
-				std::vector<physx::PxVec3> corners = {
-					physx::PxVec3(-halfExtents.x, -halfExtents.y, -halfExtents.z),
-					physx::PxVec3(halfExtents.x, -halfExtents.y, -halfExtents.z),
-					physx::PxVec3(halfExtents.x, halfExtents.y, -halfExtents.z),
-					physx::PxVec3(-halfExtents.x, halfExtents.y, -halfExtents.z),
-					physx::PxVec3(-halfExtents.x, -halfExtents.y, halfExtents.z),
-					physx::PxVec3(halfExtents.x, -halfExtents.y, halfExtents.z),
-					physx::PxVec3(halfExtents.x, halfExtents.y, halfExtents.z),
-					physx::PxVec3(-halfExtents.x, halfExtents.y, halfExtents.z)
-				};
+	//			// Generate 8 box corner points
+	//			std::vector<physx::PxVec3> corners = {
+	//				physx::PxVec3(-halfExtents.x, -halfExtents.y, -halfExtents.z),
+	//				physx::PxVec3(halfExtents.x, -halfExtents.y, -halfExtents.z),
+	//				physx::PxVec3(halfExtents.x, halfExtents.y, -halfExtents.z),
+	//				physx::PxVec3(-halfExtents.x, halfExtents.y, -halfExtents.z),
+	//				physx::PxVec3(-halfExtents.x, -halfExtents.y, halfExtents.z),
+	//				physx::PxVec3(halfExtents.x, -halfExtents.y, halfExtents.z),
+	//				physx::PxVec3(halfExtents.x, halfExtents.y, halfExtents.z),
+	//				physx::PxVec3(-halfExtents.x, halfExtents.y, halfExtents.z)
+	//			};
 
-				// Box wireframe line indices
-				std::vector<std::pair<int, int>> edges = {
-					{0, 1},
-					{1, 2},
-					{2, 3},
-					{3, 0}, // Bottom face
-					{4, 5},
-					{5, 6},
-					{6, 7},
-					{7, 4}, // Top face
-					{0, 4},
-					{1, 5},
-					{2, 6},
-					{3, 7}  // Connecting edges
-				};
+	//			// Box wireframe line indices
+	//			std::vector<std::pair<int, int>> edges = {
+	//				{0, 1},
+	//				{1, 2},
+	//				{2, 3},
+	//				{3, 0}, // Bottom face
+	//				{4, 5},
+	//				{5, 6},
+	//				{6, 7},
+	//				{7, 4}, // Top face
+	//				{0, 4},
+	//				{1, 5},
+	//				{2, 6},
+	//				{3, 7}  // Connecting edges
+	//			};
 
-				// Transform and add vertices
-				for (auto& edgePair : edges) {
-					physx::PxVec3 start = shapeTransform.transform(corners[edgePair.first]);
-					physx::PxVec3 end   = shapeTransform.transform(corners[edgePair.second]);
+	//			// Transform and add vertices
+	//			for (auto& edgePair : edges) {
+	//				physx::PxVec3 start = shapeTransform.transform(corners[edgePair.first]);
+	//				physx::PxVec3 end   = shapeTransform.transform(corners[edgePair.second]);
 
-					wireframeVertices.push_back({glm::vec3(start.x, start.y, start.z), wireframeColor});
-					wireframeVertices.push_back({glm::vec3(end.x, end.y, end.z), wireframeColor});
-				}
-				break;
-			}
+	//				wireframeVertices.push_back({glm::vec3(start.x, start.y, start.z), wireframeColor});
+	//				wireframeVertices.push_back({glm::vec3(end.x, end.y, end.z), wireframeColor});
+	//			}
+	//			break;
+	//		}
 
-			//case PxGeometryType::eSPHERE: {
-			//	// Similar approach for sphere, but create circle-like wireframes
-			//	PxSphereGeometry* sphereGeom = static_cast<PxSphereGeometry*>(&geometry);
-			//	float radius                 = sphereGeom->radius;
+	//		//case PxGeometryType::eSPHERE: {
+	//		//	// Similar approach for sphere, but create circle-like wireframes
+	//		//	PxSphereGeometry* sphereGeom = static_cast<PxSphereGeometry*>(&geometry);
+	//		//	float radius                 = sphereGeom->radius;
 
-			//	// Implement sphere wireframe generation
-			//	// This would involve creating circles in different planes
-			//	break;
-			//}
+	//		//	// Implement sphere wireframe generation
+	//		//	// This would involve creating circles in different planes
+	//		//	break;
+	//		//}
 
-			//case PxGeometryType::eCAPSULE: {
-			//	// Handle capsule wireframe generation
-			//	PxCapsuleGeometry* capsuleGeom = static_cast<PxCapsuleGeometry*>(&geometry);
-			//	// Generate line segments representing capsule's central axis and circular end caps
-			//	break;
-			//}
+	//		//case PxGeometryType::eCAPSULE: {
+	//		//	// Handle capsule wireframe generation
+	//		//	PxCapsuleGeometry* capsuleGeom = static_cast<PxCapsuleGeometry*>(&geometry);
+	//		//	// Generate line segments representing capsule's central axis and circular end caps
+	//		//	break;
+	//		//}
 
-				// Add more geometry types as needed
-		}
+	//			// Add more geometry types as needed
+	//	}
 
-		return wireframeVertices;
-	}
+	//	return wireframeVertices;
+	//}
 
 	void Update(Scene* scene, float deltaTime) const;
 

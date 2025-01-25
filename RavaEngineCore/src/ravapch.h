@@ -85,9 +85,6 @@ using namespace std::literals::chrono_literals;
 ////////////////////////////////////////////////////////////////////////
 // PhyX
 ////////////////////////////////////////////////////////////////////////
-#if !defined(NDEBUG) && !defined(_DEBUG)
-#	define _DEBUG
-#endif
 #include <PxPhysicsAPI.h>
 
 ////////////////////////////////////////////////////////////////////////
@@ -136,6 +133,9 @@ using u8  = unsigned char;
 using u16 = unsigned short;
 using u32 = unsigned int;
 using u64 = unsigned long long;
+
+using f32 = float;
+using f64 = double;
 
 template <typename T>
 using Unique = std::unique_ptr<T>;

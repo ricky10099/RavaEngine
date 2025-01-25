@@ -149,8 +149,8 @@ void SwapChain::CreateSyncObjects() {
 VkSurfaceFormatKHR SwapChain::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
 	// Search for format
 	for (const auto& availableFormat : availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB
-			|| availableFormat.format == VK_FORMAT_R8G8B8A8_SRGB
+		if (availableFormat.format == VK_FORMAT_B8G8R8_SRGB
+			|| availableFormat.format == VK_FORMAT_R8G8B8_SRGB
 				   && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			return availableFormat;
 		}

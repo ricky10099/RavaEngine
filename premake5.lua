@@ -112,7 +112,7 @@ project "RavaEngineCore"
 		}
 
 	filter "configurations:Release"
-		defines "RAVA_RELEASE"
+		defines {"RAVA_RELEASE", "NDEBUG"}
 		runtime "Release"
 		optimize "on"
 		

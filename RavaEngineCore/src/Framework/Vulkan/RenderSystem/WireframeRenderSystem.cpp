@@ -84,32 +84,32 @@ void WireframeRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registr
 		//const physx::PxGeometry* geometry = &shape->getGeometry();
 
 		// Get wireframe vertices
-		auto wireframeVertices = Rava::PhysicsSystem::CreateWireframeVertices(shape);
+		//auto wireframeVertices = Rava::PhysicsSystem::CreateWireframeVertices(shape);
 
 		// Update vertex buffer with wireframe data
 		//UpdateVertexBuffer(wireframeVertices);
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		CreateBuffer(
-			wireframeVertices.size() * sizeof(Rava::Vertex),
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			stagingBuffer,
-			stagingBufferMemory
-		);
+		//VkBuffer stagingBuffer;
+		//VkDeviceMemory stagingBufferMemory;
+		//CreateBuffer(
+		//	wireframeVertices.size() * sizeof(Rava::Vertex),
+		//	VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		//	VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		//	stagingBuffer,
+		//	stagingBufferMemory
+		//);
 
-		// Copy vertex data to staging buffer
-		void* data;
-		vkMapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory, 0, wireframeVertices.size() * sizeof(Rava::Vertex), 0, &data);
-		memcpy(data, wireframeVertices.data(), wireframeVertices.size() * sizeof(Rava::Vertex));
-		vkUnmapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory);
+		//// Copy vertex data to staging buffer
+		//void* data;
+		//vkMapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory, 0, wireframeVertices.size() * sizeof(Rava::Vertex), 0, &data);
+		//memcpy(data, wireframeVertices.data(), wireframeVertices.size() * sizeof(Rava::Vertex));
+		//vkUnmapMemory(VKContext->GetLogicalDevice(), stagingBufferMemory);
 
-		// Copy from staging buffer to vertex buffer
-		CopyBuffer(stagingBuffer, vertexBuffer, vertices.size() * sizeof(Vertex));
+		//// Copy from staging buffer to vertex buffer
+		//CopyBuffer(stagingBuffer, vertexBuffer, vertices.size() * sizeof(Vertex));
 
-		// Clean up staging buffer
-		vkDestroyBuffer(device, stagingBuffer, nullptr);
-		vkFreeMemory(device, stagingBufferMemory, nullptr);
+		//// Clean up staging buffer
+		//vkDestroyBuffer(device, stagingBuffer, nullptr);
+		//vkFreeMemory(device, stagingBufferMemory, nullptr);
 
 
 		m_pipeline->Bind(frameInfo.commandBuffer);
@@ -117,7 +117,7 @@ void WireframeRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registr
 		//vkCmdBindPipeline(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->Bind);
 
 		// Draw lines
-		vkCmdDraw(frameInfo.commandBuffer, wireframeVertices.size(), 1, 0, 0);
+		//vkCmdDraw(frameInfo.commandBuffer, wireframeVertices.size(), 1, 0, 0);
 	}
 
 	//auto view = registry.view<Rava::Component::PointLight, Rava::Component::Transform>();

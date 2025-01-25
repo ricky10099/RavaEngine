@@ -59,7 +59,6 @@ struct Transform {
 
 	glm::quat GetQuaternion() {
 		// return glm::quat(glm::vec3(glm::radians(rotation.x), glm::radians(rotation.y), glm::radians(rotation.z)));
-		// return glm::quat(glm::vec3(glm::degrees(rotation.x), glm::degrees(rotation.y), glm::degrees(rotation.z)));
 		// return glm::quat(glm::vec3(rotation.x, rotation.y, rotation.z));
 		return glm::quat(glm::radians(rotation));
 	}
@@ -131,11 +130,10 @@ struct DirectionalLight {
 };
 
 struct RigidBody {
-	physx::PxRigidActor* actor = nullptr;
+	UniquePx<physx::PxRigidActor> actor = nullptr;
 	Transform offset{glm::vec3(0.0f)};
 	physx::PxMaterial* material = nullptr;
 	bool useDefaultMaterial     = false;
-	// physx::PxShape* shape       = nullptr;
 
 	RigidBody()                 = default;
 	RigidBody(const RigidBody&) = default;
@@ -156,10 +154,10 @@ struct RigidBody {
 		);
 
 		if (isDynamic) {
-			actor           = Engine::s_Instance->GetPhysicsSystem().GetPhysics().createRigidDynamic(localTm);
+			actor           = WrapUnique(Engine::s_Instance->GetPhysicsSystem().GetPhysics().createRigidDynamic(localTm));
 			actor->userData = reinterpret_cast<void*>(entity.GetEntityID());
 		} else {
-			actor           = Engine::s_Instance->GetPhysicsSystem().GetPhysics().createRigidStatic(localTm);
+			actor           = WrapUnique(Engine::s_Instance->GetPhysicsSystem().GetPhysics().createRigidStatic(localTm));
 			actor->userData = reinterpret_cast<void*>(entity.GetEntityID());
 		}
 
@@ -230,14 +228,12 @@ struct RigidBody {
 		if (!useDefaultMaterial) {
 			material->release();
 		}
-		// shape->release();
-		if (actor) {
-			actor->release();
-		}
+
+		Engine::s_Instance->GetCurrentPxScene()->removeActor(*actor);
 	}
 
 	void UpdateMassAndInertia(float mass) const {
-		physx::PxRigidBody* rigidBody = reinterpret_cast<physx::PxRigidBody*>(actor);
+		physx::PxRigidBody* rigidBody = reinterpret_cast<physx::PxRigidBody*>(actor.get());
 		if (rigidBody) {
 			physx::PxRigidBodyExt::updateMassAndInertia(*rigidBody, mass);
 		}

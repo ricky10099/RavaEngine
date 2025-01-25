@@ -79,7 +79,7 @@ void PhysicsSystem::Update(Scene* scene, float deltaTime) const {
 	auto actors = GetActors(*scene->GetPxScene());
 
 	for (auto [entity, rigidBody] : scene->GetRegistry().view<Component::RigidBody>().each()) {
-		const auto it = actors.find(rigidBody.actor);
+		const auto it = actors.find(rigidBody.actor.get());
 		if (it == actors.end()) {
 			scene->GetPxScene()->addActor(*rigidBody.actor);
 		} else {
