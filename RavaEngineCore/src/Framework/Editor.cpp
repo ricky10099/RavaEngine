@@ -8,6 +8,8 @@
 #include "Framework/Components.h"
 #include "Framework/Entity.h"
 #include "Framework/Camera.h"
+#include "Framework/Input.h"
+#include "Framework/Window.h"
 
 namespace Rava {
 
@@ -67,8 +69,6 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 		io.Fonts->GetGlyphRangesChineseFull()
 	);
 
-	// Setup Dear ImGui style
-	// ImGui::StyleColorsDark();
 	SetEditorStlye();
 	SetEditorThemeColors();
 
@@ -90,13 +90,6 @@ Editor::Editor(VkRenderPass renderPass, u32 imageCount) {
 	init_info.ImageCount                = imageCount;
 	init_info.CheckVkResultFn           = CheckVKResult;
 	ImGui_ImplVulkan_Init(&init_info);
-
-	//// upload fonts, this is done by recording and submitting a one time use command buffer
-	//// which can be done easily bye using some existing helper functions on the lve device object
-	// auto commandBuffer = VK_Core::m_Device->BeginSingleTimeCommands(QueueTypes::GRAPHICS);
-	// ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-	// VK_Core::m_Device->EndSingleTimeCommands(commandBuffer, QueueTypes::GRAPHICS);
-	// ImGui_ImplVulkan_DestroyFontUploadObjects();
 
 	m_descriptorSets.resize(imageCount);
 
@@ -134,6 +127,7 @@ void Editor::NewFrame() {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
 }
 
 void Editor::Render(VkCommandBuffer commandBuffer) {
@@ -142,8 +136,6 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 	ImGui_ImplVulkan_RenderDrawData(drawdata, commandBuffer);
 
 	ImGuiIO& io = ImGui::GetIO();
-	(void)io;
-	// Update and Render additional Platform Windows
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 		ImGui::UpdatePlatformWindows();
 		ImGui::RenderPlatformWindowsDefault();
@@ -151,12 +143,14 @@ void Editor::Render(VkCommandBuffer commandBuffer) {
 }
 
 void Editor::Organize(Scene* scene, u32 currentFrame) {
-	ImGui::SetNextWindowBgAlpha(1.0f);
 	DrawSceneHierarchy(scene);
+	DrawGizmo();
 
 	ImGui::SetNextWindowSize(ImVec2{400.0f, 100.0f}, ImGuiCond_Once);
 	ImGui::Begin("Render Setting");
-	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);  // Edit 3 floats representing a color
+	ImGui::ColorEdit3("Clear Color", (float*)&Engine::s_Instance->clearColor);
+	ImGui::DragFloat("Gamma", &Engine::s_Instance->m_gamma, 0.1f, 0.0f, 10.0f);
+	ImGui::DragFloat("Exposure", &Engine::s_Instance->m_exposure, 0.1f, 0.0f, 10.0f);
 	ImGui::End();
 
 	ImGui::ShowDemoWindow();
@@ -165,6 +159,31 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	// ImVec2 windowSize = ImGui::GetContentRegionAvail();
 	//	ImGui::Image((ImTextureID)m_descriptorSets[currentFrame], windowSize);
 	// ImGui::End();
+}
+
+void Editor::InputHandle() {
+	if (!Input::IsMouseButtonPress(Mouse::ButtonRight)) {
+		if (Input::IsKeyDown(Key::Q)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = -1;
+			}
+		}
+		if (Input::IsKeyDown(Key::W)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::TRANSLATE;
+			}
+		}
+		if (Input::IsKeyDown(Key::E)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::ROTATE;
+			}
+		}
+		if (Input::IsKeyDown(Key::R)) {
+			if (!ImGuizmo::IsUsing()) {
+				m_gizmoType = ImGuizmo::OPERATION::SCALE;
+			}
+		}
+	}
 }
 
 void Editor::RecreateDescriptorSet(VkImageView swapChainImage, u32 currentFrame) {
@@ -213,6 +232,53 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 	}
 
 	ImGui::End();
+}
+
+void Editor::DrawGizmo() {
+	ImGuizmo::SetOrthographic(false);
+	const auto& projectionMatrix = Engine::s_Instance->m_editorCamera.GetProjection();
+	auto& viewMatrix             = Engine::s_Instance->m_editorCamera.GetView();
+	ImGuiIO& io                  = ImGui::GetIO();
+	int windowX, windowY;
+	glfwGetWindowPos(Engine::s_Instance->GetGLFWWindow(), &windowX, &windowY);
+	ImGuizmo::SetRect(windowX, windowY, io.DisplaySize.x, io.DisplaySize.y);
+
+	if (m_selectedEntity && m_gizmoType != -1) {
+		auto& transform =
+			Engine::s_Instance->m_currentScene->GetRegistry().get<Component::Transform>(m_selectedEntity->GetEntityID());
+		glm::mat4 mat4 = transform.GetTransform();
+
+		bool snap       = Input::IsKeyPress(Key::LeftControl);
+		float snapValue = 0.5f;
+		if (m_gizmoType == ImGuizmo::OPERATION::ROTATE) {
+			snapValue = 5.0f;
+		}
+		float snapValues[3] = {snapValue, snapValue, snapValue};
+
+		ImGuizmo::Manipulate(
+			glm::value_ptr(viewMatrix),
+			glm::value_ptr(projectionMatrix),
+			(ImGuizmo::OPERATION)m_gizmoType,
+			ImGuizmo::LOCAL,
+			glm::value_ptr(mat4),
+			nullptr,
+			snap ? snapValues : nullptr
+		);
+
+		glm::vec3 translation;
+		glm::quat rotation;
+		glm::vec3 scale;
+		glm::vec3 skew;
+		glm::vec4 perspective;
+		glm::decompose(mat4, scale, rotation, translation, skew, perspective);
+		glm::vec3 rotationEuler = glm::eulerAngles(rotation);
+
+		if (ImGuizmo::IsUsing()) {
+			transform.SetPosition(translation);
+			transform.SetRotation(rotationEuler);
+			transform.SetScale(scale);
+		}
+	}
 }
 
 bool Editor::DrawEntityNode(Scene* scene, const Shared<Entity>& entity, u32 index) {
@@ -265,7 +331,6 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 		memset(buffer, 0, sizeof(buffer));
 		strncpy_s(buffer, sizeof(buffer), name.data(), sizeof(buffer));
 		if (ImGui::InputText("##Tag", buffer, sizeof(buffer))) {
-			// entity->SetName(buffer);
 			name = std::string(buffer);
 		}
 	}
@@ -302,6 +367,11 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 
 	DrawComponent<Component::Camera>("Camera", entity, [](auto& component) {
 		auto& camera = component->view;
+
+		DrawVec3Control("Offset Position", component->offset.position, 0.0f, 110.0f);
+		glm::vec3 rotation = glm::degrees(component->offset.rotation);
+		DrawVec3Control("Offset Rotation", rotation, 0.0f, 110.0f);
+		component->offset.rotation = glm::radians(rotation);
 
 		ImGui::Checkbox("Main camera", &component->mainCamera);
 
@@ -372,9 +442,9 @@ void Editor::DrawComponents(Shared<Entity> entity) {
 	});
 
 	DrawComponent<Component::Model>("Model", entity, [](auto& component) {
-		DrawVec3Control("Offset Position", component->offset.position);
+		DrawVec3Control("Offset Position", component->offset.position, 0.0f, 110.0f);
 		glm::vec3 rotation = glm::degrees(component->offset.rotation);
-		DrawVec3Control("Offset Rotation", rotation);
+		DrawVec3Control("Offset Rotation", rotation, 0.0f, 110.0f);
 		component->offset.rotation = glm::radians(rotation);
 		DrawVec3Control("Offset Scale", component->offset.scale, 1.0f);
 		ImGui::BeginDisabled(true);
@@ -515,11 +585,8 @@ void Editor::DrawVec3Control(const std::string& label, glm::vec3& values, float 
 	ImGui::SameLine();
 	ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%g");
 	ImGui::PopItemWidth();
-
 	ImGui::PopStyleVar();
-
 	ImGui::Columns(1);
-
 	ImGui::PopID();
 }
 

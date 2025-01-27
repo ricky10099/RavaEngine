@@ -26,7 +26,6 @@ const std::vector<const char*> DEVICE_EXTENSIONS = {VK_KHR_SWAPCHAIN_EXTENSION_N
 //////////////////////////////////////////////////////////////////////////
 // GPU data transfer
 //////////////////////////////////////////////////////////////////////////
-
 struct PointLight {
 	glm::vec4 position{};  // ignore w
 	glm::vec4 color{};     // w is intensity
@@ -45,6 +44,8 @@ struct GlobalUbo {
 	PointLight pointLights[MAX_LIGHTS];
 	DirectionalLight directionalLight;
 	int numPointLights;
+	float gamma;
+	float exposure;
 };
 
 struct FrameInfo {

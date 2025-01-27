@@ -70,6 +70,8 @@ class MeshModel {
 
 	Bounds GetBounds() const;
 	float GetWidth() const;
+	const std::vector<Vertex> GetVertices() { return m_vertices; }
+	const std::vector<u32> GetIndices() { return m_indices; }
 	bool HasSkeleton() const { return m_skeleton ? true : false; }
 	Shared<Skeleton> GetSkeleton() { return m_skeleton; }
 	// std::shared_ptr<Skeleton> GetSkeleton() const { return m_skeleton; }

@@ -37,6 +37,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     PointLight pointLights[MAX_LIGHTS];
     DirectionalLight directionalLight;
     int numLights;
+    float gamma;
+	float exposure;
 } ubo;
 
 layout (set = 1, binding = 0) uniform MaterialUbo {
@@ -69,15 +71,6 @@ layout(push_constant) uniform Push {
 
 const float PI = 3.14159265359;
 
-vec3 ACESFilm(vec3 color) {
-    float a = 2.51f;
-    float b = 0.03f;
-    float c = 2.43f;
-    float d = 0.59f;
-    float e = 0.14f;
-    return clamp((color*(a*color+b))/(color*(c*color+d)+e), 0.0, 1.0);
-}
-
 vec3 Uncharted2Tonemap(vec3 x) {
   float A = 0.15;
   float B = 0.50;
@@ -85,13 +78,13 @@ vec3 Uncharted2Tonemap(vec3 x) {
   float D = 0.20;
   float E = 0.02;
   float F = 0.30;
-  float W = 11.2;
   return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
 vec3 Uncharted2(vec3 color) {
   const float W = 11.2;
-  float exposureBias = 2.0;
+//  float exposureBias = 2.0;
+  float exposureBias = ubo.exposure;
   vec3 curr = Uncharted2Tonemap(exposureBias * color);
   vec3 whiteScale = 1.0 / Uncharted2Tonemap(vec3(W));
   return curr * whiteScale;
@@ -156,40 +149,7 @@ void main() {
         discard;
     }
 
-if(false) {
-    // Calculate directional light contribution
-    float cosAngIncidenceDir = max(dot(surfaceNormal, normalize(-ubo.directionalLight.direction.xyz)), 0.0);
-    vec3 directionalDiffuse = ubo.directionalLight.color.xyz * cosAngIncidenceDir;
-    
-    // Specular for directional light
-    vec3 halfAngleDir = normalize(-ubo.directionalLight.direction.xyz + viewDirection);
-    float blinnTermDir = pow(max(dot(surfaceNormal, halfAngleDir), 0.0), 512.0);
-    vec3 directionalSpecular = ubo.directionalLight.color.xyz * blinnTermDir;
 
-    for (int i = 0; i < ubo.numLights; i++) {
-        PointLight light = ubo.pointLights[i];
-        vec3 directionToLight = light.position.xyz - fragPosition;
-        float attenuation = 1.0 / dot(directionToLight, directionToLight); // distance squared
-        directionToLight = normalize(directionToLight);
-
-        float cosAngIncidence = max(dot(surfaceNormal, directionToLight), 0);
-        vec3 intensity = light.color.xyz * light.color.w * attenuation;
-
-        ambientLightColor += intensity * cosAngIncidence;
-
-        // specular lighting
-        vec3 halfAngle = normalize(directionToLight + viewDirection);
-        float blinnTerm = dot(surfaceNormal, halfAngle);
-        blinnTerm = clamp(blinnTerm, 0, 1);
-        blinnTerm = pow(blinnTerm, 512.0); // higher values -> sharper highlight
-        specularLight += intensity * blinnTerm;
-    }
-  
-    ambientLightColor += directionalDiffuse;
-    specularLight += directionalSpecular;
-
-    outColor = vec4(ambientLightColor, 1.0) * diffuseColor + vec4(specularLight, 1.0);
-} else {
     // normal
     vec4 normal;
     vec3 N = normalize(fragNormal);
@@ -327,8 +287,11 @@ if(false) {
     }
 
     vec3 color = ambientLightColor + Lo;
-    color = ACESFilm(color);
-//    color = Uncharted2(color);
+    color = Uncharted2(color);
+
+    // Set Gamma as 2.0, may set it changable in future
+//	color = pow(color, vec3(1.0 / 2.0));
+	color = pow(color, vec3(1.0 / ubo.gamma));
+
     outColor = diffuseColor * vec4(color, 1.0);
-}
 }

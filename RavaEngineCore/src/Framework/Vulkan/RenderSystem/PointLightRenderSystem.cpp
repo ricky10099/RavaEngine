@@ -54,49 +54,6 @@ void PointLightRenderSystem::CreatePipeline(VkRenderPass renderPass) {
 }
 
 void PointLightRenderSystem::Update(FrameInfo& frameInfo, GlobalUbo& ubo, entt::registry& registry) {
-	// m_SortedLight.clear();
-	// glm::vec3 cameraPosition;
-	// for (auto [entity, cam, transform] : registry.view<Rava::Component::Camera, Rava::Component::Transform>().each()) {
-	//	if (cam.currentCamera) {
-	//		cameraPosition = transform.position;
-	//	}
-	// }
-
-	// int lightIndex   = 0;
-	// auto view      = registry.view<Rava::Component::PointLight, Rava::Component::Transform>();
-	// for (auto entity : view) {
-	//	auto& transform = view.get<Rava::Component::Transform>(entity);
-
-	//	ENGINE_ASSERT(lightIndex < MAX_LIGHTS);
-
-	//	auto mat4Global     = transform.GetTransform();
-	//	constexpr int column = 3;
-	//	auto lightPosition   = glm::vec3(mat4Global[column][0], mat4Global[column][1], mat4Global[column][2]);
-	//	auto distanceVec     = cameraPosition - lightPosition;
-	//	float distanceToCam  = glm::dot(distanceVec, distanceVec);
-
-	//	m_SortedLight.insert({distanceToCam, entity});
-
-	//	lightIndex++;
-	//}
-	// std::map<float, entt::entity>::reverse_iterator it;
-	// lightIndex = 0;
-	// for (it = m_SortedLight.rbegin(); it != m_SortedLight.rend(); it++) {
-	//	auto entity      = it->second;
-	//	auto& transform  = view.get<Rava::Component::Transform>(entity);
-	//	auto& pointLight = view.get<Rava::Component::PointLight>(entity);
-
-	//	// copy light to ubo
-	//	auto mat4Global                         = transform.GetTransform();
-	//	constexpr int column                     = 3;
-	//	auto lightPosition                       = glm::vec3(mat4Global[column][0], mat4Global[column][1], mat4Global[column][2]);
-	//	ubo.pointLights[lightIndex].position = glm::vec4(lightPosition, 0.0f);
-	//	ubo.pointLights[lightIndex].color    = glm::vec4(pointLight.color, pointLight.lightIntensity);
-
-	//	lightIndex++;
-	//}
-	// ubo.numPointLights = lightIndex;
-
 	// Point light
 	{
 		int lightIndex = 0;

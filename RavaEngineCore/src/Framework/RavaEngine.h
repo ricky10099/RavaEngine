@@ -11,6 +11,8 @@
 namespace Rava {
 class Camera;
 class Engine {
+	friend class Editor;
+
    public:
 	static Engine* s_Instance;
 	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 0.0f);
@@ -36,7 +38,8 @@ class Engine {
 
 	// void OnEvent(Event& event);
 	void LoadScene(Unique<Scene> scene);
-
+	float GetGamma() const { return m_gamma; }
+	float GetExposure() const { return m_exposure; }
 	GLFWwindow* GetGLFWWindow() { return m_ravaWindow.GetGLFWwindow(); }
 	u32 GetCurrentFrameIndex() { return m_renderer.GetFrameIndex(); }
 	PhysicsSystem& GetPhysicsSystem() { return m_physicsSystem; }
@@ -51,13 +54,19 @@ class Engine {
 	PhysicsSystem m_physicsSystem;
 	Unique<Scene> m_currentScene = nullptr;
 
+	float m_gamma    = 2.0f;
+	float m_exposure = 1.0f;
+
 	Timestep m_timestep{0ms};
 	std::chrono::steady_clock::time_point m_timeLastFrame;
 	std::chrono::steady_clock::time_point m_fpsLastUpdateTime;
 	float m_targetFrameTime = 0.1f;
 	u32 m_frameCount        = 0;
 
-	Camera m_mainCamera;
+	static constexpr float PHYSICS_TIMESTEP = 1.0f / 60.0f;
+	float m_accumulator                     = 0.0f;
+
+	Camera m_mainCamera{};
 	Camera m_editorCamera;
 	glm::vec3 m_editorCameraPosition   = {0.0f, 2.0f, 2.0f};
 	glm::vec3 m_editorCameraRotation   = {0.0f, 0.0f, 0.0f};

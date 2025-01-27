@@ -125,20 +125,11 @@ bool Texture::Create() {
 
 	GenerateMipmaps();
 
-	// Vulkan::TransitionImageLayout(m_textureImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	// VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
 	m_imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	vkDestroyBuffer(VKContext->GetLogicalDevice(), stagingBuffer, nullptr);
 	vkFreeMemory(VKContext->GetLogicalDevice(), stagingBufferMemory, nullptr);
 
-	// Create a texture sampler
-	// In Vulkan, textures are accessed by samplers
-	// This separates sampling information from texture data.
-	// This means you could have multiple sampler objects for the same
-	// texture with different settings Note: Similar to the samplers
-	// available with OpenGL 3.3
 	VkSamplerCreateInfo samplerCreateInfo{};
 	samplerCreateInfo.sType            = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerCreateInfo.magFilter        = m_magFilter;
@@ -162,41 +153,6 @@ bool Texture::Create() {
 		}
 	}
 
-	//// Create image view
-	//// Textures are not directly accessed by shaders and
-	//// are abstracted by image views.
-	//// Image views contain additional
-	//// information and sub resource ranges
-	// VkImageViewCreateInfo view{};
-	// view.sType      = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	// view.viewType   = VK_IMAGE_VIEW_TYPE_2D;
-	// view.format     = m_imageFormat;
-	// view.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-	//// view.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-	//// view.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-	//// view.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-	//// view.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-	////  A subresource range describes the set of mip levels (and array layers) that can be accessed through this image
-	////  view It's possible to create multiple image views for a single image referring to different (and/or overlapping)
-	////  ranges of the image
-	// view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	// view.subresourceRange.baseMipLevel   = 0;
-	// view.subresourceRange.baseArrayLayer = 0;
-	// view.subresourceRange.layerCount     = 1;
-	//// Linear tiling usually won't support mip maps
-	//// Only set mip map count if optimal tiling is used
-	// view.subresourceRange.levelCount = m_mipLevels;
-	////view.subresourceRange.levelCount = 1;
-	////  The view will be based on the texture's image
-	// view.image = m_textureImage;
-
-	//{
-	//	auto result = vkCreateImageView(VKContext->GetLogicalDevice(), &view, nullptr, &m_imageView);
-	//	if (result != VK_SUCCESS) {
-	//		ENGINE_ERROR("failed to create image view!");
-	//	}
-	//}
-
 	Vulkan::CreateImageView(m_textureImage, m_imageFormat, VK_IMAGE_ASPECT_COLOR_BIT, m_imageView, m_mipLevels);
 
 	m_descriptorImageInfo.sampler     = m_sampler;
@@ -217,24 +173,6 @@ bool Texture::Create() {
 	}
 
 	return true;
-}
-
-void Texture::Blit(u32 x, u32 y, u32 width, u32 height, u32 bytesPerPixel, const void* data) {
-	ENGINE_ERROR(
-		"not implemented void Texture::Blit(u32 x, u32 y, u32 width, u32 height, u32 "
-		"bytesPerPixel, const void* data)"
-	);
-}
-
-void Texture::Blit(u32 x, u32 y, u32 width, u32 height, int dataFormat, int type, const void* data) {
-	ENGINE_ERROR(
-		"not implemented void Texture::Blit(u32 x, u32 y, u32 width, u32 height, int dataFormat, "
-		"int type, const void* data)"
-	);
-}
-
-void Texture::Resize(u32 width, u32 height) {
-	ENGINE_ERROR("not implemented void Texture::Resize(u32 width, u32 height)");
 }
 
 void Texture::GenerateMipmaps() {

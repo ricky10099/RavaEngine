@@ -19,6 +19,7 @@ IncludeDir["PhysX"]		= "Externals/PhysX/include"
 IncludeDir["CRIWARE"]	= "Externals/CRIWARE/include"
 IncludeDir["glm"]		= "Externals/glm"
 IncludeDir["ImGui"]		= "Externals/ImGui"
+IncludeDir["ImGuizmo"]		= "Externals/ImGuizmo"
 
 LibDir = {}
 LibDir["Assimp"]	= "Externals/Assimp/lib"
@@ -62,6 +63,7 @@ project "RavaEngineCore"
 		"%{IncludeDir.CRIWARE}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.ImGui}",
+		"%{IncludeDir.ImGuizmo}",
 	}
 	
 	libdirs {
@@ -75,6 +77,7 @@ project "RavaEngineCore"
 		"vulkan-1.lib",
 		"GLFW",
 		"ImGui",
+		"ImGuizmo",
 		"PhysX_64.lib",
 		"PhysXCommon_64.lib",
 		"PhysXCooking_64.lib",
@@ -112,7 +115,7 @@ project "RavaEngineCore"
 		}
 
 	filter "configurations:Release"
-		defines "RAVA_RELEASE"
+		defines {"RAVA_RELEASE", "NDEBUG"}
 		runtime "Release"
 		optimize "on"
 		
@@ -122,4 +125,5 @@ project "RavaEngineCore"
 
 group "Externals"
 		include "Externals/ImGui.lua"
+		include "Externals/ImGuizmo.lua"
 		include "Externals/GLFW.lua"
