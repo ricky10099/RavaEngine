@@ -6,7 +6,7 @@
 
 namespace Rava {
 PhysicsSystem::PhysicsSystem()
-	: m_foundation(PxCreateFoundation(PX_PHYSICS_VERSION, m_defaultAllocator, m_defaultErrorCallback))
+	: m_foundation(PxCreateFoundation(PX_PHYSICS_VERSION, m_defaultAllocator, m_errorCallback))
 	, m_pvdTransport(physx::PxDefaultPvdSocketTransportCreate("localhost", 5425, 10))
 	, m_pvd(PxCreatePvd(*m_foundation))
 	, m_physics(PxCreatePhysics(PX_PHYSICS_VERSION, *m_foundation, physx::PxTolerancesScale(), true, m_pvd))
@@ -18,6 +18,10 @@ PhysicsSystem::PhysicsSystem()
 }
 
 PhysicsSystem::~PhysicsSystem() {
+	if (m_physicsCallBack) {
+		delete m_physicsCallBack;
+	}
+
 	m_defaultMaterial->release();
 	m_dispatcher->release();
 	m_physics->release();
@@ -33,14 +37,35 @@ void PhysicsSystem::DisconnectPVD() {
 	m_pvd->disconnect();
 }
 
+namespace {
+physx::PxFilterFlags CustomFilterShader(
+	physx::PxFilterObjectAttributes attributes0,
+	physx::PxFilterData filterData0,
+	physx::PxFilterObjectAttributes attributes1,
+	physx::PxFilterData filterData1,
+	physx::PxPairFlags& pairFlags,
+	const void* constantBlock,
+	physx::PxU32 constantBlockSize
+) {
+	// Enable contact generation
+	pairFlags = physx::PxPairFlag::eCONTACT_DEFAULT;
+
+	// Add these flags to enable contact events
+	pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_FOUND;
+	pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_PERSISTS;
+	pairFlags |= physx::PxPairFlag::eNOTIFY_TOUCH_LOST;
+	pairFlags |= physx::PxPairFlag::eNOTIFY_CONTACT_POINTS;
+
+	return physx::PxFilterFlag::eDEFAULT;
+}
+}  // namespace
+
 physx::PxScene* PhysicsSystem::CreatePhysXScene() {
 	physx::PxSceneDesc desc(m_physics->getTolerancesScale());
 	desc.gravity       = {0.0f, -9.81f, 0.0f};
 	desc.cpuDispatcher = m_dispatcher;
-	desc.filterShader  = physx::PxDefaultSimulationFilterShader;
-
+	desc.filterShader  = CustomFilterShader;
 	const auto scene = m_physics->createScene(desc);
-
 #ifndef NDEBUG
 	if (const auto pvdClient = scene->getScenePvdClient()) {
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
@@ -54,16 +79,60 @@ physx::PxScene* PhysicsSystem::CreatePhysXScene() {
 	}
 #endif
 
-	// m_simCallback = std::make_unique<SimCallback>();
-	// scene->setSimulationEventCallback(&*m_simCallback);
+	if (m_physicsCallBack) {
+		delete m_physicsCallBack;
+	}
+	m_physicsCallBack = new PhysicsEventCallback;
+	scene->setSimulationEventCallback(m_physicsCallBack);
 
 	return scene;
 }
-physx::PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(const MeshModel& mesh) {
-	return nullptr;
+physx::PxTriangleMesh* PhysicsSystem::CreateTriangleMesh(MeshModel& mesh) {
+	std::vector<Vertex> vertices = mesh.GetVertices();
+	std::vector<u32> indices     = mesh.GetIndices();
+
+	physx::PxTriangleMeshDesc meshDesc = {};
+	meshDesc.points.count              = (physx::PxU32)vertices.size();
+	meshDesc.points.data               = vertices.data();
+	meshDesc.points.stride             = sizeof(vertices[0]);
+	meshDesc.triangles.count           = (physx::PxU32)(indices.size() / 3);
+	meshDesc.triangles.data            = indices.data();
+	meshDesc.triangles.stride          = 3 * sizeof(physx::PxU32);
+
+	physx::PxTolerancesScale scale;
+	physx::PxCookingParams cookParams(scale);
+
+	physx::PxDefaultMemoryOutputStream writeBuffer;
+	physx::PxTriangleMeshCookingResult::Enum result;
+	bool status = PxCookTriangleMesh(cookParams, meshDesc, writeBuffer, &result);
+	if (!status) {
+		return NULL;
+	}
+
+	physx::PxDefaultMemoryInputData readBuffer(writeBuffer.getData(), writeBuffer.getSize());
+	return m_physics->createTriangleMesh(readBuffer);
 }
-physx::PxConvexMesh* PhysicsSystem::CreateConvexMesh(const MeshModel& mesh) {
-	return nullptr;
+
+physx::PxConvexMesh* PhysicsSystem::CreateConvexMesh(MeshModel& mesh) {
+	std::vector<Vertex> vertices = mesh.GetVertices();
+
+	physx::PxConvexMeshDesc convexDesc = {};
+	convexDesc.points.count            = (physx::PxU32)vertices.size();
+	convexDesc.points.data             = vertices.data();
+	convexDesc.points.stride           = sizeof(vertices[0]);
+	convexDesc.flags                   = physx::PxConvexFlag::eCOMPUTE_CONVEX;
+
+	physx::PxTolerancesScale scale;
+	physx::PxCookingParams params(scale);
+
+	physx::PxDefaultMemoryOutputStream buf;
+	physx::PxConvexMeshCookingResult::Enum result;
+	if (!PxCookConvexMesh(params, convexDesc, buf, &result)) {
+		return NULL;
+	}
+
+	physx::PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
+	return m_physics->createConvexMesh(input);
 }
 
 void PhysicsSystem::Update(Scene* scene, float deltaTime) const {
@@ -91,12 +160,8 @@ void PhysicsSystem::Update(Scene* scene, float deltaTime) const {
 	scene->GetPxScene()->fetchResults(true);
 
 	for (auto [entity, rigidBody, transform] : scene->GetRegistry().view<Component::RigidBody, Component::Transform>().each()) {
-		//if (auto rigidDynamic = dynamic_cast<physx::PxRigidDynamic*>(rigidBody.actor)) {
 		transform.position = ToVec3(rigidBody.actor->getGlobalPose().p) + rigidBody.offset.position;
-			transform.rotation =
-			glm::degrees(glm::eulerAngles(ToQuat(rigidBody.actor->getGlobalPose().q))) + rigidBody.offset.rotation;
-			//entity.setTransform(entity.parentTransform().inverse() * transform);
-		//}
+		transform.rotation = glm::eulerAngles(ToQuat(rigidBody.actor->getGlobalPose().q)) + rigidBody.offset.rotation;
 	}
 }
 }  // namespace Rava

@@ -261,6 +261,8 @@ void Renderer::RenderpassEntities(entt::registry& registry, Rava::Camera& curren
 		ubo.projection  = currentCamera.GetProjection();
 		ubo.view        = currentCamera.GetView();
 		ubo.inverseView = currentCamera.GetInverseView();
+		ubo.gamma       = Rava::Engine::s_Instance->GetGamma();
+		ubo.exposure    = Rava::Engine::s_Instance->GetExposure();
 		// ubo.Projection        = m_frameInfo.m_Camera->GetProjectionMatrix();
 		// ubo.View              = m_frameInfo.m_Camera->GetViewMatrix();
 		// ubo.AmbientLightColor = {1.0f, 1.0f, 1.0f, m_AmbientLightIntensity};

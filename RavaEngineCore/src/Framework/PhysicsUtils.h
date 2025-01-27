@@ -25,27 +25,22 @@ UniquePx<T, D> WrapUnique(T* p) {
 	return UniquePx<T, D>(p);
 }
 
-/// Convert Raygun Vec3 to PhysX Vec3.
 static inline const physx::PxVec3& ToVec3(const glm::vec3& v) {
 	return reinterpret_cast<const physx::PxVec3&>(v);
 }
 
-/// Convert PhysX Vec3 to Raygun Vec3.
 static inline const glm::vec3& ToVec3(const physx::PxVec3& v) {
 	return reinterpret_cast<const glm::vec3&>(v);
 }
 
-/// Convert Raygun Quaternion to PhysX Quaternion.
 static inline const physx::PxQuat& ToQuat(const glm::quat& q) {
 	return reinterpret_cast<const physx::PxQuat&>(q);
 }
 
-/// Convert PhysX Quaternion to Raygun Quaternion.
 static inline const glm::quat& ToQuat(const physx::PxQuat& q) {
 	return reinterpret_cast<const glm::quat&>(q);
 }
 
-/// Convert Raygun transform to PhysX transform.
 static inline physx::PxTransform ToTransform(const glm::vec3& t, const glm::quat& q) {
 	return physx::PxTransform{ToVec3(t), ToQuat(q)};
 }
@@ -72,5 +67,4 @@ static inline UniquePx<physx::PxMaterial> CloneMaterial(physx::PxPhysics& physic
 
 	return result;
 }
-
 }  // namespace Rava

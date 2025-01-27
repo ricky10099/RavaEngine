@@ -42,6 +42,7 @@ class Editor {
 
    private:
 	void DrawSceneHierarchy(Scene* scene);
+	void DrawGizmo();
 	bool DrawEntityNode(Scene* scene, const Shared<Entity>& entity, u32 index);
 	void DrawComponents(Shared<Entity> entity);
 	template <typename T>

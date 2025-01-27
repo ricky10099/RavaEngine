@@ -31,13 +31,13 @@ void ExampleScene::Init() {
 	m_testLight = CreateEntity("testLight");
 	m_testLight->AddComponent<Rava::Component::PointLight>(glm::vec3(1.f, 0.f, 0.f), 0.1f, 0.1f);
 	m_testLight->AddRigidBody(Rava::PhysicsSystem::ColliderType::Box, false, true);
-	m_testLight->GetComponent<Rava::Component::RigidBody>()->UpdateMassAndInertia(0.01f);
+	m_testLight->GetComponent<Rava::Component::RigidBody>()->UpdateMassAndInertia(0.001f);
 
 	m_entity2 = CreateEntity("Fish");
 	m_entity2->AddComponent<Rava::Component::Model>("Assets/Models/Fish/Fish.fbx");
 	// m_entity2->AddComponent<Rava::Component::Animation>("Assets/Models/Fish/Fish.fbx");
-	m_entity2->SetScale(glm::vec3{0.01f});
-	m_entity2->AddRigidBody(Rava::PhysicsSystem::ColliderType::Box, false, true)->UpdateMassAndInertia(0.00001f);
+	//m_entity2->SetScale(glm::vec3{0.01f});
+	m_entity2->AddRigidBody(Rava::PhysicsSystem::ColliderType::TriangleMesh, false, false)->UpdateMassAndInertia(0.00001f);
 
 	m_entity3 = CreateEntity("Dragon");
 	m_entity3->AddComponent<Rava::Component::Model>("Assets/Models/Dragon/M_B_44_Qishilong_skin_Skeleton.fbx");
@@ -46,28 +46,28 @@ void ExampleScene::Init() {
 }
 
 void ExampleScene::Update() {
-	// if (Input::IsKeyPress(Key::W)) {
-	//	m_debugCamera->Translate(glm::vec3{0.0f, 0.0f, -5.0f} * Rava::Timestep::Count());
-	// }
-	// if (Input::IsKeyPress(Key::S)) {
-	//	m_debugCamera->Translate(glm::vec3{0.0f, 0.0f, 5.0f} * Rava::Timestep::Count());
-	// }
-	// if (Input::IsKeyPress(Key::A)) {
-	//	m_debugCamera->Translate(glm::vec3{-5.0f, 0.0f, 0.0f} * Rava::Timestep::Count());
-	// }
-	// if (Input::IsKeyPress(Key::D)) {
-	//	m_debugCamera->Translate(glm::vec3{5.0f, 0.0f, 0.0f} * Rava::Timestep::Count());
-	// }
-	// if (Input::IsKeyPress(Key::Q)) {
-	//	m_debugCamera->Translate(glm::vec3{0.0f, 5.0f, 0.0f} * Rava::Timestep::Count());
-	// }
-	// if (Input::IsKeyPress(Key::E)) {
-	//	m_debugCamera->Translate(glm::vec3{0.0f, -5.0f, 0.0f} * Rava::Timestep::Count());
-	// }
+	 if (Input::IsKeyPress(Key::W)) {
+		m_entity2->Translate(glm::vec3{0.0f, 0.0f, -5.0f} * Rava::Timestep::Count());
+	 }
+	 if (Input::IsKeyPress(Key::S)) {
+		 m_entity2->Translate(glm::vec3{0.0f, 0.0f, 5.0f} * Rava::Timestep::Count());
+	 }
+	 if (Input::IsKeyPress(Key::A)) {
+		 m_entity2->Translate(glm::vec3{-5.0f, 0.0f, 0.0f} * Rava::Timestep::Count());
+	 }
+	 if (Input::IsKeyPress(Key::D)) {
+		 m_entity2->Translate(glm::vec3{5.0f, 0.0f, 0.0f} * Rava::Timestep::Count());
+	 }
+	 if (Input::IsKeyPress(Key::Q)) {
+		 m_entity2->Translate(glm::vec3{0.0f, 5.0f, 0.0f} * Rava::Timestep::Count());
+	 }
+	 if (Input::IsKeyPress(Key::E)) {
+		 m_entity2->Translate(glm::vec3{0.0f, -5.0f, 0.0f} * Rava::Timestep::Count());
+	 }
 
-	if (Input::IsKeyPress(Key::Space)) {
-		m_testLight->Translate(glm::vec3{0.0f, 1.0f, 0.0f} * Rava::Timestep::Count());
-	}
+	//if (Input::IsKeyPress(Key::Space)) {
+	//	m_testLight->Translate(glm::vec3{0.0f, 1.0f, 0.0f} * Rava::Timestep::Count());
+	//}
 
 	auto rotateLight = glm::rotate(glm::mat4(1.f), 0.5f * Rava::Timestep::Count(), {0.f, -1.f, 0.f});
 

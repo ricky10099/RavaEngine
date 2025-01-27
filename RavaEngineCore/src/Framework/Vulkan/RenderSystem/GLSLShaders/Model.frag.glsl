@@ -37,6 +37,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     PointLight pointLights[MAX_LIGHTS];
     DirectionalLight directionalLight;
     int numLights;
+    float gamma;
+	float exposure;
 } ubo;
 
 layout (set = 1, binding = 0) uniform MaterialUbo {
@@ -81,7 +83,8 @@ vec3 Uncharted2Tonemap(vec3 x) {
 
 vec3 Uncharted2(vec3 color) {
   const float W = 11.2;
-  float exposureBias = 2.0;
+//  float exposureBias = 2.0;
+  float exposureBias = ubo.exposure;
   vec3 curr = Uncharted2Tonemap(exposureBias * color);
   vec3 whiteScale = 1.0 / Uncharted2Tonemap(vec3(W));
   return curr * whiteScale;
@@ -287,7 +290,8 @@ void main() {
     color = Uncharted2(color);
 
     // Set Gamma as 2.0, may set it changable in future
-	color = pow(color, vec3(1.0 / 2.0));
+//	color = pow(color, vec3(1.0 / 2.0));
+	color = pow(color, vec3(1.0 / ubo.gamma));
 
     outColor = diffuseColor * vec4(color, 1.0);
 }

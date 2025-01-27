@@ -36,6 +36,8 @@ layout(set = 0, binding = 0) uniform GlobalUbo {
     PointLight pointLights[MAX_LIGHTS];
     DirectionalLight directionalLight;
     int numLights;
+    float gamma;
+	float exposure;
 } ubo;
 
 layout(set = 2, binding = 0) uniform SkeletonUbo {

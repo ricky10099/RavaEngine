@@ -10,6 +10,7 @@ struct Name;
 struct Transform;
 struct RigidBody;
 }  // namespace Component
+
 class Scene;
 class Entity {
    public:
@@ -20,6 +21,12 @@ class Entity {
 
 	virtual void Init(){};
 	virtual void Update(){};
+
+	virtual void OnTriggerEnter(Entity* other) {}
+	virtual void OnTriggerExit(Entity* other) {}
+	virtual void OnContactEnter(Entity* other);
+	virtual void OnContactStay(Entity* other) {}
+	virtual void OnContactExit(Entity* other) {}
 
 	void SetName(std::string_view name);
 
@@ -39,16 +46,6 @@ class Entity {
 	template <typename T, typename... Args>
 	T* AddComponent(Args&&... args) {
 		ENGINE_ASSERT(!HasComponent<T>(), "Entity already has component!");
-
-		//// Check if the component's constructor accepts an Entity
-		// if constexpr (std::is_constructible_v<T, Entity&, Args...>) {
-		//	// Pass the current Entity instance to the component
-		//	return &m_scene->GetRegistry().emplace<T>(m_entity, *this, std::forward<Args>(args)...);
-		// } else {
-		//	// Construct without passing the Entity
-		//	return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
-		// }
-
 		return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
 	}
 

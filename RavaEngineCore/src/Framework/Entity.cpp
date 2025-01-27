@@ -28,7 +28,9 @@ Entity::Entity(entt::entity entity, Scene* scene, std::string_view name)
 //
 //	 return &m_scene->GetRegistry().emplace<T>(m_entity, std::forward<Args>(args)...);
 //}
-
+void Entity::OnContactEnter(Entity* other) {
+	ENGINE_TRACE("OnContactEnter({0})", other->GetComponent<Component::Name>()->data);
+}
 
 void Entity::SetName(std::string_view name) {
 	m_name->SetName(name);

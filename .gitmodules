@@ -12,4 +12,4 @@
 	url = https://github.com/ricky10099/imgui.git
 [submodule "Externals/ImGuizmo"]
 	path = Externals/ImGuizmo
-	url = https://github.com/CedricGuillemet/ImGuizmo.git
+	url = https://github.com/ricky10099/ImGuizmo.git

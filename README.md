@@ -1,7 +1,7 @@
 # RavaEngine
 
 <p align="center">
-  <img width="512" height="512" src="https://github.com/ricky10099/RavaEngine/blob/main/Assets/System/Rava.png">
+  <img width="512" height="512" src="https://github.com/ricky10099/RavaEngine/blob/main/Assets/System/Images/Rava.png">
 </p>
 
 Self learning Vulkan API and try to make a game engine.

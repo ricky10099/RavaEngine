@@ -28,8 +28,7 @@ Engine::Engine() {
 	m_editorCamera.SetViewYXZ(m_editorCameraPosition, m_editorCameraRotation);
 }
 
-Engine::~Engine() {
-}
+Engine::~Engine() {}
 
 void Engine::Run() {
 	if (m_currentScene == nullptr) {
@@ -46,15 +45,23 @@ void Engine::Run() {
 		m_timestep      = newTime - m_timeLastFrame;
 		m_timeLastFrame = newTime;
 
+		m_accumulator += m_timestep;
+
 		switch (engineState) {
 			case EngineState::Run:
-				m_physicsSystem.Update(m_currentScene.get(), m_timestep);
+				if (m_accumulator >= PHYSICS_TIMESTEP) {
+					m_physicsSystem.Update(m_currentScene.get(), PHYSICS_TIMESTEP);
+					m_accumulator -= PHYSICS_TIMESTEP;
+				}
 				UpdateSceneCamera();
 				UpdateSceneAndEntities();
 				RunButton();
 				break;
 			case EngineState::Debug:
-				m_physicsSystem.Update(m_currentScene.get(), m_timestep);
+				if (m_accumulator >= PHYSICS_TIMESTEP) {
+					m_physicsSystem.Update(m_currentScene.get(), PHYSICS_TIMESTEP);
+					m_accumulator -= PHYSICS_TIMESTEP;
+				}
 				UpdateSceneAndEntities();
 				[[fallthrough]];
 			case EngineState::Edit:
@@ -64,6 +71,7 @@ void Engine::Run() {
 		}
 
 		m_renderer.BeginFrame();
+		m_renderer.UpdateEditor(m_currentScene.get());
 		UpdateRigidBodyTransform();
 		m_renderer.UpdateAnimations(m_currentScene->GetRegistry());
 		m_renderer.RenderpassEntities(m_currentScene->GetRegistry(), m_mainCamera);
@@ -71,7 +79,6 @@ void Engine::Run() {
 		m_renderer.RenderEnv(m_currentScene->GetRegistry());
 
 		m_renderer.RenderpassGUI();
-		m_renderer.UpdateEditor(m_currentScene.get());
 		m_renderer.EndScene();
 
 		m_frameCount++;
@@ -119,7 +126,7 @@ void Engine::EditorInputHandle() {
 	if (Input::IsMouseButtonPress(Mouse::Button1)) {
 		glm::vec3 moveDirection{0.0f};
 		glm::vec3 rotation{0.0f};
-		
+
 		if (Input::IsKeyPress(Key::W)) {
 			moveDirection += m_editorCameraForward;
 		}
@@ -229,29 +236,26 @@ void Engine::UpdateSceneAndEntities() {
 }
 
 void Engine::UpdateSceneCamera() {
+	bool hasMainCamera = false;
+
 	for (auto [entity, cam, transform] : m_currentScene->GetRegistry().view<Component::Camera, Component::Transform>().each()) {
 		if (cam.mainCamera) {
 			m_mainCamera = cam.view;
+			hasMainCamera = true;
 		}
-		cam.view.MoveCamera(transform.position, transform.rotation);
+		cam.view.MoveCamera(transform.position + cam.offset.position, transform.rotation + cam.offset.rotation);
 		cam.view.RecalculateProjection();
+	}
+
+	if (!hasMainCamera) {
+		m_mainCamera = {};
 	}
 }
 
 void Engine::UpdateRigidBodyTransform() {
-	for (auto [entity, rigidBody, transform] : m_currentScene->GetRegistry().view<Component::RigidBody, Component::Transform>().each()) {
-		glm::vec3 eulerAngles(
-			glm::radians(transform.rotation.x), glm::radians(transform.rotation.y), glm::radians(transform.rotation.z)
-			//glm::degrees(transform.rotation.x),
-			//glm::degrees(transform.rotation.y),
-			//glm::degrees(transform.rotation.z)
-			//(transform.rotation.x), (transform.rotation.y), (transform.rotation.z)
-		);
-		glm::quat rotation   = glm::quat(eulerAngles);
-		physx::PxQuat pxRotation(rotation.x, rotation.y, rotation.z, rotation.w);
-		physx::PxVec3 pxPosition(transform.position.x, transform.position.y, transform.position.z);
-		//physx::PxTransform t = ToTransform(transform.position, transform.GetQuaternion());
-		physx::PxTransform t(pxPosition, pxRotation);
+	for (auto [entity, rigidBody, transform] :
+		 m_currentScene->GetRegistry().view<Component::RigidBody, Component::Transform>().each()) {
+		physx::PxTransform t(ToTransform(transform.position, transform.GetQuaternion()));
 		rigidBody.actor->setGlobalPose(t);
 	}
 }

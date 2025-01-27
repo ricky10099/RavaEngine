@@ -48,7 +48,6 @@ void WireframeRenderSystem::CreatePipeline(VkRenderPass renderPass) {
 	PipelineConfig pipelineConfig{};
 	Pipeline::DefaultPipelineConfig(pipelineConfig);
 	pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-	// Pipeline::EnableAlphaBlending(pipelineConfig);
 	pipelineConfig.attributeDescriptions.clear();
 	pipelineConfig.bindingDescriptions.clear();
 	pipelineConfig.renderPass     = renderPass;
@@ -81,7 +80,7 @@ void WireframeRenderSystem::Render(FrameInfo& frameInfo, entt::registry& registr
 		physx::PxShape* shape;
 		rigidBody.actor->getShapes(&shape, 1);
 
-		//const physx::PxGeometry* geometry = &shape->getGeometry();
+		const physx::PxGeometry* geometry = &shape->getGeometry();
 
 		// Get wireframe vertices
 		//auto wireframeVertices = Rava::PhysicsSystem::CreateWireframeVertices(shape);

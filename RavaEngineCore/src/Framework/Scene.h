@@ -32,7 +32,7 @@ class Scene {
    protected:
 	std::string_view m_name = typeid(*this).name();
 	entt::registry m_registry;
-	physx::PxScene* m_pxScene;
+	physx::PxScene* m_pxScene = nullptr;
 	std::vector<Shared<Entity>> m_entities;
 
    private:
