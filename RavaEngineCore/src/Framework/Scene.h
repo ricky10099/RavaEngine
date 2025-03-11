@@ -19,7 +19,15 @@ class Scene {
 	virtual void Update(){};
 	virtual void Exit(){};
 
-	Shared<Entity> CreateEntity(std::string_view name);
+	template <typename T>
+	Shared<T> CreateEntity(std::string_view name) {
+		static_assert(std::is_base_of_v<Entity, T>, "T must be derived from Entity");
+
+		Shared<T> entity = std::make_shared<T>(m_registry.create(), this, name);
+		m_entities.push_back(entity);
+		return entity;
+	}
+
 	void DestroyEntity(u32 index);
 
 	std::string_view GetName() const { return m_name; }

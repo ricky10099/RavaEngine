@@ -9,9 +9,8 @@ workspace "RavaEngine"
 
 outputdir = "%{cfg.buildcfg}"
 
-VULKAN_SDK = os.getenv("VULKAN_SDK")
-
 IncludeDir = {}
+IncludeDir["Vulkan"]	= "Externals/Vulkan/include"
 IncludeDir["GLFW"]		= "Externals/GLFW/include"
 IncludeDir["spdlog"]	= "Externals/spdlog/include"
 IncludeDir["Assimp"]	= "Externals/Assimp/include"
@@ -22,6 +21,7 @@ IncludeDir["ImGui"]		= "Externals/ImGui"
 IncludeDir["ImGuizmo"]		= "Externals/ImGuizmo"
 
 LibDir = {}
+LibDir["Vulkan"]	= "Externals/Vulkan/lib"
 LibDir["Assimp"]	= "Externals/Assimp/lib"
 LibDir["PhysX"]		= "Externals/PhysX/lib"
 LibDir["CRIWARE"]	= "Externals/CRIWARE/lib"
@@ -54,7 +54,7 @@ project "RavaEngineCore"
 
 	includedirs {
 		"%{prj.name}/src",
-		"%{VULKAN_SDK}/Include",
+		"%{IncludeDir.Vulkan}",
 		"Externals",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.spdlog}",
@@ -67,7 +67,7 @@ project "RavaEngineCore"
 	}
 	
 	libdirs {
-		"%{VULKAN_SDK}/Lib",
+		"%{LibDir.Vulkan}",
 		"%{LibDir.Assimp}/%{cfg.buildcfg}",
 		"%{LibDir.PhysX}/%{cfg.buildcfg}",
 		"%{LibDir.CRIWARE}",

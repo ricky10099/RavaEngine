@@ -95,10 +95,14 @@ void Engine::LoadScene(Unique<Scene> scene) {
 		m_currentScene->ClearScene();
 		m_currentScene.reset();
 	}
+	m_renderer.ResetEditor();
 	m_currentScene = std::move(scene);
 	ENGINE_INFO("Initializing {0}", m_currentScene->GetName());
 	m_currentScene->CreatePhysXScene();
 	m_currentScene->Init();
+	for (auto& entity : m_currentScene->m_entities) {
+		entity->Init();
+	}
 }
 
 void Engine::UpdateTitleFPS(std::chrono::steady_clock::time_point newTime) {

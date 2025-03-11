@@ -403,6 +403,10 @@ void Renderer::EndRenderPass(/*VkCommandBuffer commandBuffer*/) const {
 	vkCmdEndRenderPass(m_currentCommandBuffer);
 }
 
+void Renderer::ResetEditor() {
+	m_editor->Reset();
+}
+
 void Renderer::UpdateEditor(Rava::Scene* scene) {
 	m_editor->Organize(scene, m_currentImageIndex);
 	m_editor->InputHandle();

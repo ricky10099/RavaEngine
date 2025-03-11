@@ -35,6 +35,7 @@ class Renderer {
 	void BeginGUIRenderPass(/*VkCommandBuffer commandBuffer*/);
 	void EndRenderPass(/*VkCommandBuffer commandBuffer*/) const;
 
+	void ResetEditor();
 	void UpdateEditor(Rava::Scene* scene);
 	void UpdateAnimations(entt::registry& registry);
 	//void Render(Scene* scene);

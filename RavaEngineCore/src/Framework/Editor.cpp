@@ -218,7 +218,7 @@ void Editor::DrawSceneHierarchy(Scene* scene) {
 	ImGuiPopupFlags flags = ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems;
 	if (ImGui::BeginPopupContextWindow(0, flags)) {
 		if (ImGui::MenuItem("Create Empty Entity")) {
-			scene->CreateEntity("Empty Entity");
+			scene->CreateEntity<Entity>("Empty Entity");
 		}
 
 		ImGui::EndPopup();

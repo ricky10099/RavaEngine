@@ -17,6 +17,11 @@ class Editor {
 	void InputHandle();
 
 	void RecreateDescriptorSet(VkImageView swapChainImage, u32 imageCount);
+	
+	void Reset() {
+		m_selectedEntity = nullptr;
+		m_gizmoType      = -1;
+	}
 
 	void SetSelectedEntity(Shared<Entity> entity) { m_selectedEntity = entity; }
 

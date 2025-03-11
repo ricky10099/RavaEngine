@@ -3,10 +3,11 @@
 #include "Framework/RavaEngine.h"
 #include "Framework/Log.h"
 #include "GameScenes/ExampleScene/ExampleScene.h"
+#include "GameScenes/GameScene/GameScene.h"
 
 int main() {
 	Rava::Engine engine{};
-	engine.LoadScene(std::make_unique<ExampleScene>());
+	engine.LoadScene(std::make_unique<GameScene>());
 
 	try {
 		engine.Run();

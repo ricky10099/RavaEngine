@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-// #include "Framework/Components.h"
+#include "Framework/Scene.h"
 
 namespace Rava {
 namespace Component {
@@ -11,7 +11,7 @@ struct Transform;
 struct RigidBody;
 }  // namespace Component
 
-class Scene;
+//class Scene;
 class Entity {
    public:
 	Entity() = delete;
