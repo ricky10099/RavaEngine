@@ -12,6 +12,11 @@ Vulkanを独学していて、ゲームエンジンを作ってみます。
 
 "Rava"という名前はLavaとRickyの頭文字を組み合わせです。
 
+## Before Start
+Please install vulkan SDK from [Official webpage](https://vulkan.lunarg.com/sdk/home#windows), the version this project using is 1.3.290.
+
+先に[公式サイト](https://vulkan.lunarg.com/sdk/home#windows)からvulkan SDKをインストールしてください。このプロジェクト使っているバージョンは1.3.290です。
+
 ## Start
 <ins>**1. Download the repository:**</ins>
 
