@@ -18,6 +18,5 @@ class Player : public Rava::Entity {
 
    private:
 	Rava::Component::Model* m_model         = nullptr;
-	Rava::Component::Camera* m_camera       = nullptr;
 	Rava::Component::RigidBody* m_rigidBody = nullptr;
 };

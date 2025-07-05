@@ -18,9 +18,6 @@ class Engine {
 	glm::vec4 clearColor = glm::vec4(0.1f, 0.1f, 0.1f, 0.0f);
 	u16 frameLimit       = 144;
 
-	// static constexpr int WINDOW_WIDTH  = 1280;
-	// static constexpr int WINDOW_HEIGHT = 720;
-
 	enum class EngineState {
 		Edit,
 		Debug,
@@ -36,7 +33,6 @@ class Engine {
 
 	void Run();
 
-	// void OnEvent(Event& event);
 	void LoadScene(Unique<Scene> scene);
 	float GetGamma() const { return m_gamma; }
 	float GetExposure() const { return m_exposure; }
