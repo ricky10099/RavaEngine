@@ -153,7 +153,7 @@ void Editor::Organize(Scene* scene, u32 currentFrame) {
 	ImGui::DragFloat("Exposure", &Engine::s_Instance->m_exposure, 0.1f, 0.0f, 10.0f);
 	ImGui::End();
 
-	ImGui::ShowDemoWindow();
+	//ImGui::ShowDemoWindow();
 
 	//    ImGui::Begin("Vulkan Viewport");
 	// ImVec2 windowSize = ImGui::GetContentRegionAvail();

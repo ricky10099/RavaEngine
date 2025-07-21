@@ -18,7 +18,6 @@ void GameScene::Init() {
 	m_tree->AddRigidBody(Rava::PhysicsSystem::ColliderType::Box, false, false);
 	m_directionalLight = CreateEntity<Rava::Entity>("Directional Light");
 	m_directionalLight->AddComponent<Rava::Component::DirectionalLight>();
-	m_camera->AddComponent<Rava::Component::Camera>(true);
 }
 
 void GameScene::Update() {}

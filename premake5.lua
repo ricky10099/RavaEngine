@@ -46,6 +46,7 @@ project "RavaEngineCore"
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.c",
+		"%{prj.name}/**.rc",
 	}
 	
 	defines {

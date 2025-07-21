@@ -19,5 +19,4 @@ class GameScene : public Rava::Scene {
 	Shared<Rava::Entity> m_field;
 	Shared<Rava::Entity> m_tree;
 	Shared<Rava::Entity> m_directionalLight;
-	Shared<Rava::Entity> m_camera;
 };

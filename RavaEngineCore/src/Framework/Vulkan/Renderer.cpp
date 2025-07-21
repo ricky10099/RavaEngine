@@ -18,8 +18,7 @@ Renderer::Renderer(Rava::Window* window)
 	, m_frameCounter{0}
 	, m_currentImageIndex{0}  //, m_ambientLightIntensity{0.0f}
 	, m_currentFrameIndex{0}  //, m_showDebugShadowMap{false}
-	, m_frameInProgress{false}
-	, m_shadersCompiled{false} {
+	, m_frameInProgress{false} {
 	// Init();
 }
 
