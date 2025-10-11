@@ -34,9 +34,12 @@ SwapChain::~SwapChain() {
 
 	// cleanup synchronization objects
 	for (size_t i = 0; i < MAX_FRAMES_SYNC; i++) {
-		vkDestroySemaphore(VKContext->GetLogicalDevice(), m_renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(VKContext->GetLogicalDevice(), m_imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(VKContext->GetLogicalDevice(), m_inFlightFences[i], nullptr);
+	}
+
+	for (size_t i = 0; i < ImageCount(); i++) {
+		vkDestroySemaphore(VKContext->GetLogicalDevice(), m_renderFinishedSemaphores[i], nullptr);
 	}
 }
 
@@ -114,7 +117,7 @@ void SwapChain::CreateSwapChainImageViews() {
 
 void SwapChain::CreateSyncObjects() {
 	m_imageAvailableSemaphores.resize(MAX_FRAMES_SYNC);
-	m_renderFinishedSemaphores.resize(MAX_FRAMES_SYNC);
+	m_renderFinishedSemaphores.resize(ImageCount());
 	m_inFlightFences.resize(MAX_FRAMES_SYNC);
 	m_imagesInFlight.resize(ImageCount(), VK_NULL_HANDLE);
 
@@ -130,9 +133,14 @@ void SwapChain::CreateSyncObjects() {
 	for (size_t i = 0; i < MAX_FRAMES_SYNC; i++) {
 		if (vkCreateSemaphore(VKContext->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_imageAvailableSemaphores[i])
 				!= VK_SUCCESS
-			|| vkCreateSemaphore(VKContext->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i])
-				   != VK_SUCCESS
 			|| vkCreateFence(VKContext->GetLogicalDevice(), &fenceInfo, nullptr, &m_inFlightFences[i]) != VK_SUCCESS) {
+			ENGINE_CRITICAL("Failed to create Synchronization objects for a frame!");
+		}
+	}
+
+	for (size_t i = 0; i < ImageCount(); i++) {
+		if (vkCreateSemaphore(VKContext->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_renderFinishedSemaphores[i])
+			!= VK_SUCCESS) {
 			ENGINE_CRITICAL("Failed to create Synchronization objects for a frame!");
 		}
 	}
@@ -230,7 +238,7 @@ VkResult SwapChain::SubmitCommandBuffers(const VkCommandBuffer* buffers, u32* im
 	submitInfo.commandBufferCount     = 1;               // Number of command buffers to submit
 	submitInfo.pCommandBuffers        = buffers;         // Command buffer to submit
 
-	VkSemaphore signalSemaphores[]  = {m_renderFinishedSemaphores[m_currentFrame]};
+	VkSemaphore signalSemaphores[]  = {m_renderFinishedSemaphores[*imageIndex]};
 	submitInfo.signalSemaphoreCount = 1;                 // Number of semaphores to signal
 	submitInfo.pSignalSemaphores    = signalSemaphores;  // Semaphores to signal when command buffer finishes
 
